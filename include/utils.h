@@ -1,0 +1,77 @@
+#ifndef UTILS_H
+#define UTILS_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <assert.h>
+#include <string.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <malloc.h>
+#include <math.h>
+#include "pad.h"
+
+#include <lv2/process.h>
+#include <psl1ght/lv2/filesystem.h>
+#include <psl1ght/lv2.h>
+#include <sys/stat.h>
+#include <sys/sysfs.h>
+
+// for msgdialogs
+#include <sysutil/events.h>
+#include <io/msg.h>
+
+#include <tiny3d.h>
+#include <libfont.h>
+
+#define FONT_DEFAULT 0
+#define FONT_BUTTON  2
+
+#define DT_DIR 1
+
+typedef struct {
+    unsigned flags;
+    char path_name[MAXPATHLEN+1];
+	char title[64];
+	char title_id[64];
+
+} t_directories;
+
+#define MAX_DIRECTORIES 512
+
+extern int ndirectories;
+extern t_directories directories[MAX_DIRECTORIES];
+
+extern u32 fdevices;
+extern u32 fdevices_old;
+extern u32 forcedevices;
+
+extern char hdd_folder[64];
+extern char bluray_game[64];
+
+void cls();
+void cls2();
+
+char * LoadFile(char *path, int *file_size);
+int SaveFile(char *path, char *mem, int file_size);
+
+void DrawDialogOK(char * str);
+int DrawDialogYesNo(char * str);
+
+int parse_param_sfo(char * file, char *title_name);
+int parse_ps3_disc(char *path, char * id);
+void utf8_to_ansi(char *utf8, char *ansi, int len);
+
+void sort_entries(t_directories *list, int *max);
+void delete_entries(t_directories *list, int *max, u32 flag);
+void fill_entries_from_device(char *path, t_directories *list, int *max, u32 flag, int sel);
+
+void copy_from_selection(int game_sel);
+void copy_from_bluray();
+void delete_game(int game_sel);
+void test_game(int game_sel);
+
+#endif
+
