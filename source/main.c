@@ -41,6 +41,10 @@
 
 #include "syscall8.h"
 
+#ifdef WITH_CFW355
+#include "payload355/payload.h"
+#endif
+
 #include "spu_soundmodule.bin.h" // load SPU Module
 #include "spu_soundlib.h"
 
@@ -66,7 +70,9 @@ MODPlay mod_track;
 
 #include "ftp.h"
 
+#ifndef WITH_CFW355
 #include "payload_groove_hermes.bin.h"
+#endif
 
 // include fonts
 
@@ -373,8 +379,7 @@ int lv2launch(u64 addr)
 int syscall36(char * path) 
 { return Lv2Syscall1(36, (u64) path); }
 
-
-
+#ifndef WITH_CFW355
 int send_payload_code()
 {
     int l, n;
@@ -414,6 +419,7 @@ int send_payload_code()
 
     return 0;
 }
+#endif
 
 typedef struct {
 
@@ -728,7 +734,9 @@ s32 main(s32 argc, const char* argv[])
     u32 segmentcount = 0;
     sysSpuSegment * segments;
 
+#ifndef WITH_CFW355
     flag = send_payload_code();
+#endif
 
     SysLoadModule(SYSMODULE_FS);
     SysLoadModule(SYSMODULE_PNGDEC);
@@ -773,6 +781,7 @@ s32 main(s32 argc, const char* argv[])
         }
     }
 
+#ifndef WITH_CFW355
     if(!flag) {
         lv2launch(0x80000000007e0000ULL);
         __asm__("sync");
@@ -790,6 +799,31 @@ s32 main(s32 argc, const char* argv[])
             exit(0);
         }
     }
+#else
+	if (!is_payload_loaded()) {
+	/*
+		install_new_poke();
+
+		if (!map_lv1()) {
+			remove_new_poke();
+			exit(0);
+		}
+
+		patch_lv2_protection();
+		remove_new_poke();
+
+		unmap_lv1();
+
+		load_payload();
+    */
+        tiny3d_Init(1024*1024);
+
+        ioPadInit(7);
+        DrawDialogOK("LV2 Patcher v9 (syscall36) is need it!");
+        exit(0);
+	}
+#endif
+
 
     usleep(250000);
 

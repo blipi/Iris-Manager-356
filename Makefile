@@ -9,17 +9,26 @@ TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCE		:=	source
 INCLUDE		:=	include
-DATA		:=	data
+#DATA		:=	data
 LIBS		:=	 $(PSL1GHT)/modules/spu_soundmodule.bin.a \
 				-lspu_sound -lmod -laudio -lnet -lsysfs -lpngdec -lfont -lfreetype -lz -ltiny3d -lgcm_sys -lreality -lsysutil -lio -lsysmodule -lm
 
-ICON0       = $(SOURCE)/../ICON0.PNG
+ICON0       :=  ICON0.PNG
 TITLE		:=	Hermes Manager - v1.0
 APPID		:=	HMANAGER4
 CONTENTID	:=	UP0001-$(APPID)_00-0000000000000000
 
-CFLAGS		+= -g -O2 -Wall --std=gnu99
+CFLAGS		+= -g -O2 -Wall --std=gnu99 `ppu-freetype-config --cflags`
 CXXFLAGS	+= -g -O2 -Wall
+
+CFLAGS		+=  -DMANAGER_DIR="$(APPID)"
+
+#PPU_EMBEDDED_SRCS += data355/patch.txt data355/payload.bin
+CFLAGS		+=  -DUSE_MEMCPY_SYSCALL
+CFLAGS		+=  -DWITH_CFW355
+SOURCE		+=	source/payload355
+INCLUDE		+=	include/payload355
+DATA		:=	data355
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 

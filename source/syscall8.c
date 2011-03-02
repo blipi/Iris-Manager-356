@@ -30,7 +30,14 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static uint64_t syscall8(register uint64_t cmd, register uint64_t param1, register  uint64_t param2, register  uint64_t param3)
 {   
+#ifdef WITH_SYS8ASM
+	__asm__ volatile ("li      11, 0x8\n\t" "sc\n\t":"=r" (cmd), "=r"(param1), "=r"(param2), "=r"(param3)
+					  :"r"(cmd), "r"(param1), "r"(param2), "r"(param3)
+					  :"%r0", "%r12", "%lr", "%ctr", "%xer", "%cr0", "%cr1", "%cr5", "%cr6", "%cr7", "memory");
+	return cmd;
+#else
 	return  Lv2Syscall4(8, cmd, param1, param2, param3);
+#endif
 }
 
 int sys8_disable(uint64_t key)
