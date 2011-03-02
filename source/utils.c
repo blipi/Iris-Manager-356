@@ -124,7 +124,7 @@ int parse_param_sfo(char * file, char *title_name)
     u64 bytes;
     u64 position = 0LL;
 	
-    *title_name = 0;
+    //*title_name = 0;
 
 	if(!lv2FsOpen(file, 0, &fd, S_IRWXU | S_IRWXG | S_IRWXO, NULL, 0))
 		{
@@ -1469,7 +1469,13 @@ void copy_from_selection(int game_sel)
             mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
             sprintf(name, "/dev_usb00%c/GAMEZ", 47 + curr_device);
             mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
-            sprintf(name, "/dev_usb00%c/GAMEZ/%s", 47 + curr_device, strstr(directories[game_sel].path_name, "/GAMEZ") + 7);
+
+            char * p = strstr(directories[game_sel].path_name, "/GAMEZ");
+            if(!p) p = strstr(directories[game_sel].path_name, "/GAMES");
+
+            if(!p) p = "NULL"; else p+= 7;
+
+            sprintf(name, "/dev_usb00%c/GAMEZ/%s", 47 + curr_device, p);
             mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
                 
         }
@@ -1495,18 +1501,29 @@ void copy_from_selection(int game_sel)
 
         if(dialog_action == 1) {
 
-            char *p = strstr(directories[game_sel].path_name, "/GAMEZ") + 7;
+            char *p = strstr(directories[game_sel].path_name, "/GAMEZ");
+
+            if(!p) p= strstr(directories[game_sel].path_name, "/GAMES");
             
+            if(!p) p = "NULL"; else p+= 7;
+
             if(p[0] == '_') p++; // skip special char
 
-            if(!memcmp(hdd_folder,"dev_hdd0", 8)){
+            if(!memcmp(hdd_folder,"dev_hdd0", 9)){
 
                 sprintf(name, "/%s/GAMEZ", hdd_folder);	
                 mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
                 sprintf(name, "/%s/GAMEZ/%s", hdd_folder, p);	
                 mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
 
-            } else {
+            } else if (!memcmp(hdd_folder,"dev_hdd0_2", 11)){
+
+                sprintf(name, "/%s/GAMES", "dev_hdd0");	
+                mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
+                sprintf(name, "/%s/GAMES/%s", "dev_hdd0", p);	
+                mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
+
+            } else{
 
                 sprintf(name, "/dev_hdd0/game/%s", hdd_folder);	
                 mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
@@ -1545,21 +1562,31 @@ void copy_from_selection(int game_sel)
         int vflip = 0;
         
         if(copy_is_split && !abort_copy) {
+                
+            char *p = strstr(directories[game_sel].path_name, "/GAMEZ");
+
+            if(!p) p = strstr(directories[game_sel].path_name, "/GAMES");
+
+            if(!p) p = "NULL"; else p+= 7;
+            
+            if(p[0] == '_') p++; // skip special char
 
             if(dest == 0) {
 
-                char *p = strstr(directories[game_sel].path_name, "/GAMEZ") + 7;
                 
-                if(p[0] == '_') p++; // skip special char
+                
+                
 
-                if(!memcmp(hdd_folder,"dev_hdd0", 8)) {
-                    sprintf(filename, "/%s/GAMEZ/_%s", hdd_folder, strstr(directories[game_sel].path_name, "/GAMEZ") + 7);
-                } else {
-                    sprintf(filename, "/dev_hdd0/game/%s/GAMEZ/_%s", hdd_folder, strstr(directories[game_sel].path_name, "/GAMEZ") + 7);
+                if(!memcmp(hdd_folder,"dev_hdd0", 9)) {
+                    sprintf(filename, "/%s/GAMEZ/_%s", hdd_folder, p);
+                } else if(!memcmp(hdd_folder,"dev_hdd0_2", 11)) {
+                    sprintf(filename, "/%s/GAMES/_%s", "dev_hdd0", p);
+                } else{
+                    sprintf(filename, "/dev_hdd0/game/%s/GAMEZ/_%s", hdd_folder, p);
                 }
             } else {
                 
-                sprintf(filename, "/dev_usb00%c/GAMEZ/_%s", 47+dest, strstr(directories[game_sel].path_name, "/GAMEZ") + 7);
+                sprintf(filename, "/dev_usb00%c/GAMEZ/_%s", 47+dest, p);
             }
 
             // try rename
@@ -1636,21 +1663,27 @@ void copy_from_selection(int game_sel)
                 game_sel = 0;
 
             } else {
+                
+                char *p = strstr(directories[game_sel].path_name, "/GAMEZ");
+
+                if(!p) p = strstr(directories[game_sel].path_name, "/GAMES");
+
+                if(!p) p = "NULL"; else p+= 7;
+                
+                if(p[0] == '_') p++; // skip special char
 
                 if(dest == 0) {
 
-                    char *p = strstr(directories[game_sel].path_name, "/GAMEZ") + 7;
-
-                    if(p[0] == '_') p++; // skip special char
-
-                    if (!memcmp(hdd_folder,"dev_hdd0", 8)) {
+                    if (!memcmp(hdd_folder,"dev_hdd0", 9)) {
                         sprintf(filename, "/%s/GAMEZ/_%s", hdd_folder, p);
-                    } else {
+                    } else if (!memcmp(hdd_folder,"dev_hdd0_2", 11)) {
+                        sprintf(filename, "/%s/GAMES/_%s", "dev_hdd0", p);
+                    } else{
                         sprintf(filename, "/dev_hdd0/game/%s/GAMEZ/_%s", hdd_folder, p);
                     }
                 } else {
                     
-                    sprintf(filename, "/dev_usb00%c/GAMEZ/_%s", 47 + dest, strstr(directories[game_sel].path_name, "/GAMEZ") + 7);
+                    sprintf(filename, "/dev_usb00%c/GAMEZ/_%s", 47 + dest, p);
                 }
                     
                 ret = rename(name, filename);
@@ -1707,11 +1740,20 @@ void copy_from_bluray()
                 forcedevices = (1 << curr_device);
                 
                 if(curr_device == 0) {
-                    if(!memcmp(hdd_folder,"dev_hdd0", 8)) {
+                    if(!memcmp(hdd_folder,"dev_hdd0", 9)) {
+
                         sprintf(name, "/%s/GAMEZ", hdd_folder);	
                         mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
                         sprintf(name, "/%s/GAMEZ/%s", hdd_folder, id);	
-                         mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
+                        mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
+
+                    } else if(!memcmp(hdd_folder,"dev_hdd0_2", 11)) {
+
+                        sprintf(name, "/%s/GAMES", "dev_hdd0");	
+                        mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
+                        sprintf(name, "/%s/GAMES/%s", "dev_hdd0", id);	
+                        mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
+
                     } else {
                         
                         sprintf(name, "/dev_hdd0/game/%s", hdd_folder);	
@@ -1751,15 +1793,20 @@ void copy_from_bluray()
 
                     if(curr_device == 0) {
 
-                        if (!memcmp(hdd_folder,"dev_hdd0", 8)) {
+                        if (!memcmp(hdd_folder,"dev_hdd0", 9)) {
 
-                            sprintf(filename, "/%s/GAMEZ/_%s", hdd_folder, id);	
-                } else {
-                  sprintf(filename, "/dev_hdd0/game/%s/GAMEZ/_%s", hdd_folder, id);	
-                }
-            } else {
-                sprintf(filename, "/dev_usb00%c/GAMEZ/_%s", 47 + curr_device, id);
-            }
+                            sprintf(filename, "/%s/GAMEZ/_%s", hdd_folder, id);
+
+                        } else if (!memcmp(hdd_folder,"dev_hdd0_2", 11)) {
+
+                            sprintf(filename, "/%s/GAMES/_%s", "dev_hdd0", id);
+
+                        } else {
+                            sprintf(filename, "/dev_hdd0/game/%s/GAMEZ/_%s", hdd_folder, id);	
+                        }
+                    } else {
+                            sprintf(filename, "/dev_usb00%c/GAMEZ/_%s", 47 + curr_device, id);
+                    }
                         
             ret = rename(name, filename);
 
@@ -1828,8 +1875,10 @@ void copy_from_bluray()
 
                 } else {
                     if(curr_device == 0) {
-                        if(!memcmp(hdd_folder,"dev_hdd0", 8)) {
+                        if(!memcmp(hdd_folder,"dev_hdd0", 9)) {
                             sprintf(filename, "/%s/GAMEZ/_%s", hdd_folder, id);	
+                        } else if(!memcmp(hdd_folder,"dev_hdd0_2", 11)) {
+                            sprintf(filename, "/%s/GAMES/_%s", "dev_hdd0", id);	
                         } else {
                             sprintf(filename, "/dev_hdd0/game/%s/GAMEZ/_%s", hdd_folder, id);	
                         }
@@ -1976,4 +2025,106 @@ void test_game(int game_sel)
             break;
         }
     }
+}
+
+/*******************************************************************************************************************************************************/
+/* Favourites                                                                                                                                           */
+/*******************************************************************************************************************************************************/
+
+int havefavourites = 0;
+tfavourites favourites;
+
+void LoadFavourites(char * path)
+{
+    int n;
+
+    memset(&favourites, 0, sizeof(favourites));
+
+    int file_size;
+    char *file = LoadFile(path, &file_size);
+
+    if(file) {
+        
+        memcpy(&favourites, file, sizeof(favourites));
+
+        free(file);
+    }
+
+    for(n = 0; n < 12; n++) {
+        favourites.list[n].index = -1;
+        favourites.list[n].flags =  0;
+    }
+
+}
+
+void SaveFavourites(char * path)
+{
+    
+    SaveFile(path, (void *) &favourites, sizeof(favourites));
+
+}
+
+void UpdateFavourites(t_directories *list, int nlist)
+{
+    int n, m;
+
+    for(m = 0; m < 12; m++) {
+        favourites.list[m].index = -1;
+        for(n = 0; n < nlist; n++) {
+            if(!strncmp(list[n].title_id, favourites.list[m].title_id, 64)) {
+                if(favourites.list[m].index < 0) {
+                    strncpy(favourites.list[m].title_id, list[n].title_id, 64);
+                    strncpy(favourites.list[m].title, list[n].title, 64);
+                    favourites.list[m].index = n;
+                    favourites.list[m].flags = list[n].flags;
+                    havefavourites = 1;
+                } else if(favourites.list[m].flags > list[n].flags) {
+                    favourites.list[m].index = n;
+                    favourites.list[m].flags = list[n].flags;
+                    havefavourites = 1;
+                }
+            }
+        }
+    }
+}
+
+
+int TestFavouritesExits(char *id)
+{
+    int m;
+    for(m = 0; m < 12; m++) {
+        if(!strncmp(favourites.list[m].title_id, id, 64)) return 1;
+    }
+    
+    return 0;
+}
+
+void AddFavourites(int indx, t_directories *list, int position_list)
+{
+    strncpy(favourites.list[indx].title_id, list[position_list].title_id, 64);
+    strncpy(favourites.list[indx].title, list[position_list].title, 64);
+    favourites.list[indx].index = position_list;
+    favourites.list[indx].flags = list[position_list].flags;
+    havefavourites = 1;
+
+}
+
+int DeleteFavouritesIfExits(char *id)
+{
+    int m;
+    for(m = 0; m < 12; m++) {
+        if(!strcmp(favourites.list[m].title_id, id)) {
+            memset(favourites.list[m].title_id, 0, 64);
+            memset(favourites.list[m].title, 0, 64);
+            favourites.list[m].index = -1;
+        }
+    }
+    
+    havefavourites = 0;
+
+    for(m = 0; m < 12; m++) {
+        if(favourites.list[m].index >= 0) havefavourites = 1;
+    }
+
+    return 0;
 }

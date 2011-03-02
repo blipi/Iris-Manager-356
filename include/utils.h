@@ -32,12 +32,23 @@
 #define DT_DIR 1
 
 typedef struct {
-    unsigned flags;
+    u32 flags;
     char path_name[MAXPATHLEN+1];
 	char title[64];
 	char title_id[64];
 
 } t_directories;
+
+typedef struct {
+    int index;
+    u32 flags;
+    char title[64];
+    char title_id[64];
+} entry_favourites;
+
+typedef struct {
+    entry_favourites list[12];
+} tfavourites;
 
 #define MAX_DIRECTORIES 512
 
@@ -72,6 +83,16 @@ void copy_from_selection(int game_sel);
 void copy_from_bluray();
 void delete_game(int game_sel);
 void test_game(int game_sel);
+
+extern tfavourites favourites;
+extern int havefavourites;
+
+void LoadFavourites(char * path);
+void SaveFavourites(char * path);
+void UpdateFavourites(t_directories *list, int nlist);
+int TestFavouritesExits(char *id);
+void AddFavourites(int indx, t_directories *list, int position_list);
+int DeleteFavouritesIfExits(char *id);
 
 #endif
 

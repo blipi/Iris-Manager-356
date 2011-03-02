@@ -13,16 +13,11 @@
 //    You should have received a copy of the GNU General Public License
 //    along with OpenPS3FTP.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <stdio.h>
-#include <string.h>
 #include <fcntl.h>
-
-#include <net/net.h>
 
 #include <psl1ght/lv2/filesystem.h>
 
-#include "md5.h"
-#include "functions.h"
+#include "common.h"
 
 void absPath(char* absPath, const char* path, const char* cwd)
 {
@@ -33,6 +28,12 @@ void absPath(char* absPath, const char* path, const char* cwd)
 	else
 	{
 		strcpy(absPath, cwd);
+		
+		if(cwd[strlen(cwd) - 1] != '/')
+		{
+			strcat(absPath, "/");
+		}
+		
 		strcat(absPath, path);
 	}
 }
@@ -56,22 +57,25 @@ int isDir(const char* path)
 	while (*s++);
 }*/
 
-void md5(char md5[33], const char* str)
+int ssplit(const char* str, char* left, int lmaxlen, char* right, int rmaxlen)
 {
-	char output[33];
-	unsigned char md5sum[16];
-
-	md5_context ctx;
-	md5_starts(&ctx);
-	md5_update(&ctx, (unsigned char *)str, strlen(str));
-	md5_finish(&ctx, md5sum);
-
-	int i;
-	for(i = 0; i < 16; i++)
+	size_t ios = strcspn(str, " ");
+	int ret = (ios < strlen(str) - 1);
+	int lmax = (ios < lmaxlen) ? ios : lmaxlen;
+	
+	strncpy(left, str, lmax);
+	left[lmax] = '\0';
+	
+	if(ret)
 	{
-		sprintf(output + i * 2, "%02x", md5sum[i]);
+		strncpy(right, str + ios + 1, rmaxlen);
+		right[rmaxlen] = '\0';
+	}
+	else
+	{
+		right[0] = '\0';
 	}
 	
-	strcpy(md5, output);
+	return ret;
 }
 
