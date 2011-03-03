@@ -1244,6 +1244,8 @@ void draw_screen1(float x, float y)
 
     float x2;
 
+    int selected = select_px + select_py * 4;
+
     SetCurrentFont(FONT_DEFAULT);
 
     // header title
@@ -1263,7 +1265,7 @@ void draw_screen1(float x, float y)
 
     // list device space
 
-    m = select_px + select_py * 4;
+    m = selected;
 
     if(Png_offset[m]) {
 
@@ -1346,13 +1348,31 @@ void draw_screen1(float x, float y)
         i++;   
         }
 
-    i = select_px + select_py * 4;
+    i = selected;
 
     if(flash) {
 
         int png_on = 0;
 
         DrawBox(x + 200 * select_px - 4, y + select_py * 150 - 4 , 0, 200, 150, 0xa0a06080);
+        
+        #if 0
+        i = selected;
+
+            if(Png_offset[i]) {
+                SetCurrentFont(FONT_BUTTON);
+                SetFontColor(0xffffffff, 0x00000080);
+                SetFontSize(8, 16);        
+                x2 = DrawFormatString(x + 200 * select_px - 4 + (200 - 24 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "Press ");
+                SetFontColor(0xffffffff, 0x000000FF);
+                x2 = DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, "SELECT");
+                SetFontColor(0xffffffff, 0x00000080);
+                DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, " for Options");
+                SetCurrentFont(FONT_DEFAULT);
+            }
+        #endif
+            
+        #if 1
 
         if(mode_favourites >= 65536) {
 
@@ -1387,7 +1407,7 @@ void draw_screen1(float x, float y)
             if(png_on)
                 DrawTextBox(x + 200 * select_px - 4, y + select_py * 150 - 4 , 0, 200, 150, 0x8fff8fcf);
         } else {
-            i = select_px + select_py * 4;
+            i = selected;
 
             if(Png_offset[i]) {
                 SetCurrentFont(FONT_BUTTON);
@@ -1411,12 +1431,13 @@ void draw_screen1(float x, float y)
                 SetCurrentFont(FONT_DEFAULT);
             }
         }
+     #endif
     }
 
 
     // draw game name
 
-    i = select_px + select_py * 4;
+    i = selected;
 
     DrawBox(x, y + 3 * 150, 0, 200 * 4 - 8, 40, 0x00000028);
 
@@ -1460,7 +1481,7 @@ void draw_screen1(float x, float y)
     ps3pad_read();
 
     if((old_pad & BUTTON_L2) && (new_pad & BUTTON_TRIANGLE)) {
-        mode_favourites = 131072 | (select_px + select_py * 4);
+        mode_favourites = 131072 | (selected);
         return;
     }
 
@@ -1474,7 +1495,7 @@ void draw_screen1(float x, float y)
     }
 
     if(new_pad & BUTTON_CROSS) {
-        i = select_px + select_py * 4;
+        i = selected;
 
         if(mode_favourites >= 131072) { // swap favourites
             
@@ -1594,7 +1615,7 @@ void draw_screen1(float x, float y)
     }
 
     if(new_pad & BUTTON_SELECT) {
-        i = select_px + select_py * 4;
+        i = selected;
 
         select_option = 0;
         
@@ -1712,6 +1733,8 @@ void draw_options(float x, float y, int index)
     float y2, x2;
 
     int copy_flag = 1;
+
+    int selected = select_px + select_py * 4;
     
 
     SetCurrentFont(FONT_DEFAULT);
@@ -1827,7 +1850,7 @@ void draw_options(float x, float y, int index)
 
     SetFontColor(0xffffffff, 0x00000000);
 
-    i = select_px + select_py * 4;
+    i = selected;
 
     if(Png_offset[i]) {
 
@@ -1874,7 +1897,7 @@ void draw_options(float x, float y, int index)
                 return;
 
             case 1:
-                 i = select_px + select_py * 4;
+                 i = selected;
 
                  if(Png_offset[i]) {
 
@@ -1892,7 +1915,7 @@ void draw_options(float x, float y, int index)
                  return;
 
             case 2:
-                 i = select_px + select_py * 4;
+                 i = selected;
 
                  if(Png_offset[i]) {
                     
@@ -1910,7 +1933,7 @@ void draw_options(float x, float y, int index)
                  return;
 
             case 3:
-                 i = select_px + select_py * 4;
+                 i = selected;
 
                  if(Png_offset[i]) {
 
@@ -1976,6 +1999,7 @@ void draw_options(float x, float y, int index)
                 }
                 break;
             case 6:
+                Png_offset[12] = 0;
                 select_option = 0;
                 menu_screen = 0;
                 return;
@@ -1987,7 +2011,7 @@ void draw_options(float x, float y, int index)
     }
 
     if(new_pad & BUTTON_CIRCLE) {
-        menu_screen = 0; return;
+        Png_offset[12] = 0; menu_screen = 0; select_option = 0; return;
     }
    
 
@@ -2041,6 +2065,7 @@ void draw_configs(float x, float y, int index)
 
     float y2, x2;
    
+    int selected = select_px + select_py * 4;
 
     SetCurrentFont(FONT_DEFAULT);
 
@@ -2056,7 +2081,7 @@ void draw_configs(float x, float y, int index)
   
     DrawFormatString(x, y - 2, " Config. Game");
 
-    i = select_px + select_py * 4;
+    i = selected;
 
     SetCurrentFont(FONT_BUTTON);
         
@@ -2125,7 +2150,7 @@ void draw_configs(float x, float y, int index)
 
     // draw game name
 
-    i = select_px + select_py * 4;
+    i = selected;
 
     DrawBox(x, y + 3 * 150, 0, 200 * 4 - 8, 40, 0x00000028);
 
