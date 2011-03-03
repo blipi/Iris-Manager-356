@@ -171,7 +171,7 @@ int LoadTexturePNG(char * filename, int index)
     return -1;
 }
 
-
+static char path_name[MAXPATHLEN];
 
 void get_games() 
 {
@@ -184,7 +184,7 @@ void get_games()
         
             if(favourites.list[n].index < 0 || favourites.list[n].title_id[0] == 0 || favourites.list[n].index >= ndirectories) Png_offset[n] = 0;
             else {
-                char path_name[MAXPATHLEN+1];
+                
 
                 sprintf(path_name, "%s/PS3_GAME/ICON0.PNG", directories[favourites.list[n].index].path_name);
 
@@ -199,8 +199,6 @@ void get_games()
     for(n = 0; n < 12; n++) {
         if((currentdir + n) < ndirectories) {
             
-            char path_name[MAXPATHLEN+1];
-
             sprintf(path_name, "%s/PS3_GAME/ICON0.PNG", directories[currentdir + n].path_name);
 
             if(LoadTexturePNG(path_name, n) < 0) ;//Png_offset[n] = 0;
@@ -641,12 +639,12 @@ void video_adjust()
         SetFontColor(0xffffffff, 0x0);
 
         SetFontAutoCenter(1);
-        DrawString(0, (512 - 24)/2 - 64, "Use LEFT (-X) / RIGHT (+X) / UP (-Y) / DOWN (+Y) to adjust the screen");
+        DrawFormatString(0, (512 - 24)/2 - 64, "Use LEFT (-X) / RIGHT (+X) / UP (-Y) / DOWN (+Y) to adjust the screen");
 
         DrawFormatString(0, (512 - 24)/2, "Video Scale X: %i Y: %i", videoscale_x, videoscale_y);
 
-        DrawString(0, (512 - 24)/2 + 64, "Press 'X' to exit");
-        DrawString(0, (512 - 24)/2 + 96, "Press 'O' to default values");
+        DrawFormatString(0, (512 - 24)/2 + 64, "Press 'X' to exit");
+        DrawFormatString(0, (512 - 24)/2 + 96, "Press 'O' to default values");
         SetFontAutoCenter(0);
 
         tiny3d_Flip();
@@ -781,6 +779,8 @@ void Select_games_folder()
         }
     }
 }
+
+static char filename[1024];
 
 s32 main(s32 argc, const char* argv[])
 {
@@ -925,9 +925,7 @@ s32 main(s32 argc, const char* argv[])
         cls();
 
         SetFontSize(32, 64);
-        
-        
-        
+       
         SetFontColor(0xffffffff, 0x00000000);
         SetFontAutoCenter(1);
 
@@ -936,9 +934,9 @@ s32 main(s32 argc, const char* argv[])
         DrawBox(x, y, 65535.0f, 640.0f, 360, 0x30003018);
 
         x= 0.0; y = 512.0f/2.0f - 32.0f;
-        if(sys8_enable(0) < 0x102) DrawString(0, y, "Payload Resident Is Old");
+        if(sys8_enable(0) < 0x102) DrawFormatString(0, y, "Payload Resident Is Old");
 
-            else DrawString(0, y, "Payload Is Resident");
+            else DrawFormatString(0, y, "Payload Is Resident");
         
         SetFontAutoCenter(0);
         tiny3d_Flip();
@@ -1044,8 +1042,6 @@ s32 main(s32 argc, const char* argv[])
         int found_game_insert=0;
         
         int found_game_remove=0;
-
-        static char filename[1024];
         
         if(forcedevices || (frame & 63)==0 || fdevices == 0)
 	    for(find_device = 0;find_device < 12; find_device++) {
@@ -1093,8 +1089,8 @@ s32 main(s32 argc, const char* argv[])
 						directories[ndirectories].title[63]=0;
 						directories[ndirectories].flags=(1<<11);
 
-                        sprintf(temp_buffer, "%s/%s", directories[ndirectories].path_name, "PS3_DISC.SFB" );
-                        parse_ps3_disc((char *) temp_buffer, directories[ndirectories].title_id);
+                        sprintf(filename, "%s/%s", directories[ndirectories].path_name, "PS3_DISC.SFB" );
+                        parse_ps3_disc((char *) filename, directories[ndirectories].title_id);
                         directories[ndirectories].title_id[63]=0;
                         //parse_param_sfo_id(filename, directories[ndirectories].title_id);
                         //directories[ndirectories].title_id[63]=0;
@@ -1161,7 +1157,7 @@ s32 main(s32 argc, const char* argv[])
 		}
        
         if (found_game_insert || found_game_remove){
-          
+
           UpdateFavourites(directories, ndirectories);
 
           if(mode_favourites && !havefavourites) mode_favourites = 0;
@@ -1201,8 +1197,8 @@ s32 main(s32 argc, const char* argv[])
 
         if(select_px < 0 || select_px > 3) select_px = 0;
         if(select_py < 0 || select_py > 2) select_py = 0;
-        if(currentdir >= ndirectories) currentdir = 0;
-        if(currentgamedir >= ndirectories) currentgamedir = 0;
+        if(currentdir < 0 || currentdir >= ndirectories) currentdir = 0;
+        if(currentgamedir < 0 || currentgamedir >= ndirectories) currentgamedir = 0;
 
        
        // paranoid favourite check
@@ -1397,21 +1393,21 @@ void draw_screen1(float x, float y)
                 SetCurrentFont(FONT_BUTTON);
                 SetFontColor(0xffffffff, 0x00000080);
                 SetFontSize(8, 16);        
-                x2 = DrawString(x + 200 * select_px - 4 + (200 - 24 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "Press ");
+                x2 = DrawFormatString(x + 200 * select_px - 4 + (200 - 24 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "Press ");
                 SetFontColor(0xffffffff, 0x000000FF);
-                x2 = DrawString(x2, y + select_py * 150 - 4 + 150 - 24, "SELECT");
+                x2 = DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, "SELECT");
                 SetFontColor(0xffffffff, 0x00000080);
-                DrawString(x2, y + select_py * 150 - 4 + 150 - 24, " for Options");
+                DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, " for Options");
                 SetCurrentFont(FONT_DEFAULT);
             } else  if(mode_favourites && mode_favourites < 65536 && favourites.list[i].title_id[0] != 0) {
                 SetCurrentFont(FONT_BUTTON);
                 SetFontColor(0x7fff00ff, 0x00000080);
                 SetFontSize(8, 16);        
-                x2 = DrawString(x + 200 * select_px - 4 + (200 - 23 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "Press ");
+                x2 = DrawFormatString(x + 200 * select_px - 4 + (200 - 23 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "Press ");
                 SetFontColor(0xffffffff, 0x000000FF);
-                x2 = DrawString(x2, y + select_py * 150 - 4 + 150 - 24, "SELECT");
+                x2 = DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, "SELECT");
                 SetFontColor(0x7fff00ff, 0x00000080);
-                DrawString(x2, y + select_py * 150 - 4 + 150 - 24, " for Delete");
+                DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, " for Delete");
                 SetCurrentFont(FONT_DEFAULT);
             }
         }
@@ -1444,8 +1440,7 @@ void draw_screen1(float x, float y)
 
         SetFontAutoCenter(0);
   
-        
-        DrawString(x, y + 3 * 150, temp_buffer);
+        DrawFormatString(x, y + 3 * 150, temp_buffer);
 
         SetFontAutoCenter(0);
     }
@@ -1453,11 +1448,13 @@ void draw_screen1(float x, float y)
     if(flash) {
         SetFontColor(0xffffffff, 0x404040ff);
         SetFontSize(18, 20);
-        x2= DrawString(1024, y + 3 * 150, " Press START for Global Options ");
+        x2= DrawFormatString(1024, 0, " Press START for Global Options ");
 
-        DrawString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 + 6, " Press START for Global Options ");
+        DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 + 6, " Press START for Global Options ");
     }
    
+    DrawBox(x, y + 3 * 150, 1000, 200 * 4 - 8, 40, 0x00000028);
+
     tiny3d_Flip();
 
     ps3pad_read();
@@ -1729,7 +1726,7 @@ void draw_options(float x, float y, int index)
 
     SetFontAutoCenter(0);
   
-    DrawString(x, y - 2, " Options");
+    DrawFormatString(x, y - 2, " Options");
 
 
     if(directories[currentgamedir].flags & 1) {
@@ -1765,7 +1762,7 @@ void draw_options(float x, float y, int index)
     utf8_to_ansi(directories[currentgamedir].title_id, temp_buffer, 64);
     temp_buffer[64] = 0;
     
-    DrawString(848 - x - strlen(temp_buffer) * 16 - 8, y, temp_buffer);
+    DrawFormatString(848 - x - strlen(temp_buffer) * 16 - 8, y, temp_buffer);
 
     y += 24;
     
@@ -1846,7 +1843,7 @@ void draw_options(float x, float y, int index)
 
         SetFontAutoCenter(1);
   
-        DrawString(0, y + 3 * 150, temp_buffer);
+        DrawFormatString(0, y + 3 * 150, temp_buffer);
 
         SetFontAutoCenter(0);
     
@@ -1968,7 +1965,6 @@ void draw_options(float x, float y, int index)
                 else {
                     mode_favourites = currentgamedir  | 65536;
                     
-                    char path_name[MAXPATHLEN+1];
 
                     sprintf(path_name, "%s/PS3_GAME/ICON0.PNG", directories[currentgamedir].path_name);
                     if(LoadTexturePNG(path_name, 12) < 0) ;
@@ -2058,7 +2054,7 @@ void draw_configs(float x, float y, int index)
 
     SetFontAutoCenter(0);
   
-    DrawString(x, y - 2, " Config. Game");
+    DrawFormatString(x, y - 2, " Config. Game");
 
     i = select_px + select_py * 4;
 
@@ -2069,7 +2065,7 @@ void draw_configs(float x, float y, int index)
     utf8_to_ansi(directories[currentgamedir].title_id, temp_buffer, 64);
     temp_buffer[64] = 0;
     
-    DrawString(848 - x - strlen(temp_buffer) * 16 - 8, y, temp_buffer);
+    DrawFormatString(848 - x - strlen(temp_buffer) * 16 - 8, y, temp_buffer);
 
     y += 24;
     
@@ -2150,7 +2146,7 @@ void draw_configs(float x, float y, int index)
         SetFontAutoCenter(1);
   
         
-        DrawString(0, y + 3 * 150, temp_buffer);
+        DrawFormatString(0, y + 3 * 150, temp_buffer);
 
         SetFontAutoCenter(0);
     }
@@ -2272,7 +2268,7 @@ void draw_gbloptions(float x, float y)
 
     SetFontAutoCenter(0);
   
-    DrawString(x, y - 2, " Global Options");
+    DrawFormatString(x, y - 2, " Global Options");
 
     y += 24;
 

@@ -33,7 +33,7 @@
 
 typedef struct {
     u32 flags;
-    char path_name[MAXPATHLEN+1];
+    char path_name[MAXPATHLEN];
 	char title[64];
 	char title_id[64];
 
