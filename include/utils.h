@@ -47,6 +47,7 @@ typedef struct {
 } entry_favourites;
 
 typedef struct {
+    u32 version;
     entry_favourites list[12];
 } tfavourites;
 
@@ -73,6 +74,7 @@ int DrawDialogYesNo(char * str);
 
 int parse_param_sfo(char * file, char *title_name);
 int parse_ps3_disc(char *path, char * id);
+int parse_param_sfo_id(char * file, char *title_id);
 void utf8_to_ansi(char *utf8, char *ansi, int len);
 
 void sort_entries(t_directories *list, int *max);

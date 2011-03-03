@@ -175,6 +175,65 @@ int parse_param_sfo(char * file, char *title_name)
 
 }
 
+int parse_param_sfo_id(char * file, char *title_id)
+{
+	Lv2FsFile fd;
+    u64 bytes;
+    u64 position = 0LL;
+	
+    strncpy(title_id, "UNKNOWN", 63);
+
+	if(!lv2FsOpen(file, 0, &fd, S_IRWXU | S_IRWXG | S_IRWXO, NULL, 0))
+		{
+		unsigned len, pos, str;
+		unsigned char *mem=NULL;
+
+        lv2FsLSeek64(fd, 0, 2, &position);
+		len = (u32) position;
+
+		mem= (unsigned char *) malloc(len+16);
+		if(!mem) {lv2FsClose(fd);return -2;}
+
+		memset(mem, 0, len+16);
+
+		lv2FsLSeek64(fd, 0, 0, &position);
+		
+        if(lv2FsRead(fd, mem, len, &bytes)!=0) bytes =0LL;
+
+        len = (u32) bytes;
+
+		lv2FsClose(fd); 
+
+		str= (mem[8]+(mem[9]<<8));
+		pos=(mem[0xc]+(mem[0xd]<<8));
+
+		int indx=0;
+
+		while(str<len)
+			{
+			if(mem[str]==0) break;
+			
+			if(!strcmp((char *) &mem[str], "TITLE_ID"))
+				{
+                memcpy(title_id, (char *) &mem[pos], 4);
+                title_id[4] = '-';
+				strncpy(&title_id[5], (char *) &mem[pos + 4], 58);
+				free(mem);
+				return 0;
+				}
+			while(mem[str]) str++;str++;
+			pos+=(mem[0x1c+indx]+(mem[0x1d+indx]<<8));
+			indx+=16;
+			}
+		if(mem) free(mem);
+        
+		}
+
+	
+	return -1;
+
+}
+
 int parse_ps3_disc(char *path, char * id)
 {
 	int n;
@@ -183,7 +242,7 @@ int parse_ps3_disc(char *path, char * id)
     u64 bytes;
     u64 position = 0LL;
 
-    *id = 0;
+    strncpy(id, "UNKNOWN", 63);
 	
 	if(!lv2FsOpen(path, 0, &fd, S_IRWXU | S_IRWXG | S_IRWXO, NULL, 0))
 		{
@@ -226,6 +285,8 @@ void utf8_to_ansi(char *utf8, char *ansi, int len)
 {
 u8 *ch= (u8 *) utf8;
 u8 c;
+
+    *ansi = 0;
 
 	while(*ch!=0 && len>0){
 
@@ -365,7 +426,10 @@ void fill_entries_from_device(char *path, t_directories *list, int *max, u32 fla
 			list[*max ].title[63]=0;
 
             sprintf(file, "%s/%s",  list[*max ].path_name, "PS3_DISC.SFB" );
-            parse_ps3_disc((char *) file, list[*max ].title_id);
+            if(parse_ps3_disc((char *) file, list[*max ].title_id)<0) {
+                sprintf(file, "%s/PS3_GAME/PARAM.SFO", list[*max ].path_name);
+			    parse_param_sfo_id(file, list[*max ].title_id); // build de ID from param.sfo
+            }
             list[*max ].title_id[63]=0;
 			
 			}
@@ -2044,8 +2108,8 @@ void LoadFavourites(char * path)
     char *file = LoadFile(path, &file_size);
 
     if(file) {
-        
-        memcpy(&favourites, file, sizeof(favourites));
+        tfavourites *fav = (tfavourites *) file;
+        if(file_size == sizeof(favourites) && fav->version == 100) memcpy(&favourites, file, sizeof(favourites));
 
         free(file);
     }
@@ -2059,7 +2123,7 @@ void LoadFavourites(char * path)
 
 void SaveFavourites(char * path)
 {
-    
+    favourites.version = 100;
     SaveFile(path, (void *) &favourites, sizeof(favourites));
 
 }
@@ -2068,22 +2132,20 @@ void UpdateFavourites(t_directories *list, int nlist)
 {
     int n, m;
 
+    havefavourites = 0;
+
     for(m = 0; m < 12; m++) {
         favourites.list[m].index = -1;
 
         for(n = 0; n < nlist; n++) {
-            if(!strncmp(list[n].title_id, favourites.list[m].title_id, 64)) {
-                if(favourites.list[m].index < 0) {
-                    strncpy(favourites.list[m].title_id, list[n].title_id, 64);
-                    strncpy(favourites.list[m].title, list[n].title, 64);
+            if(favourites.list[m].title_id[0] !=0 && !strncmp(list[n].title_id, favourites.list[m].title_id, 64)) {
+                if(favourites.list[m].index < 0 || favourites.list[m].flags > list[n].flags) {
+                    //strncpy(favourites.list[m].title_id, list[n].title_id, 64);
+                    //strncpy(favourites.list[m].title, list[n].title, 64);
                     favourites.list[m].index = n;
                     favourites.list[m].flags = list[n].flags;
                     havefavourites = 1;
-                } else if(favourites.list[m].flags > list[n].flags) {
-                    favourites.list[m].index = n;
-                    favourites.list[m].flags = list[n].flags;
-                    havefavourites = 1;
-                }
+                } 
             }
         }
     }

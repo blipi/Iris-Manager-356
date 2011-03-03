@@ -130,13 +130,13 @@ void Load_PNG_resources()
 int LoadTexturePNG(char * filename, int index)
 {
     
-    u32 * texture_pointer2 = (u32 *) (png_texture + index * 2048 * 1024); // 4 MB reserved for PNG index
+    u32 * texture_pointer2 = (u32 *) (png_texture + index * 4096 * 1024); // 4 MB reserved for PNG index
 
     // here you can add more textures using 'texture_pointer'. It is returned aligned to 16 bytes
    
-	LoadPNG(&Png_datas[index], filename);
-    free(Png_datas[index].png_in);
-
+    memset(&Png_datas[index], 0, sizeof(PngDatas));
+	if(LoadPNG(&Png_datas[index], filename) <0) memset(&Png_datas[index], 0, sizeof(PngDatas));
+ 
     Png_offset[index] = 0;
        
     if(Png_datas[index].bmp_out) {
@@ -181,7 +181,8 @@ void get_games()
 
     if(mode_favourites) {
         for(n = 0; n < 12; n++) {
-            if(favourites.list[n].index < 0) Png_offset[n] = 0;
+        
+            if(favourites.list[n].index < 0 || favourites.list[n].title_id[0] == 0 || favourites.list[n].index >= ndirectories) Png_offset[n] = 0;
             else {
                 char path_name[MAXPATHLEN+1];
 
@@ -320,7 +321,7 @@ void LoadTexture()
 {
     int i;
 
-    u32 * texture_mem = tiny3d_AllocTexture(96*1024*1024); // alloc 96MB of space for textures (this pointer can be global)    
+    u32 * texture_mem = tiny3d_AllocTexture(100*1024*1024); // alloc 100MB of space for textures (this pointer can be global)    
 
     u32 * texture_pointer; // use to asign texture space without changes texture_mem
 
@@ -499,7 +500,7 @@ char bluray_game[64]; // name of the game
 
 static int exit_program = 0;
 
-#define ROUND_UP12(x) (((x)+11)/12*12)
+#define ROUND_UP12(x) ((((x)+11)/12)*12)
 
 void draw_screen1(float x, float y);
 void draw_options(float x, float y, int index);
@@ -1194,6 +1195,24 @@ s32 main(s32 argc, const char* argv[])
             video_adjust();
         }
 
+        // paranoid checks
+
+        if(select_px < 0 || select_px > 3) select_px = 0;
+        if(select_py < 0 || select_py > 2) select_py = 0;
+        if(currentdir >= ndirectories) currentdir = 0;
+        if(currentgamedir >= ndirectories) currentgamedir = 0;
+
+       
+       // paranoid favourite check
+        for(n = 0; n < 12; n++) {
+            if(favourites.list[n].index >=0) {
+                if(favourites.list[n].title_id[0] == 0) exit(0);
+                if(favourites.list[n].index >= ndirectories) exit(0);
+                if(directories[favourites.list[n].index].flags == 0) exit(0);
+            }
+        }
+                
+            
         switch(menu_screen) {
             case 0:
                 draw_screen1(x, y);
@@ -1244,11 +1263,6 @@ void draw_screen1(float x, float y)
     else if(mode_favourites) DrawFormatString(x, y - 2, " Favourites");
     else DrawFormatString(x, y - 2, " Page %i", currentdir/12 + 1);
 
-
-    if(select_px < 0 || select_px > 3) select_px = 0;
-    if(select_py < 0 || select_py > 2) select_py = 0;
-
- 
     // list device space
 
     m = select_px + select_py * 4;
@@ -1305,6 +1319,7 @@ void draw_screen1(float x, float y)
                 DrawTextBox(x + 200 * m, y + n * 150, 0, 192, 142, 0xffffffff);
                 
                // if((mode_favourites !=0) && favourites.list[i].index < 0) exit(0);
+                if((mode_favourites !=0) && favourites.list[i].index < 0) exit(0);
 
                 if(!mode_favourites || ((mode_favourites !=0) && favourites.list[i].index >= 0)) {
                     // draw Bluray icon
@@ -1336,30 +1351,43 @@ void draw_screen1(float x, float y)
     i = select_px + select_py * 4;
 
     if(flash) {
+
+        int png_on = 0;
+
         DrawBox(x + 200 * select_px - 4, y + select_py * 150 - 4 , 0, 200, 150, 0xa0a06080);
 
         if(mode_favourites >= 65536) {
 
-            if(mode_favourites < 131072)
-                tiny3d_SetTextureWrap(0, Png_offset[12], Png_datas[12].width, 
-                    Png_datas[12].height, Png_datas[12].wpitch, 
-                        TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
+            if(mode_favourites < 131072) {
+
+                if(Png_offset[12]) {
+                    tiny3d_SetTextureWrap(0, Png_offset[12], Png_datas[12].width, 
+                        Png_datas[12].height, Png_datas[12].wpitch, 
+                            TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
+                    png_on = 1;
+                }
+            }
             else {
                 i = mode_favourites - 131072;
-                if(!Png_offset[i] && favourites.list[i].title_id[0] != 0) {
-                    tiny3d_SetTextureWrap(0, Png_res_offset[0], Png_res[0].width, 
-                        Png_res[0].height, Png_res[0].wpitch, 
+
+                if(i>= 0 && i < 12) {
+                    if(!Png_offset[i] && favourites.list[i].title_id[0] != 0) {
+                        tiny3d_SetTextureWrap(0, Png_res_offset[0], Png_res[0].width, 
+                            Png_res[0].height, Png_res[0].wpitch, 
+                                TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
+                        png_on = 1;
+                            
+                    } else if(Png_offset[i]){
+                        png_on = 1;
+                        tiny3d_SetTextureWrap(0, Png_offset[i], Png_datas[i].width, 
+                        Png_datas[i].height, Png_datas[i].wpitch, 
                             TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
-                        
-                } else if(Png_offset[i]){
-          
-                    tiny3d_SetTextureWrap(0, Png_offset[i], Png_datas[i].width, 
-                    Png_datas[i].height, Png_datas[i].wpitch, 
-                        TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
+                    }
                 }
             }
 
-            DrawTextBox(x + 200 * select_px - 4, y + select_py * 150 - 4 , 0, 200, 150, 0x8fff8fcf);
+            if(png_on)
+                DrawTextBox(x + 200 * select_px - 4, y + select_py * 150 - 4 , 0, 200, 150, 0x8fff8fcf);
         } else {
             i = select_px + select_py * 4;
 
@@ -1480,11 +1508,11 @@ void draw_screen1(float x, float y)
 
         if(Png_offset[i]) {
             if(mode_favourites != 0 && favourites.list[i].index < 0) {
-                DrawDialogOK("Cannot run this favourite");
+                DrawDialogOK("Cannot run this favourite");return;
             } else if(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title[0] == '_') {
                 sprintf(temp_buffer, "%s\n\nMarked as not executable", 
                     directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title);
-                DrawDialogOK(temp_buffer);
+                DrawDialogOK(temp_buffer);return;
             } else {
                 
                  // load game config
@@ -1599,7 +1627,7 @@ void draw_screen1(float x, float y)
             }
             
             currentgamedir = (mode_favourites !=0) ? favourites.list[i].index : (currentdir + i);
-            if(currentgamedir >= 0) {
+            if(currentgamedir >= 0 && currentgamedir < ndirectories) {
                 menu_screen = 1; return;
             }
         }
@@ -1617,6 +1645,8 @@ void draw_screen1(float x, float y)
             else if(currentdir >= 12) {mode_favourites = 0; currentdir -= 12; get_games();}
             else {mode_favourites = (!mode_favourites && havefavourites); currentdir = ROUND_UP12(ndirectories) - 12; get_games();}
         }
+
+        return;
     }
 
     if(new_pad & BUTTON_DOWN) {
@@ -1633,6 +1663,8 @@ void draw_screen1(float x, float y)
             else {mode_favourites = (!mode_favourites && havefavourites); currentdir = 0; get_games();}
             
         }
+
+        return;
     }
 
     if(new_pad & BUTTON_LEFT) {
@@ -1649,6 +1681,8 @@ void draw_screen1(float x, float y)
             else {mode_favourites = (!mode_favourites && havefavourites); currentdir = ROUND_UP12(ndirectories) - 12; get_games();}
 
         }
+
+        return;
     }
 
     if(new_pad & BUTTON_RIGHT) {
@@ -1664,6 +1698,8 @@ void draw_screen1(float x, float y)
             else if(currentdir < (ROUND_UP12(ndirectories) - 12)) {mode_favourites = 0; currentdir += 12; get_games();}
             else {mode_favourites = (!mode_favourites && havefavourites); currentdir = 0; get_games();}
         }
+
+        return;
     }
 }
 
