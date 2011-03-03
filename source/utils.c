@@ -2070,6 +2070,7 @@ void UpdateFavourites(t_directories *list, int nlist)
 
     for(m = 0; m < 12; m++) {
         favourites.list[m].index = -1;
+
         for(n = 0; n < nlist; n++) {
             if(!strncmp(list[n].title_id, favourites.list[m].title_id, 64)) {
                 if(favourites.list[m].index < 0) {
