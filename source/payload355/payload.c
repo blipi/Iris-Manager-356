@@ -25,8 +25,13 @@
 #include "mm.h"
 
 #include "payload_syscall36.bin.h"
-#include "patch_syscall36_txt.bin.h"
 
+/* removed, better use direct memory patch */
+/* quick and safe */
+#if 0
+#include "patch_syscall36_txt.bin.h"
+#endif
+ 
 u64 mmap_lpar_addr;
 static int poke_syscall = 7;
 
@@ -43,7 +48,7 @@ void pokeq(u64 addr, u64 val)
 
 void pokeq32(u64 addr, uint32_t val)
 {
-	uint32_t next = peekq(addr) & 0xffffffffUL;
+	uint32_t next = peekq(addr) & 0xffffffff;
 	pokeq(addr, (u64) val << 32 | next);
 }
 
@@ -78,11 +83,9 @@ inline static void lv2_memcpy(void *to, const void *from, size_t sz)
 
 void load_payload(void)
 {
-	char *ptr, *ptr2;
-	unsigned long long addr, value;
-	int patches = 0;
 
 #ifdef USE_MEMCPY_SYSCALL
+
 	/* This does not work on some PS3s */
 	pokeq(NEW_POKE_SYSCALL_ADDR, 0x4800000428250000ULL);
 	pokeq(NEW_POKE_SYSCALL_ADDR + 8, 0x4182001438a5ffffULL);
@@ -111,6 +114,40 @@ void load_payload(void)
 		pokeq(0x80000000002be4a0ULL + i * sizeof(u64), (uint32_t) * pl64);
 	}
 #endif
+
+/*
+55f14: 60000000
+55f1c: 48000098
+7af68: 60000000
+7af7c: 60000000
+
+2b3274: 4800b32c2ba30420 # add a jump to payload2_start
+
+55EA0: 63FF003D60000000  # fix 8001003D error
+55F64: 3FE080013BE00000  # fix 8001003E error
+
+346690: 80000000002be570 # syscall_map_open_desc
+*/
+
+    /* by 2 anonymous people */
+    _poke32(0x55f14, 0x60000000);
+    _poke32(0x55f1c, 0x48000098);
+    _poke32(0x7af68, 0x60000000);
+    _poke32(0x7af7c, 0x60000000);
+
+    _poke(0x2b3274, 0x4800b32c2ba30420); /* add a jump to payload2_start */
+    _poke(0x55EA0, 0x63FF003D60000000);  /* fix 8001003D error */
+    _poke(0x55F64, 0x3FE080013BE00000);  /* fix 8001003E error */
+    
+    _poke(0x346690, 0x80000000002be570); /* syscall_map_open_desc */
+
+/* removed, better use direct memory patch */
+/* quick and safe */
+#if 0
+
+	char *ptr, *ptr2;
+	unsigned long long addr, value;
+	int patches = 0;
 
 	char *tmp = strtok((char *) &patch_syscall36_txt_bin[0], "\n");
 
@@ -146,6 +183,8 @@ void load_payload(void)
 			patches--;
 	}
 	while ((tmp = strtok(NULL, "\n")));
+#endif
+
 }
 
 int map_lv1(void)

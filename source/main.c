@@ -854,31 +854,33 @@ s32 main(s32 argc, const char* argv[])
             exit(0);
         }
     }
+
 #else
+
 	if (!is_payload_loaded()) {
-	/*
+
 		install_new_poke();
 
 		if (!map_lv1()) {
 			remove_new_poke();
+
+            tiny3d_Init(1024*1024);
+            ioPadInit(7);
+            DrawDialogOK("Error Loading Payload: map failed?!");
 			exit(0);
 		}
 
 		patch_lv2_protection();
 		remove_new_poke();
 
-		unmap_lv1();
+		unmap_lv1();  /* 3.55 need unmap? */
+
+        __asm__("sync");
+        sleep(1);
 
 		load_payload();
-    */
-        tiny3d_Init(1024*1024);
-
-        ioPadInit(7);
-        DrawDialogOK("LV2 Patcher v9 (syscall36) is need it!");
-        exit(0);
 	}
 #endif
-
 
     usleep(250000);
 
