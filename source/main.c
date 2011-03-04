@@ -80,6 +80,8 @@ MODPlay mod_track;
 
 // font 2: 224 chr from 32 to 255, 16 x 32 pix 2 bit depth
 #include "font_b.h"
+#include "bluray_png.bin.h"
+#include "usb_png.bin.h"
 
 #define ROT_INC(x ,y , z) {x++; if(x > y) x = z;}
 #define ROT_DEC(x ,y , z) {x--; if(x < y) x = z;}
@@ -94,15 +96,17 @@ int ndirectories = 0;
 int currentdir = 0;
 int currentgamedir = 0;
 
+void unpatch_bdvdemu();
+int patch_bdvdemu(u32 flags);
+int move_origin_to_bdemubackup(char *path);
+int move_bdemubackup_to_origin(u32 flags);
+
 u8 * png_texture = NULL;
 PngDatas Png_datas[16];
 u32 Png_offset[16];
 
 PngDatas Png_res[16];
 u32 Png_res_offset[16];
-
-#include "bluray_png.bin.h"
-#include "usb_png.bin.h"
 
 void Load_PNG_resources()
 {
@@ -471,7 +475,7 @@ u64 hmanager_key = 0x1759829723742374ULL;
 
 // manager
 
-char temp_buffer[2048];
+char temp_buffer[4096];
 
 int videoscale_x = 0;
 int videoscale_y = 0;
@@ -520,7 +524,8 @@ struct {
     int xmb;
     int updates;
     int ext_ebootbin;
-    int pad[9];
+    int bdemu;
+    int pad[8];
 } game_cfg;
 
 int load_ps3loadx = 0;
@@ -984,6 +989,7 @@ s32 main(s32 argc, const char* argv[])
     syscall36("/dev_bdvd");
     sys8_perm_mode((u64) 2);
 
+    unpatch_bdvdemu();
     
     MODPlay_Init(&mod_track);
     
@@ -1044,7 +1050,7 @@ s32 main(s32 argc, const char* argv[])
         int found_game_remove=0;
         
         if(forcedevices || (frame & 63)==0 || fdevices == 0)
-	    for(find_device = 0;find_device < 12; find_device++) {
+	    for(find_device = 0; find_device < 12; find_device++) {
 
 			if(find_device==11) sprintf(filename, "/dev_bdvd");
 			else if(find_device==0) sprintf(filename, "/dev_hdd0");
@@ -1055,6 +1061,9 @@ s32 main(s32 argc, const char* argv[])
 
 			if (dir) {
                 closedir (dir);
+
+                if(find_device > 0 && find_device < 11) move_bdemubackup_to_origin(1 << find_device);
+
 				fdevices|= 1<<find_device;
 		    } else
 				fdevices&= ~ (1<<find_device);
@@ -1595,12 +1604,28 @@ void draw_screen1(float x, float y)
                 
                 }
                 
-                sys8_perm_mode((u64) (game_cfg.perm & 3));
                 if(!game_cfg.xmb) sys8_sys_configure(CFG_XMB_DEBUG); else sys8_sys_configure(CFG_XMB_RETAIL);
                 
                 sys8_sys_configure(CFG_UNPATCH_APPVER + (game_cfg.updates != 0));
 
-                syscall36(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].path_name);
+                if(game_cfg.bdemu) {
+                    n = move_origin_to_bdemubackup(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].path_name);
+                    if(n < 0) {
+                        syscall36("/dev_bdvd"); // in error exits
+                        sys8_perm_mode((u64) 1);
+                        exit_program = 1; 
+                        return;
+                    }
+                    if(n == 1) game_cfg.bdemu = 0; // if !dev_usb... bdemu is not usable
+                }
+
+                if(game_cfg.bdemu && 
+                    patch_bdvdemu(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].flags) == 0) 
+                    syscall36("//dev_bdvd");
+                else
+                    syscall36(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].path_name);
+ 
+                sys8_perm_mode((u64) (game_cfg.perm & 3));
 
                 exit_program = 1; 
                 
@@ -2139,10 +2164,17 @@ void draw_configs(float x, float y, int index)
 
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "Save Config", (flash && select_option == 4))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, "BD Emu (for USB)", (flash && select_option == 4))  + 16;
+        
+    x2 = DrawButton2(x2, y2, 0, "  On  ", (game_cfg.bdemu != 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  Off  ", (game_cfg.bdemu == 0)) + 8;
+
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "Return", (flash && select_option == 5))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, "Save Config", (flash && select_option == 5))  + 16;
+    y2+= 48;
+
+    x2 = DrawButton1(x + 32, y2, 240, "Return", (flash && select_option == 6))  + 16;
     y2+= 48;
 
 
@@ -2203,7 +2235,10 @@ void draw_configs(float x, float y, int index)
                 ROT_INC(game_cfg.ext_ebootbin, 1, 0);
                 break;
             case 4:
-                // load game config
+                ROT_INC(game_cfg.bdemu, 1, 0);
+                break;
+            case 5:
+                // save game config
                 sprintf(temp_buffer, "%s/config/%s.cfg", self_path, directories[currentgamedir].title_id);
               
                 
@@ -2221,13 +2256,13 @@ void draw_configs(float x, float y, int index)
 
     if(new_pad & BUTTON_UP) {
 
-        ROT_DEC(select_option, 0, 5)
+        ROT_DEC(select_option, 0, 6)
         
     }
 
     if(new_pad & BUTTON_DOWN) {
         
-        ROT_INC(select_option, 5, 0); 
+        ROT_INC(select_option, 6, 0); 
         
     }
 
@@ -2245,6 +2280,9 @@ void draw_configs(float x, float y, int index)
                 break;
             case 3:
                 ROT_DEC(game_cfg.ext_ebootbin, 0, 1);
+                break;
+            case 4:
+                ROT_DEC(game_cfg.bdemu, 0, 1);
                 break;
             default:
                 break;
@@ -2265,6 +2303,9 @@ void draw_configs(float x, float y, int index)
                 break;
             case 3:
                 ROT_INC(game_cfg.ext_ebootbin, 1, 0);
+                break;
+            case 4:
+                ROT_INC(game_cfg.bdemu, 1, 0);
                 break;
             default:
                 break;
@@ -2436,3 +2477,186 @@ void draw_gbloptions(float x, float y)
     
 }
 
+/******************************************************************************************************************************************************/
+/* BDVDEMU FUNCTIONS                                                                                                                                  */
+/******************************************************************************************************************************************************/
+
+#define LV2MOUNTADDR_341 0x80000000003EE504ULL
+#define LV2MOUNTADDR_355 0x80000000003EE504ULL
+
+void unpatch_bdvdemu()
+{
+    int n;
+ 
+    char * mem = temp_buffer;
+
+    sys8_memcpy((u64) mem, LV2MOUNTADDR_341, 0xff0ULL);
+
+    for(n = 0; n< 0xff0; n+= 0x100) {
+
+        if(!memcmp(mem + n, "CELL_FS_IOS:PATA0_BDVD_DRIVE", 29)) {
+        
+         if(!memcmp(mem + n + 0x69, "temp_bdvd", 10))
+
+            sys8_memcpy(LV2MOUNTADDR_341 + n + 0x69, (u64) "dev_bdvd\0", 10ULL);
+            
+        }
+
+        if(!memcmp(mem + n, "CELL_FS_IOS:USB_MASS_STORAGE0", 29)) {
+            if(!memcmp(mem + n + 0x69, "dev_bdvd", 9)) {
+                sys8_memcpy(LV2MOUNTADDR_341 + n + 0x69, (u64) (mem + n + 0x79), 11ULL);
+                sys8_memset(LV2MOUNTADDR_341 + n + 0x79, 0ULL, 12ULL);
+            }
+            
+        }
+      
+    }
+
+ 
+}
+
+
+int patch_bdvdemu(u32 flags)
+{
+    int n;
+    //int flag = 0, flag2 = 0;
+    int usb = -1;
+
+    char * mem = temp_buffer;
+
+
+    sys8_memcpy((u64) mem, LV2MOUNTADDR_341, 0xff0);
+
+    for(n = 1; n < 11; n++) {
+        if(flags == (1 << n)) {usb = n - 1; break;}
+    }
+
+    if(usb < 0) {
+        DrawDialogOK("BDEMU is only for USB devices");
+        return -1;
+    }
+
+    sprintf(path_name, "CELL_FS_IOS:USB_MASS_STORAGE00%c", 48 + usb);
+    sprintf(&path_name[128], "dev_usb00%c", 48 + usb);
+
+    for(n = 0; n< 0xff0; n+= 0x100) {
+
+        if(!memcmp(mem + n, "CELL_FS_IOS:PATA0_BDVD_DRIVE", 29)) {
+    
+            sys8_memcpy(LV2MOUNTADDR_341 + n + 0x69, (u64) "temp_bdvd", 10ULL);
+           // flag++;
+        }
+
+        if(!memcmp(mem + n, path_name, 32)) {
+           
+            sys8_memcpy(LV2MOUNTADDR_341 + n + 0x69, (u64) "dev_bdvd\0\0", 11ULL);
+            sys8_memcpy(LV2MOUNTADDR_341 + n + 0x79, (u64) &path_name[128], 11ULL);
+            
+            //flag2++;
+        }
+      
+    }
+
+#if 0
+    cls();
+    SetFontSize(32, 64);
+       
+    SetFontColor(0xffffffff, 0x00000000);
+    SetFontAutoCenter(0);
+
+    DrawFormatString(16, 32, "patched %i %i ", flag, flag2);
+
+    tiny3d_Flip();
+
+    sleep(4);
+
+    if(flag2 == 0) return -1;
+#endif
+
+    return 0;
+}
+
+int move_origin_to_bdemubackup(char *path)
+{
+    if(strncmp(path, "/dev_usb00", 10)) return 1;
+    
+    sprintf(temp_buffer, "%s/PS3_GAME/PS3PATH.BUP", path);
+    sprintf(temp_buffer + 1024, "%s/PS3_GAME", path);
+
+    if(SaveFile(temp_buffer, temp_buffer + 1024, strlen(temp_buffer + 1024))!=0) {
+        
+        sprintf(temp_buffer + 1024, "Error Saving:\n%s", temp_buffer);
+        DrawDialogOK(temp_buffer + 1024);
+        
+        return -1;
+    }
+    
+    strncpy(temp_buffer + 11, "/PS3_GAME", 16);
+
+    if(lv2FsRename(temp_buffer  + 1024, temp_buffer) != 0)  {
+        
+        sprintf(temp_buffer + 256, "Error Moving To:\n%s/PS3_GAME exists", temp_buffer);
+        DrawDialogOK(temp_buffer + 256);
+
+        return -1;
+     }
+    
+    sprintf(temp_buffer + 256, "BDEMU mounted in:\n%s/PS3_GAME", temp_buffer);
+    DrawDialogOK(temp_buffer + 256);
+
+    return 0;
+}
+
+int move_bdemubackup_to_origin(u32 flags)
+{
+    int n;
+    int usb = -1;
+
+    static u32 olderrflags = 0;
+
+    for(n = 1; n < 11; n++) {
+        if(flags == (1 << n)) {usb = n - 1; break;}
+    }
+
+    if(usb < 0) return -1;
+
+    sprintf(temp_buffer, "/dev_usb00%c/PS3_GAME", 48 + usb);
+
+    sprintf(temp_buffer + 256, "/dev_usb00%c/PS3_GAME/PS3PATH.BUP", 48 + usb);
+
+    int file_size;
+    char *file;
+
+    file = LoadFile(temp_buffer + 256, &file_size);
+    
+    if(!file) return -1;
+
+    memset(temp_buffer + 1024, 0, 0x420);
+    
+    if(file_size > 0x400) file_size = 0x400;
+
+    memcpy(temp_buffer + 1024, file, file_size);
+
+    free(file);
+
+    for(n=0; n< 0x400; n++) {
+        if(temp_buffer[1024 + n] == 0) break;
+        if(((u8)temp_buffer[1024 + n]) < 32) {temp_buffer[1024 + n] = 0; break;}
+    }
+    
+    
+    if(strncmp(temp_buffer, temp_buffer + 1024, 10))  return -1; // if not /dev_usb00x return
+
+    memcpy(temp_buffer + 1024, temp_buffer, 11); 
+
+    if(lv2FsRename(temp_buffer, temp_buffer + 1024) != 0)  {
+        if(!(olderrflags & flags)) {
+            sprintf(temp_buffer, "Error Moving To:\n%s exists", temp_buffer + 1024);
+            DrawDialogOK(temp_buffer);
+            olderrflags |= flags;
+        }
+        return -1;
+    }
+
+    return 0;
+}
