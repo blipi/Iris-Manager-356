@@ -78,7 +78,12 @@ int is_payload_loaded(void)
 	return peekq(0x80000000002be4a0ULL) == *tmp;
 }
 
-inline static void lv2_memcpy(void *to, const void *from, size_t sz)
+inline static void lv2_memcpy( u64 to, const u64 from, size_t sz)
+{
+	Lv2Syscall3(NEW_POKE_SYSCALL, to, from, sz);
+}
+
+inline static void lv2_memcpy_b(void *to, const void *from, size_t sz)
 {
 	Lv2Syscall3(NEW_POKE_SYSCALL, (unsigned long long)to,
 		    (unsigned long long)
@@ -96,8 +101,8 @@ void load_payload(void)
 	pokeq(NEW_POKE_SYSCALL_ADDR + 16, 0x7cc428ae7cc329aeULL);
 	pokeq(NEW_POKE_SYSCALL_ADDR + 24, 0x4bffffec4e800020ULL);
 
-    lv2_memcpy((void *) 0x80000000002be4a0ULL, 
-				   payload_syscall36_bin, 
+    lv2_memcpy(0x80000000002be4a0ULL, 
+				   (u64) payload_syscall36_bin, 
 				   sizeof(payload_syscall36_bin));
 
 	/* restore syscall */
@@ -250,8 +255,10 @@ int lv2_unpatch_bdvdemu(void)
  
     char * mem = temp_buffer;
     memset(mem, 0, 0xff0);
+    
+    install_new_poke();
 
-    sys8_memcpy((u64) mem, LV2MOUNTADDR_355, 0xff0ULL);
+    lv2_memcpy( (u64) mem, LV2MOUNTADDR_355, 0xff0);
 
     for(n = 0; n< 0xff0; n+= 0x100) {
 
@@ -275,6 +282,8 @@ int lv2_unpatch_bdvdemu(void)
         }
       
     }
+    
+    remove_new_poke();
 
     if((mem[0] == 0) && (flag == 0))
         return -1;
@@ -292,7 +301,9 @@ int lv2_patch_bdvdemu(uint32_t flags)
 
     char * mem = temp_buffer;
 
-    sys8_memcpy((u64) mem, LV2MOUNTADDR_355, 0xff0);
+    install_new_poke();
+
+    lv2_memcpy((u64) mem, LV2MOUNTADDR_355, 0xff0);
 
     sprintf(path_name, "CELL_FS_IOS:USB_MASS_STORAGE00%c", 48 + usb);
     sprintf(&path_name[128], "dev_usb00%c", 48 + usb);
@@ -314,7 +325,9 @@ int lv2_patch_bdvdemu(uint32_t flags)
         }
       
     }
-
+    
+    remove_new_poke();
+    
     return flag;
 }
 
