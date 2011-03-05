@@ -96,5 +96,7 @@ int TestFavouritesExits(char *id);
 void AddFavourites(int indx, t_directories *list, int position_list);
 int DeleteFavouritesIfExits(char *id);
 
+int param_sfo_util(char * path, int patch_app);
+
 #endif
 

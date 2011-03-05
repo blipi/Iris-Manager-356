@@ -1365,22 +1365,6 @@ void draw_screen1(float x, float y)
 
         DrawBox(x + 200 * select_px - 4, y + select_py * 150 - 4 , 0, 200, 150, 0xa0a06080);
         
-        #if 0
-        i = selected;
-
-            if(Png_offset[i]) {
-                SetCurrentFont(FONT_BUTTON);
-                SetFontColor(0xffffffff, 0x00000080);
-                SetFontSize(8, 16);        
-                x2 = DrawFormatString(x + 200 * select_px - 4 + (200 - 24 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "Press ");
-                SetFontColor(0xffffffff, 0x000000FF);
-                x2 = DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, "SELECT");
-                SetFontColor(0xffffffff, 0x00000080);
-                DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, " for Options");
-                SetCurrentFont(FONT_DEFAULT);
-            }
-        #endif
-            
         #if 1
 
         if(mode_favourites >= 65536) {
@@ -1563,6 +1547,9 @@ void draw_screen1(float x, float y)
                     goto skip_sys8;
                 }
 
+                if(!(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].flags & 2048))
+                    param_sfo_util(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].path_name, (game_cfg.updates != 0));
+
                 if(!game_cfg.ext_ebootbin) sys8_path_table(0LL);
                 else {
                         
@@ -1620,8 +1607,9 @@ void draw_screen1(float x, float y)
                 }
 
                 if(game_cfg.bdemu && 
-                    patch_bdvdemu(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].flags) == 0) 
+                    patch_bdvdemu(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].flags) == 0) {
                     syscall36("//dev_bdvd");
+                }
                 else
                     syscall36(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].path_name);
  
@@ -2521,7 +2509,7 @@ void unpatch_bdvdemu()
     int flag = 0;
     flag = lv2_unpatch_bdvdemu();
 
-#if 1
+#if 0
     cls();
     SetFontSize(18, 20);
        
@@ -2583,7 +2571,7 @@ int patch_bdvdemu(u32 flags)
     int flag = 0;
     flag = lv2_patch_bdvdemu(flags);
 
-#if 1
+#if 0
     cls();
     SetFontSize(18, 20);
        

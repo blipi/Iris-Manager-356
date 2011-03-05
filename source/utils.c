@@ -2191,3 +2191,99 @@ int DeleteFavouritesIfExits(char *id)
 
     return 0;
 }
+
+int param_sfo_util(char * path, int patch_app)
+{
+    int patched = 0;
+	Lv2FsFile fd;
+    u64 bytes;
+    u64 position = 0LL;
+    char file[0x420];
+    char file2[0x420];
+
+    char str_version[8];
+    
+    unsigned char *mem = NULL;
+
+    int n;
+    char * version = LoadFile("/dev_flash/vsh/etc/version.txt", &n);
+
+    if(!version) return -2;
+
+    char *v = strstr(version, "release:");
+
+    if(v) {memcpy(str_version, v + 8, 7); str_version[7] = 0;}
+    
+    free(version);
+
+    if(!v) return -3;
+
+
+    sprintf(file, "%s/PS3_GAME/PARAM.SFO", path);
+    sprintf(file2, "%s/PS3_GAME/_PARAM.SFO", path);
+	
+    n = lv2FsOpen(file2, 0, &fd, S_IRWXU | S_IRWXG | S_IRWXO, NULL, 0); //_PARAM.SFO is the unmodified backup
+
+    if(n) n = lv2FsOpen(file, 0, &fd, S_IRWXU | S_IRWXG | S_IRWXO, NULL, 0);
+
+	if(!n) {
+		unsigned len, pos, str;
+		
+
+        lv2FsLSeek64(fd, 0, 2, &position);
+		len = (u32) position;
+
+		mem = (unsigned char *) malloc(len+16);
+		if(!mem) {lv2FsClose(fd); return -2;}
+
+		memset(mem, 0, len+16);
+
+		lv2FsLSeek64(fd, 0, 0, &position);
+		
+        if(lv2FsRead(fd, mem, len, &bytes)!=0) bytes =0LL;
+
+        len = (u32) bytes;
+
+		lv2FsClose(fd);
+
+		str= (mem[8]+(mem[9]<<8));
+		pos=(mem[0xc]+(mem[0xd]<<8));
+
+		int indx=0;
+
+		while(str<len) {
+			if(mem[str]==0) break;
+			
+			if(!strcmp((char *) &mem[str], "PS3_SYSTEM_VER")) {
+				if(strcmp((char *) &mem[pos], str_version) > 0) {
+                    memcpy(&mem[pos], str_version, 8);
+                    patched = 1;
+                }
+			}
+            if(patch_app && !strcmp((char *) &mem[str], "APP_VER")) {
+               
+				mem[pos + 1] = '9';
+                patched = 1;
+               
+			}
+
+			while(mem[str]) str++;str++;
+			pos+=(mem[0x1c+indx]+(mem[0x1d+indx]<<8));
+			indx+=16;
+		}
+
+        if(patched) {
+            lv2FsRename(file, file2);
+            SaveFile(file, (char *) mem, len);   
+        }
+
+    if(mem) free(mem);
+
+    return 0;
+        
+    }
+
+	return -1;
+
+}
+
