@@ -864,7 +864,7 @@ s32 main(s32 argc, const char* argv[])
 
 	if (!is_payload_loaded()) {
 
-		install_new_poke();
+		install_new_poke(); /* need for patch lv2 */
 
 		if (!map_lv1()) {
 			remove_new_poke();
@@ -875,13 +875,13 @@ s32 main(s32 argc, const char* argv[])
 			exit(0);
 		}
 
-		patch_lv2_protection();
-		remove_new_poke();
+		patch_lv2_protection(); /* yaw */
+		remove_new_poke(); /* restore pokes */
 
 		unmap_lv1();  /* 3.55 need unmap? */
 
         __asm__("sync");
-        sleep(1);
+        sleep(1); /* dont touch! nein! */
 
 		load_payload();
 	}
@@ -905,7 +905,6 @@ s32 main(s32 argc, const char* argv[])
     tiny3d_Init(1024*1024*2);
 
     ioPadInit(7);
-            DrawDialogOK("Loading Payload: OK");
 
 	// Load texture
 
@@ -991,7 +990,6 @@ s32 main(s32 argc, const char* argv[])
     sys8_perm_mode((u64) 2);
 
     unpatch_bdvdemu();
-            DrawDialogOK("Loading bdvdemu: OK");
     
     MODPlay_Init(&mod_track);
     
@@ -2530,7 +2528,7 @@ void unpatch_bdvdemu()
     SetFontColor(0xffffffff, 0x00000000);
     SetFontAutoCenter(0);
 
-    DrawFormatString(16, 32, "unpatched (%i)", flag);
+    DrawFormatString(16, 32, "unpatched (%i) mem(%c%c%c)", flag, temp_buffer[0], temp_buffer[1], temp_buffer[2]);
 
     tiny3d_Flip();
 
@@ -2592,7 +2590,7 @@ int patch_bdvdemu(u32 flags)
     SetFontColor(0xffffffff, 0x00000000);
     SetFontAutoCenter(0);
 
-    DrawFormatString(16, 32, "patched %i ", flag);
+    DrawFormatString(16, 32, "patched %i mem(%c%c%c)", flag, temp_buffer[0], temp_buffer[1], temp_buffer[2]);
 
     tiny3d_Flip();
 

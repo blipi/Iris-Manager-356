@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <malloc.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,33 +84,49 @@ inline static void lv2_memcpy( u64 to, const u64 from, size_t sz)
 	Lv2Syscall3(NEW_POKE_SYSCALL, to, from, sz);
 }
 
-inline static void lv2_memcpy_b(void *to, const void *from, size_t sz)
+inline static void lv2_memset( u64 dst, const u64 val, size_t sz)
 {
-	Lv2Syscall3(NEW_POKE_SYSCALL, (unsigned long long)to,
-		    (unsigned long long)
-		    from, sz);
+
+    u64 *tmp = memalign(32, (sz*(sizeof(u64))) );
+    if(!tmp)
+        return;
+
+    memset(tmp, val, sz);
+    
+	Lv2Syscall3(NEW_POKE_SYSCALL, dst, (u64) tmp, sz);
+
+	free(tmp);
 }
+
+inline void install_lv2_memcpy()
+{
+	/* install memcpy */
+	/* This does not work on some PS3s */
+	pokeq(NEW_POKE_SYSCALL_ADDR, 0x4800000428250000ULL);
+	pokeq(NEW_POKE_SYSCALL_ADDR + 8, 0x4182001438a5ffffULL);
+	pokeq(NEW_POKE_SYSCALL_ADDR + 16, 0x7cc428ae7cc329aeULL);
+	pokeq(NEW_POKE_SYSCALL_ADDR + 24, 0x4bffffec4e800020ULL);
+}
+
+inline void remove_lv2_memcpy()
+{
+	/* restore syscall */
+	remove_new_poke();
+	pokeq(NEW_POKE_SYSCALL_ADDR + 16, 0xebc2fe287c7f1b78);
+	pokeq(NEW_POKE_SYSCALL_ADDR + 24, 0x3860032dfba100e8);
+}
+
 
 void load_payload(void)
 {
 
 #ifdef USE_MEMCPY_SYSCALL
 
-	/* This does not work on some PS3s */
-	pokeq(NEW_POKE_SYSCALL_ADDR, 0x4800000428250000ULL);
-	pokeq(NEW_POKE_SYSCALL_ADDR + 8, 0x4182001438a5ffffULL);
-	pokeq(NEW_POKE_SYSCALL_ADDR + 16, 0x7cc428ae7cc329aeULL);
-	pokeq(NEW_POKE_SYSCALL_ADDR + 24, 0x4bffffec4e800020ULL);
-
+    install_lv2_memcpy();
     lv2_memcpy(0x80000000002be4a0ULL, 
 				   (u64) payload_syscall36_bin, 
 				   sizeof(payload_syscall36_bin));
-
-	/* restore syscall */
-	remove_new_poke();
-	pokeq(NEW_POKE_SYSCALL_ADDR + 16, 0xebc2fe287c7f1b78);
-	pokeq(NEW_POKE_SYSCALL_ADDR + 24, 0x3860032dfba100e8);
-
+    remove_lv2_memcpy();
 #else
 	/* WARNING!! It supports only payload with a size multiple of 4 */
 	uint32_t i;
@@ -256,34 +273,33 @@ int lv2_unpatch_bdvdemu(void)
     char * mem = temp_buffer;
     memset(mem, 0, 0xff0);
     
-    install_new_poke();
+    install_lv2_memcpy();
 
     lv2_memcpy( (u64) mem, LV2MOUNTADDR_355, 0xff0);
 
-    for(n = 0; n< 0xff0; n+= 0x100) {
-
+    for(n = 0; n< 0xff0; n+= 0x100)
+    {
         if(!memcmp(mem + n, "CELL_FS_IOS:PATA0_BDVD_DRIVE", 29))
         {
             if(!memcmp(mem + n + 0x69, "temp_bdvd", 10))
             {
-                sys8_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) "dev_bdvd\0", 10ULL);
+                lv2_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) "dev_bdvd\0", 10);
                 flag++;
             }  
         }
 
-        if(!memcmp(mem + n, "CELL_FS_IOS:USB_MASS_STORAGE0", 29)) {
+        if(!memcmp(mem + n, "CELL_FS_IOS:USB_MASS_STORAGE0", 29)) 
+        {
             if(!memcmp(mem + n + 0x69, "dev_bdvd", 9)) 
             {
-                sys8_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) (mem + n + 0x79), 11ULL);
-                sys8_memset(LV2MOUNTADDR_355 + n + 0x79, 0ULL, 12ULL);
+                lv2_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) (mem + n + 0x79), 11);
+                lv2_memset(LV2MOUNTADDR_355 + n + 0x79, 0ULL, 12);
                 flag+=10;
             }
-            
         }
-      
     }
     
-    remove_new_poke();
+    remove_lv2_memcpy();
 
     if((mem[0] == 0) && (flag == 0))
         return -1;
@@ -300,33 +316,41 @@ int lv2_patch_bdvdemu(uint32_t flags)
     int usb = -1;
 
     char * mem = temp_buffer;
+    memset(mem, 0, 0xff0);
 
-    install_new_poke();
+    install_lv2_memcpy();
 
     lv2_memcpy((u64) mem, LV2MOUNTADDR_355, 0xff0);
+
+    for(n = 1; n < 11; n++) 
+    {
+        if(flags == (1 << n))
+        {
+            usb = n - 1;
+            break;
+        }
+    }
 
     sprintf(path_name, "CELL_FS_IOS:USB_MASS_STORAGE00%c", 48 + usb);
     sprintf(&path_name[128], "dev_usb00%c", 48 + usb);
 
-    for(n = 0; n< 0xff0; n+= 0x100) {
-
-        if(!memcmp(mem + n, "CELL_FS_IOS:PATA0_BDVD_DRIVE", 29)) {
-    
-            sys8_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) "temp_bdvd", 10ULL);
+    for(n = 0; n< 0xff0; n+= 0x100)
+    {
+        if(!memcmp(mem + n, "CELL_FS_IOS:PATA0_BDVD_DRIVE", 29))
+        {
+            lv2_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) "temp_bdvd", 10);
             flag++;
         }
 
-        if(!memcmp(mem + n, path_name, 32)) {
-           
-            sys8_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) "dev_bdvd\0\0", 11ULL);
-            sys8_memcpy(LV2MOUNTADDR_355 + n + 0x79, (u64) &path_name[128], 11ULL);
-            
+        if(!memcmp(mem + n, path_name, 32))
+        {
+            lv2_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) "dev_bdvd\0\0", 11);
+            lv2_memcpy(LV2MOUNTADDR_355 + n + 0x79, (u64) &path_name[128], 11);
             flag+=10;
         }
-      
     }
     
-    remove_new_poke();
+    remove_lv2_memcpy();
     
     return flag;
 }
