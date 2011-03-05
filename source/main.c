@@ -175,7 +175,7 @@ int LoadTexturePNG(char * filename, int index)
     return -1;
 }
 
-static char path_name[MAXPATHLEN];
+char path_name[MAXPATHLEN];
 
 void get_games() 
 {
@@ -905,6 +905,7 @@ s32 main(s32 argc, const char* argv[])
     tiny3d_Init(1024*1024*2);
 
     ioPadInit(7);
+            DrawDialogOK("Loading Payload: OK");
 
 	// Load texture
 
@@ -990,6 +991,7 @@ s32 main(s32 argc, const char* argv[])
     sys8_perm_mode((u64) 2);
 
     unpatch_bdvdemu();
+            DrawDialogOK("Loading bdvdemu: OK");
     
     MODPlay_Init(&mod_track);
     
@@ -2482,50 +2484,66 @@ void draw_gbloptions(float x, float y)
 /******************************************************************************************************************************************************/
 
 #define LV2MOUNTADDR_341 0x80000000003EE504ULL
-#define LV2MOUNTADDR_355 0x80000000003EE504ULL
 
 void unpatch_bdvdemu()
 {
+
+#if 0
     int n;
+    int flag = 0, flag2 = 0;
  
     char * mem = temp_buffer;
+    memset(mem, 0, 0xff0);
 
-    sys8_memcpy((u64) mem, LV2MOUNTADDR_341, 0xff0ULL);
+    sys8_memcpy((u64) mem, LV2MOUNTADDR_355, 0xff0ULL);
 
     for(n = 0; n< 0xff0; n+= 0x100) {
 
-        if(!memcmp(mem + n, "CELL_FS_IOS:PATA0_BDVD_DRIVE", 29)) {
-        
-         if(!memcmp(mem + n + 0x69, "temp_bdvd", 10))
-
-            sys8_memcpy(LV2MOUNTADDR_341 + n + 0x69, (u64) "dev_bdvd\0", 10ULL);
-            
+        if(!memcmp(mem + n, "CELL_FS_IOS:PATA0_BDVD_DRIVE", 29))
+        {
+            if(!memcmp(mem + n + 0x69, "temp_bdvd", 10))
+            {
+                sys8_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) "dev_bdvd\0", 10ULL);
+                flag++;
+            }  
         }
 
         if(!memcmp(mem + n, "CELL_FS_IOS:USB_MASS_STORAGE0", 29)) {
-            if(!memcmp(mem + n + 0x69, "dev_bdvd", 9)) {
-                sys8_memcpy(LV2MOUNTADDR_341 + n + 0x69, (u64) (mem + n + 0x79), 11ULL);
-                sys8_memset(LV2MOUNTADDR_341 + n + 0x79, 0ULL, 12ULL);
+            if(!memcmp(mem + n + 0x69, "dev_bdvd", 9)) 
+            {
+                sys8_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) (mem + n + 0x79), 11ULL);
+                sys8_memset(LV2MOUNTADDR_355 + n + 0x79, 0ULL, 12ULL);
+                flag2++;
             }
             
         }
       
     }
+#endif
+    int flag = 0;
+    flag = lv2_unpatch_bdvdemu();
 
- 
+#if 1
+    cls();
+    SetFontSize(18, 20);
+       
+    SetFontColor(0xffffffff, 0x00000000);
+    SetFontAutoCenter(0);
+
+    DrawFormatString(16, 32, "unpatched (%i)", flag);
+
+    tiny3d_Flip();
+
+    sleep(4);
+#endif
+
 }
 
 
 int patch_bdvdemu(u32 flags)
 {
     int n;
-    //int flag = 0, flag2 = 0;
     int usb = -1;
-
-    char * mem = temp_buffer;
-
-
-    sys8_memcpy((u64) mem, LV2MOUNTADDR_341, 0xff0);
 
     for(n = 1; n < 11; n++) {
         if(flags == (1 << n)) {usb = n - 1; break;}
@@ -2536,6 +2554,12 @@ int patch_bdvdemu(u32 flags)
         return -1;
     }
 
+#if 0
+    int flag = 0, flag2 = 0;
+    char * mem = temp_buffer;
+
+    sys8_memcpy((u64) mem, LV2MOUNTADDR_355, 0xff0);
+
     sprintf(path_name, "CELL_FS_IOS:USB_MASS_STORAGE00%c", 48 + usb);
     sprintf(&path_name[128], "dev_usb00%c", 48 + usb);
 
@@ -2543,34 +2567,38 @@ int patch_bdvdemu(u32 flags)
 
         if(!memcmp(mem + n, "CELL_FS_IOS:PATA0_BDVD_DRIVE", 29)) {
     
-            sys8_memcpy(LV2MOUNTADDR_341 + n + 0x69, (u64) "temp_bdvd", 10ULL);
-           // flag++;
+            sys8_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) "temp_bdvd", 10ULL);
+            flag++;
         }
 
         if(!memcmp(mem + n, path_name, 32)) {
            
-            sys8_memcpy(LV2MOUNTADDR_341 + n + 0x69, (u64) "dev_bdvd\0\0", 11ULL);
-            sys8_memcpy(LV2MOUNTADDR_341 + n + 0x79, (u64) &path_name[128], 11ULL);
+            sys8_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) "dev_bdvd\0\0", 11ULL);
+            sys8_memcpy(LV2MOUNTADDR_355 + n + 0x79, (u64) &path_name[128], 11ULL);
             
-            //flag2++;
+            flag2++;
         }
       
     }
+#endif
 
-#if 0
+    int flag = 0;
+    flag = lv2_patch_bdvdemu(flags);
+
+#if 1
     cls();
-    SetFontSize(32, 64);
+    SetFontSize(18, 20);
        
     SetFontColor(0xffffffff, 0x00000000);
     SetFontAutoCenter(0);
 
-    DrawFormatString(16, 32, "patched %i %i ", flag, flag2);
+    DrawFormatString(16, 32, "patched %i ", flag);
 
     tiny3d_Flip();
 
     sleep(4);
 
-    if(flag2 == 0) return -1;
+    if(flag < 10) return -1;
 #endif
 
     return 0;
@@ -2660,3 +2688,4 @@ int move_bdemubackup_to_origin(u32 flags)
 
     return 0;
 }
+

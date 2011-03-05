@@ -23,6 +23,7 @@
 #include "payload.h"
 #include "hvcall.h"
 #include "mm.h"
+#include "syscall8.h"
 
 #include "payload_syscall36.bin.h"
 
@@ -34,6 +35,9 @@
  
 u64 mmap_lpar_addr;
 static int poke_syscall = 7;
+
+extern char path_name[MAXPATHLEN];
+extern char temp_buffer[4096];
 
 u64 peekq(u64 addr)
 {
@@ -232,4 +236,85 @@ void remove_new_poke(void)
 	pokeq(NEW_POKE_SYSCALL_ADDR + 8, 0xFBC100F0FBE100F8ULL);
 }
 
-/* vim: set ts=4 sw=4 sts=4 tw=120 */
+
+/******************************************************************************************************************************************************/
+/* BDVDEMU FUNCTIONS                                                                                                                                  */
+/******************************************************************************************************************************************************/
+
+#define LV2MOUNTADDR_355 0x80000000003F64C4ULL
+
+int lv2_unpatch_bdvdemu(void)
+{
+    int n;
+    int flag = 0;
+ 
+    char * mem = temp_buffer;
+    memset(mem, 0, 0xff0);
+
+    sys8_memcpy((u64) mem, LV2MOUNTADDR_355, 0xff0ULL);
+
+    for(n = 0; n< 0xff0; n+= 0x100) {
+
+        if(!memcmp(mem + n, "CELL_FS_IOS:PATA0_BDVD_DRIVE", 29))
+        {
+            if(!memcmp(mem + n + 0x69, "temp_bdvd", 10))
+            {
+                sys8_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) "dev_bdvd\0", 10ULL);
+                flag++;
+            }  
+        }
+
+        if(!memcmp(mem + n, "CELL_FS_IOS:USB_MASS_STORAGE0", 29)) {
+            if(!memcmp(mem + n + 0x69, "dev_bdvd", 9)) 
+            {
+                sys8_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) (mem + n + 0x79), 11ULL);
+                sys8_memset(LV2MOUNTADDR_355 + n + 0x79, 0ULL, 12ULL);
+                flag+=10;
+            }
+            
+        }
+      
+    }
+
+    if((mem[0] == 0) && (flag == 0))
+        return -1;
+    else
+        return flag;
+
+}
+
+
+int lv2_patch_bdvdemu(uint32_t flags)
+{
+    int n;
+    int flag = 0;
+    int usb = -1;
+
+    char * mem = temp_buffer;
+
+    sys8_memcpy((u64) mem, LV2MOUNTADDR_355, 0xff0);
+
+    sprintf(path_name, "CELL_FS_IOS:USB_MASS_STORAGE00%c", 48 + usb);
+    sprintf(&path_name[128], "dev_usb00%c", 48 + usb);
+
+    for(n = 0; n< 0xff0; n+= 0x100) {
+
+        if(!memcmp(mem + n, "CELL_FS_IOS:PATA0_BDVD_DRIVE", 29)) {
+    
+            sys8_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) "temp_bdvd", 10ULL);
+            flag++;
+        }
+
+        if(!memcmp(mem + n, path_name, 32)) {
+           
+            sys8_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) "dev_bdvd\0\0", 11ULL);
+            sys8_memcpy(LV2MOUNTADDR_355 + n + 0x79, (u64) &path_name[128], 11ULL);
+            
+            flag+=10;
+        }
+      
+    }
+
+    return flag;
+}
+
