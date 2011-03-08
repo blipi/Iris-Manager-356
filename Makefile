@@ -26,8 +26,8 @@ CFLAGS		+=  -DMANAGER_DIR="$(APPID)"
 #PPU_EMBEDDED_SRCS += data355/patch.txt data355/payload.bin
 CFLAGS		+=  -DUSE_MEMCPY_SYSCALL
 CFLAGS		+=  -DWITH_CFW355
-SOURCE		+=	source/payload355
-INCLUDE		+=	include/payload355
+SOURCE		+=	source/payload355 source/libs
+INCLUDE		+=	include/payload355 include/libs
 DATA		:=	data355
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))

@@ -11,7 +11,6 @@
 #define BUTTON_R3         1024
 #define BUTTON_L3         512
 #define BUTTON_SELECT     256
-            
 #define BUTTON_SQUARE     128
 #define BUTTON_CROSS      64
 #define BUTTON_CIRCLE     32
@@ -20,6 +19,8 @@
 #define BUTTON_L1         4
 #define BUTTON_R2         2
 #define BUTTON_L2         1
+
+#define BUTTON_ANYDIR     (BUTTON_LEFT | BUTTON_DOWN | BUTTON_RIGHT | BUTTON_UP)
 
 extern PadInfo padinfo;
 extern PadData paddata;
