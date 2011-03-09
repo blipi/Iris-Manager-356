@@ -397,7 +397,7 @@ void fill_entries_from_device(char *path, t_directories *list, int *max, u32 fla
 	if((*max) <0) *max =0;
 
 
-	dir=opendir (path);
+	dir = opendir (path);
 	if(!dir) return;
 
 	while(1)
@@ -555,6 +555,8 @@ void DPrintf(char *format, ...)
 /* FAST FILES                                                                                                                                          */
 /*******************************************************************************************************************************************************/
 
+static int copy_split_to_cache = 0;
+
 static int file_counter=0; // to count files
 
 static time_t time_start; // time counter init
@@ -660,6 +662,12 @@ static int fast_copy_async(char *pathr, char *pathw, int enable)
 
 static int fast_copy_process();
 
+static int nfilecached = 0;
+
+static char filecached[1][2][1024];
+
+static char * path_cache = NULL;
+
 static int fast_copy_add(char *pathr, char *pathw, char *file)
 {
 	int size_mem;
@@ -695,12 +703,28 @@ static int fast_copy_add(char *pathr, char *pathw, char *file)
 				
 	}
 	
+    if(copy_split_to_cache && fast_files[fast_num_files].bigfile_mode != 2) return 0;
+    
+    
     sprintf(fast_files[fast_num_files].pathr, "%s/%s", pathr, file);
 
 	if(sysFsStat(fast_files[fast_num_files].pathr, &s) < 0) 
         {DPrintf("Failed in stat()\n"); abort_copy = 1; return -1;}
+    
+    if(copy_split_to_cache) {
+        if(nfilecached > 0) return 0;
+        sprintf(&filecached[nfilecached][0][0], "%s/%s", pathr, file);
+        sprintf(&filecached[nfilecached][1][0], "%s", file);
 
-	sprintf(fast_files[fast_num_files].pathw, "%s/%s", pathw, file);
+        char * a = strstr((char *) &filecached[nfilecached][0][0], ".66600");
+        if(a) a[0] = 0;
+        a = strstr((char *) &filecached[nfilecached][1][0], ".66600");
+        if(a) a[0] = 0;
+
+        sprintf(fast_files[fast_num_files].pathw, "%s/%s", path_cache, file);
+        nfilecached++;
+    } else
+	    sprintf(fast_files[fast_num_files].pathw, "%s/%s", pathw, file);
 
 	// zero files
 	if((s64) s.st_size == 0LL) {
@@ -1226,6 +1250,8 @@ static int my_game_test(char *path)
    dir=opendir (path);
    if(!dir) return -1;
 
+   
+
    while(1)
 		{
 		struct dirent *entry=readdir (dir);
@@ -1256,6 +1282,8 @@ static int my_game_test(char *path)
 					
 				s64 size = 0LL;
 
+                int is_split = 0;
+
 				if(!f) {DPrintf("malloc() Error!!!\n\n");abort_copy=2;closedir (dir);return -1;}
 				sprintf(f,"%s/%s", path, entry->d_name);
 
@@ -1271,6 +1299,7 @@ static int my_game_test(char *path)
 						{  
 						DPrintf("Split file %lli MB %s\n\n", size/0x100000LL, f);
 						num_files_split++;
+                        is_split = 1;
 								
 						}
 							
@@ -1280,11 +1309,15 @@ static int my_game_test(char *path)
 
 				if(f) free(f);
 
+                if(!copy_split_to_cache || is_split) {
+
 				int seconds= (int) (time(NULL)-time_start);
 				
 			    file_counter++;
 				
 				global_device_bytes+=size;
+
+                
 				
 				sprintf(string1,"Test File: %i Time: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", file_counter, seconds/3600, 
 					(seconds/60) % 60, seconds % 60, ((double) global_device_bytes)/(1024.0*1024.*1024.0));
@@ -1301,10 +1334,11 @@ static int my_game_test(char *path)
 
 				if(abort_copy) break;
 
-				if (new_pad & BUTTON_TRIANGLE) 
+                if(!copy_split_to_cache && (new_pad & BUTTON_TRIANGLE))
 					{
 					abort_copy=1;
 					}
+                }
 			
 			if(abort_copy) break;
 
@@ -1325,6 +1359,8 @@ static int my_game_delete(char *path)
 
    dir = opendir (path);
    if(!dir) return -1;
+
+   copy_split_to_cache = 0;
    
    while(1) {
 		struct dirent *entry = readdir (dir);
@@ -1420,6 +1456,8 @@ static int _my_game_copy(char *path, char *path2)
 		if(entry.d_name[0] == '.' && entry.d_name[1] == 0) continue;
 		if(entry.d_name[0] == '.' && entry.d_name[1] == '.' && entry.d_name[2] == 0) continue;
 
+       // if(copy_split_to_cache && (entry.d_type & DT_DIR)) continue;
+
 		if((entry.d_type & DT_DIR)) {
 
 			if(abort_copy) break;
@@ -1431,11 +1469,11 @@ static int _my_game_copy(char *path, char *path2)
 
 			sprintf(d1,"%s/%s", path, entry.d_name);
 			sprintf(d2,"%s/%s", path2, entry.d_name);
-			DPrintf("D1: %s\nD2: %s", path, path2);
+			if(!copy_split_to_cache) DPrintf("D1: %s\nD2: %s\n", path, path2);
 
 			//if(strcmp(path2, "/dev_bdvd/PS3_UPDATE") == 0)
 			//{
-			mkdir(d2, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
+			if(!copy_split_to_cache) mkdir(d2, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
 			_my_game_copy(d1, d2);
 			//}
 
@@ -1448,7 +1486,7 @@ static int _my_game_copy(char *path, char *path2)
 			
             } else {
 				
-                DPrintf("EPATH: %s\nEPATH2: %s\nENTRY %s\n", path, path2, entry.d_name);
+               if(!copy_split_to_cache) DPrintf("EPATH: %s\nEPATH2: %s\nENTRY %s\n", path, path2, entry.d_name);
 
 				if(fast_copy_add(path, path2, entry.d_name) < 0) {
 					
@@ -1494,6 +1532,8 @@ static char filename[1024];
 
 void copy_from_selection(int game_sel)
 {
+    copy_split_to_cache = 0;
+
     if(directories[game_sel].flags & 2048)  {copy_from_bluray();return;}
 
     int n, ret;
@@ -1959,10 +1999,219 @@ void copy_from_bluray()
     }
 }
 
+/////////////////
+
+float cache_need_free = 0.0f;
+
+void copy_to_cache(int game_sel, char * hmanager_path)
+{
+    
+    if(directories[game_sel].flags & 2048)  {return;}
+    if(directories[game_sel].flags & 1)  {return;}
+
+    int n, ret;
+
+    char name[1024];
+    char name2[1024];
+    int dest = 0;
+
+    dialog_action = 0;
+    abort_copy = 0;
+
+   
+    for(n = 1; n < 11; n++) {
+       if((directories[game_sel].flags >> n) & 1) break;
+    }
+
+    if(n == 11) return;
+
+    dest = n;
+      
+    sprintf(filename, "%s\n\n%s USB00%c %s HDD0 CACHE?", directories[game_sel].title, "Want to copy from", 47 + dest, "to"); 
+        
+    dialog_action = 0;
+    ret = msgDialogOpen2( mdialogyesno, filename, my_dialog, (void*)0x0000aaaa, NULL );
+            
+    wait_dialog();
+
+    if(dialog_action == 1) {
+
+        sprintf(name2, "%s/PS3_GAME", directories[game_sel].path_name);
+
+        path_cache = name;
+
+        nfilecached = 0;
+        filecached[nfilecached][0][0] = 0;
+        filecached[nfilecached][1][0] = 0;
+  
+        // reset to update datas
+        
+        
+        time_start = time(NULL);
+
+        abort_copy = 0;
+        initConsole();
+        file_counter = 0;
+        new_pad = 0;
+
+        //////////////
+        
+        global_device_bytes = 0;
+
+        num_directories = file_counter = num_files_big = num_files_split = 0;
+        
+        
+        copy_split_to_cache = 1;
+        my_game_test((char *) name2);
+        copy_split_to_cache = 0;
+
+        u32 blockSize;
+        u64 freeSize;
+        float freeSpace;
+
+        sysFsGetFreeSize("/dev_hdd0/", &blockSize, &freeSize);
+        freeSpace = ( ((u64)blockSize * freeSize));
+        freeSpace = freeSpace / 1073741824.0;
+
+        cache_need_free = ((float) global_device_bytes / 1073741824.0) + 2.0f;
+
+        if(freeSpace < cache_need_free) {
+            sprintf(string1, "You have %.2fGB free and you needs %.2fGB\n\nPlease, delete Cache Entries", freeSpace, cache_need_free);
+
+            DrawDialogOK(string1);
+            
+            draw_cache_external();
+
+            new_pad = 0;
+        }
+
+            
+        sysFsGetFreeSize("/dev_hdd0/", &blockSize, &freeSize);
+        freeSpace = ( ((u64)blockSize * freeSize));
+        freeSpace = freeSpace / 1073741824.0;
+
+        if(freeSpace < cache_need_free) {
+            sprintf(string1, "Sorry, you have %.2fGB free\n\nand you needs %.2fGB", freeSpace, cache_need_free);
+
+            DrawDialogOK(string1);
+
+            cache_need_free = 0.0f;
+
+            global_device_bytes = 0;
+
+            abort_copy = 0;
+            file_counter = 0;
+            copy_mode = 0;
+
+            new_pad = 0;
+
+            return;
+        }
+
+        sprintf(name, "%s/cache", hmanager_path);	
+        mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
+        sprintf(name, "%s/cache/%s", hmanager_path, directories[game_sel].title_id);	
+        mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
+
+        cache_need_free = 0.0f;
+
+        global_device_bytes = 0;
+        ////////////////
+
+        DPrintf("Starting... \n copy %s\n to %s\n\n", directories[game_sel].path_name, name);
+
+        abort_copy = 0;
+        file_counter = 0;
+        copy_mode = 0;
+
+        copy_is_split=0;
+
+        copy_split_to_cache = 1;
+        my_game_copy((char *) name2/*directories[game_sel].path_name*/, (char *) name);
+        copy_split_to_cache = 0;
+
+        int seconds = (int) (time(NULL) - time_start);
+        int vflip = 0;
+        
+        
+
+        while(1) {
+            
+            if(abort_copy) sprintf(string1, "Aborted!!!  Time: %2.2i:%2.2i:%2.2i\n", seconds / 3600, (seconds / 60) % 60, seconds % 60);
+            else {
+                    
+                sprintf(string1,"Done! Files Copied: %i Time: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n",
+                    file_counter, seconds / 3600, (seconds / 60) % 60, seconds % 60, ((double) global_device_bytes) / (1024.0 * 1024. * 1024.0));
+            }
+
+            
+            cls2();
+
+            strcpy(dbg_str1, string1);
+
+            if(vflip & 32)
+                strcpy(dbg_str2, "Press X to Exit");
+            else
+                strcpy(dbg_str2, "");
+
+            vflip++;
+                
+            DbgDraw();
+
+            tiny3d_Flip();
+
+            ps3pad_read();
+
+            if (new_pad & BUTTON_CROSS) {
+            
+                new_pad = 0;
+                break;
+            }
+
+        }
+
+        if(abort_copy || nfilecached ==0) {
+
+           
+            sprintf(filename, "%s\n\n%s USB00%c?", directories[game_sel].title, "Delete failed dump in", 47 + dest);
+
+            dialog_action = 0;
+            
+            ret = msgDialogOpen2( mdialogyesno, filename, my_dialog, (void*) 0x0000aaaa, NULL );
+                    
+            wait_dialog();
+
+            if(dialog_action == 1) {
+
+                abort_copy = 0;
+                time_start = time(NULL);
+                file_counter = 0;
+
+                my_game_delete((char *) name);
+    
+                rmdir((char *) name); // delete this folder
+
+                game_sel = 0;
+
+            }
+        } else {
+        
+           sprintf(name, "%s/cache/%s/paths.dir", hmanager_path, directories[game_sel].title_id);
+           SaveFile(name, (char *) filecached, sizeof(filecached));
+           sprintf(name, "%s/cache/%s/name_entry", hmanager_path, directories[game_sel].title_id);
+           SaveFile(name, (char *) directories[game_sel].title, 64);
+        }
+        
+    }
+	
+}
+////////////////////
 void delete_game(int game_sel)
 {
    
     int n, ret;
+
+    copy_split_to_cache = 0;
     
     if(directories[game_sel].flags & 2048) return;
 
@@ -2044,6 +2293,8 @@ void test_game(int game_sel)
 			
     abort_copy=0;
 
+    copy_split_to_cache = 0;
+
     initConsole();
 
     file_counter = 0;
@@ -2052,8 +2303,10 @@ void test_game(int game_sel)
     global_device_bytes = 0;
 
     num_directories = file_counter = num_files_big = num_files_split = 0;
-
+    
+    
     my_game_test(directories[game_sel].path_name);
+    
 
     DPrintf("Directories: %i Files: %i\nBig files: %i Split files: %i\n\n", num_directories, file_counter, num_files_big, num_files_split);
 
@@ -2089,8 +2342,88 @@ void test_game(int game_sel)
             break;
         }
     }
+
+
+    // rename in test for non executable games
+    if(num_files_split && (directories[game_sel].flags & 2046)) {
+       
+        char *str = strstr(directories[game_sel].path_name, "/GAMEZ/");
+
+            if(str && str[7] != '_') {
+                int n = (str - directories[game_sel].path_name);
+                memcpy(filename, directories[game_sel].path_name, n + 7);filename[n+7] = '_'; filename[n+8] =0;
+                strcat(filename, str + 7);
+                rename(directories[game_sel].path_name, filename);
+                //DrawDialogOK(filename);
+                forcedevices = 2046;
+            }
+    
+    }
 }
 
+void DeleteDirectory(const char* path)
+{
+	int dfd;
+	u64 read;
+	Lv2FsDirent dir;
+	if (lv2FsOpenDir(path, &dfd))
+		return;
+    
+    read = sizeof(Lv2FsDirent);
+	while (!lv2FsReadDir(dfd, &dir, &read)) {
+		char newpath[0x440];
+		if (!read)
+			break;
+		if (!strcmp(dir.d_name, ".") || !strcmp(dir.d_name, ".."))
+			continue;
+
+		strcpy(newpath, path);
+		strcat(newpath, "/");
+		strcat(newpath, dir.d_name);
+
+		if (dir.d_type & DT_DIR) {
+			DeleteDirectory(newpath);
+			rmdir(newpath);
+		} else {
+			remove(newpath);
+		}
+	}
+	lv2FsCloseDir(dfd);
+}
+
+void FixDirectory(const char* path)
+{
+	int dfd;
+	u64 read;
+	Lv2FsDirent dir;
+    
+	if (lv2FsOpenDir(path, &dfd))
+		return;
+
+    lv2FsChmod(path, 0777);
+    
+    read = sizeof(Lv2FsDirent);
+	while (!lv2FsReadDir(dfd, &dir, &read)) {
+		char newpath[0x440];
+		if (!read)
+			break;
+		if (!strcmp(dir.d_name, ".") || !strcmp(dir.d_name, ".."))
+			continue;
+
+		strcpy(newpath, path);
+		strcat(newpath, "/");
+		strcat(newpath, dir.d_name);
+
+		if (dir.d_type & DT_DIR) {
+
+			FixDirectory(newpath);
+          
+		} else {
+			lv2FsChmod(newpath, FS_S_IFMT | 0777);
+		}
+	}
+	lv2FsCloseDir(dfd);
+}
 /*******************************************************************************************************************************************************/
 /* Favourites                                                                                                                                           */
 /*******************************************************************************************************************************************************/
@@ -2201,9 +2534,12 @@ int param_sfo_util(char * path, int patch_app)
     char file[0x420];
     char file2[0x420];
 
+    u8 * app_ver = NULL;
+
     char str_version[8];
     
     unsigned char *mem = NULL;
+    unsigned char *mem2 = NULL;
 
     int n;
     char * version = LoadFile("/dev_flash/vsh/etc/version.txt", &n);
@@ -2222,9 +2558,52 @@ int param_sfo_util(char * path, int patch_app)
     sprintf(file, "%s/PS3_GAME/PARAM.SFO", path);
     sprintf(file2, "%s/PS3_GAME/_PARAM.SFO", path);
 	
-    n = lv2FsOpen(file2, 0, &fd, S_IRWXU | S_IRWXG | S_IRWXO, NULL, 0); //_PARAM.SFO is the unmodified backup
+    if(!lv2FsOpen(file2, 0, &fd, S_IRWXU | S_IRWXG | S_IRWXO, NULL, 0)) {
+		unsigned len, pos, str;
+		
 
-    if(n) n = lv2FsOpen(file, 0, &fd, S_IRWXU | S_IRWXG | S_IRWXO, NULL, 0);
+        lv2FsLSeek64(fd, 0, 2, &position);
+		len = (u32) position;
+
+		mem2 = (unsigned char *) malloc(len+16);
+		if(!mem2) {lv2FsClose(fd); return -2;}
+
+		memset(mem2, 0, len+16);
+
+		lv2FsLSeek64(fd, 0, 0, &position);
+		
+        if(lv2FsRead(fd, mem2, len, &bytes)!=0) bytes =0LL;
+
+        len = (u32) bytes;
+
+		lv2FsClose(fd);
+
+		str= (mem2[8]+(mem2[9]<<8));
+		pos=(mem2[0xc]+(mem2[0xd]<<8));
+
+		int indx=0;
+
+		while(str<len) {
+			if(mem2[str]==0) break;
+			
+			
+
+            if(!strcmp((char *) &mem2[str], "APP_VER")) {
+               
+				app_ver = &mem2[pos];
+                
+			}
+
+			while(mem2[str]) str++;str++;
+			pos+=(mem2[0x1c+indx]+(mem2[0x1d+indx]<<8));
+			indx+=16;
+		}
+    
+    }
+
+    n = lv2FsOpen(file, 0, &fd, S_IRWXU | S_IRWXG | S_IRWXO, NULL, 0);
+    
+    if(n) {n = lv2FsOpen(file2, 0, &fd, S_IRWXU | S_IRWXG | S_IRWXO, NULL, 0); patched = 1;}
 
 	if(!n) {
 		unsigned len, pos, str;
@@ -2260,11 +2639,21 @@ int param_sfo_util(char * path, int patch_app)
                     patched = 1;
                 }
 			}
-            if(patch_app && !strcmp((char *) &mem[str], "APP_VER")) {
+
+            if(!strcmp((char *) &mem[str], "APP_VER")) {
+               u8 old =  mem[pos + 1];
                
-				mem[pos + 1] = '9';
-                patched = 1;
-               
+               if(app_ver) {
+                    
+                   mem[pos + 1] = app_ver[1];
+                   if(mem[pos + 1] == '9') mem[pos + 1] = '1';
+               } else mem[pos + 1] = '1';
+                
+               if(patch_app) {
+				    mem[pos + 1] = '9';
+               }
+
+               if(old != mem[pos + 1]) patched = 1;
 			}
 
 			while(mem[str]) str++;str++;
@@ -2278,6 +2667,7 @@ int param_sfo_util(char * path, int patch_app)
         }
 
     if(mem) free(mem);
+    if(mem2) free(mem2);
 
     return 0;
         
@@ -2286,4 +2676,3 @@ int param_sfo_util(char * path, int patch_app)
 	return -1;
 
 }
-

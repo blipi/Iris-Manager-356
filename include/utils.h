@@ -62,6 +62,9 @@ extern u32 forcedevices;
 
 extern char hdd_folder[64];
 extern char bluray_game[64];
+extern float cache_need_free;
+
+void draw_cache_external();
 
 void cls();
 void cls2();
@@ -85,6 +88,12 @@ void copy_from_selection(int game_sel);
 void copy_from_bluray();
 void delete_game(int game_sel);
 void test_game(int game_sel);
+
+void copy_to_cache(int game_sel, char * hmanager_path);
+
+void DeleteDirectory(const char* path);
+
+void FixDirectory(const char* path);
 
 extern tfavourites favourites;
 extern int havefavourites;
