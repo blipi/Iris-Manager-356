@@ -1164,7 +1164,7 @@ int fast_copy_process()
         if(seconds)
         {
             int tleft = ((copy_total_size - global_device_bytes) * seconds) / global_device_bytes;
-            if( abs(time_left - tleft) >= 5) //more than 5 secs change to update time
+            if( abs(time_left - tleft) >= 10) //more than 10 secs change to update time
                 time_left = tleft;
         }
         
