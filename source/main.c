@@ -39,8 +39,6 @@
 #include <tiny3d.h>
 #include <libfont.h>
 
-#include "language.h"
-
 #include "syscall8.h"
 
 #ifdef WITH_CFW355
@@ -109,8 +107,6 @@ u32 Png_offset[16];
 
 PngDatas Png_res[16];
 u32 Png_res_offset[16];
-
-extern char * language[];
 
 void Load_PNG_resources()
 {
@@ -547,12 +543,8 @@ int inited = 0;
 
 void fun_exit()
 {
-    close_language();
-    __asm__("sync");
-    sleep(1);
-
     ftp_deinit();
-    
+
     if(inited & INITED_SOUNDLIB) {
         if(inited & INITED_MODLIB)  
             MODPlay_Unload (&mod_track);
@@ -616,19 +608,6 @@ void LoadManagerCfg()
             videoscale_y = manager_cfg.videoscale_y[3];
             break;
     }
-
-    char lang_chosen[256] = "language.ini";
-
-    sprintf(temp_buffer, "%s/config/%s", self_path, lang_chosen);
-    int errn = open_language(temp_buffer);
-    if( errn < 0)
-    {
-        char errstr[256];
-        sprintf(errstr, "Invalid language.ini file or not found (%i), need a reinstall?", errn); 
-
-        DrawDialogOK(errstr);
-        exit(0);
-    }
 }
 
 int SaveManagerCfg()
@@ -665,12 +644,12 @@ void video_adjust()
         SetFontColor(0xffffffff, 0x0);
 
         SetFontAutoCenter(1);
-        DrawFormatString(0, (512 - 24)/2 - 64, language[VIDEOADJUST_POSITION]);
+        DrawFormatString(0, (512 - 24)/2 - 64, "Use LEFT (-X) / RIGHT (+X) / UP (-Y) / DOWN (+Y) to adjust the screen");
 
-        DrawFormatString(0, (512 - 24)/2, language[VIDEOADJUST_SCALEINFO], videoscale_x, videoscale_y);
+        DrawFormatString(0, (512 - 24)/2, "Video Scale X: %i Y: %i", videoscale_x, videoscale_y);
 
-        DrawFormatString(0, (512 - 24)/2 + 64, language[VIDEOADJUST_EXITINFO]);
-        DrawFormatString(0, (512 - 24)/2 + 96, language[VIDEOADJUST_DEFAULTS]);
+        DrawFormatString(0, (512 - 24)/2 + 64, "Press 'X' to exit");
+        DrawFormatString(0, (512 - 24)/2 + 96, "Press 'O' to default values");
         SetFontAutoCenter(0);
 
         tiny3d_Flip();
@@ -708,8 +687,8 @@ void video_adjust()
             
       
             if(SaveManagerCfg() == 0) {
-                sprintf(temp_buffer, "manager_setup.bin\n\n%s", language[VIDEOADJUST_SAVED]);
-                DrawDialogOK(temp_buffer);
+             
+                DrawDialogOK("manager_setup.bin\n\nFile Saved");
             }
 
             break;
@@ -730,7 +709,7 @@ void Select_games_folder()
     dir = opendir ("/dev_hdd0/GAMES");
     if(dir) {
         closedir (dir);
-        sprintf(temp_buffer, "%s %s %s", language[GAMEFOLDER_WANTUSE], "/dev_hdd0/GAMES", language[GAMEFOLDER_TOINSTALLNTR]); 
+        sprintf(temp_buffer, "%s %s %s", "Want to use", "/dev_hdd0/GAMES", "to install the game?"); 
 
         if(DrawDialogYesNo(temp_buffer) == 1) {
             strncpy(hdd_folder, "dev_hdd0_2", 64);
@@ -742,7 +721,7 @@ void Select_games_folder()
     dir = opendir ("/dev_hdd0/GAMEZ");
     if(dir) {
         closedir (dir);
-        sprintf(temp_buffer, "%s %s %s", language[GAMEFOLDER_WANTUSE], "/dev_hdd0/GAMEZ", language[GAMEFOLDER_TOINSTALLNTR]); 
+        sprintf(temp_buffer, "%s %s %s", "Want to use", "/dev_hdd0/GAMEZ", "to install the game?"); 
 
         if(DrawDialogYesNo(temp_buffer) == 1) {
             strncpy(hdd_folder, "dev_hdd0", 64);
@@ -773,7 +752,7 @@ void Select_games_folder()
                 
                 closedir (dir2);
       
-                sprintf(temp_buffer, "%s /%s %s", language[GAMEFOLDER_WANTUSE], entry->d_name, language[GAMEFOLDER_TOINSTALLNTR]);
+                sprintf(temp_buffer, "%s /%s %s", "Want to use", entry->d_name, "to install the game?");
 
                 if(DrawDialogYesNo(temp_buffer) == 1) {
                     strncpy(hdd_folder, entry->d_name, 64);
@@ -789,7 +768,7 @@ void Select_games_folder()
 
     if(!selected) {
         
-        sprintf(temp_buffer, "%s %s %s", language[GAMEFOLDER_WANTUSE], "/dev_hdd0/GAMEZ", language[GAMEFOLDER_TOINSTALLNTR]);
+        sprintf(temp_buffer, "%s %s %s", "Want to use", "/dev_hdd0/GAMEZ", "to install the game?");
 
         if(DrawDialogYesNo(temp_buffer) == 1) {
             strncpy(hdd_folder, "dev_hdd0", 64);
@@ -800,7 +779,7 @@ void Select_games_folder()
             strncpy(manager_cfg.hdd_folder, "HMANAGER4", 64);
             mkdir("/dev_hdd0/game/HMANAGER4/GAMEZ", S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
 
-            sprintf(temp_buffer, "%s %s %s", language[GAMEFOLDER_USING], "dev_hdd0/game/HMANAGER4/GAMEZ", language[GAMEFOLDER_TOINSTALL]);
+            sprintf(temp_buffer, "%s %s %s", "Using", "dev_hdd0/game/HMANAGER4/GAMEZ", "to install the game");
             DrawDialogOK(temp_buffer);
         }
     }
@@ -875,7 +854,7 @@ s32 main(s32 argc, const char* argv[])
 
             ioPadInit(7);
             
-            DrawDialogOK(language[MAIN_PAYLOADINVALID]);
+            DrawDialogOK("Invalid payload or payload locked");
 
             exit(0);
         }
@@ -892,7 +871,7 @@ s32 main(s32 argc, const char* argv[])
 
             tiny3d_Init(1024*1024);
             ioPadInit(7);
-            DrawDialogOK(language[MAIN_PAYLOADINVALIDMAP]);
+            DrawDialogOK("Error Loading Payload: map failed?!");
 			exit(0);
 		}
 
@@ -960,9 +939,9 @@ s32 main(s32 argc, const char* argv[])
         DrawBox(x, y, 65535.0f, 640.0f, 360, 0x30003018);
 
         x= 0.0; y = 512.0f/2.0f - 32.0f;
-        if(sys8_enable(0) < 0x102) DrawFormatString(0, y, language[MAIN_PAYLOADOLD]);
+        if(sys8_enable(0) < 0x102) DrawFormatString(0, y, "Payload Resident Is Old");
 
-            else DrawFormatString(0, y, language[MAIN_PAYLOADRESIDENT]);
+            else DrawFormatString(0, y, "Payload Is Resident");
         
         SetFontAutoCenter(0);
         tiny3d_Flip();
@@ -1056,7 +1035,7 @@ s32 main(s32 argc, const char* argv[])
     while(!exit_program) {
 
         float x = 0.0f, y = 0.0f;
-
+    
         flash = (frame >> 5) & 1;
 
         frame++;
@@ -1288,10 +1267,10 @@ void draw_screen1(float x, float y)
 
     SetFontAutoCenter(0);
 
-    if(mode_favourites >= 131072) DrawFormatString(x, y - 2, " %s", language[DRAWSCREEN_FAVSWAP]);
-    else if(mode_favourites >= 65536) DrawFormatString(x, y - 2, " %s", language[DRAWSCREEN_FAVINSERT]); 
-    else if(mode_favourites) DrawFormatString(x, y - 2, " %s", language[DRAWSCREEN_FAVORITES]);
-    else DrawFormatString(x, y - 2, " %s %i", language[DRAWSCREEN_PAGE],currentdir/12 + 1);
+    if(mode_favourites >= 131072) DrawFormatString(x, y - 2, " Favourites Swap");
+    else if(mode_favourites >= 65536) DrawFormatString(x, y - 2, " Favourites Insert"); 
+    else if(mode_favourites) DrawFormatString(x, y - 2, " Favourites");
+    else DrawFormatString(x, y - 2, " Page %i", currentdir/12 + 1);
 
     // list device space
 
@@ -1427,21 +1406,21 @@ void draw_screen1(float x, float y)
                 SetCurrentFont(FONT_BUTTON);
                 SetFontColor(0xffffffff, 0x00000080);
                 SetFontSize(8, 16);        
-                x2 = DrawFormatString(x + 200 * select_px - 4 + (200 - 24 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "%s ", language[DRAWSCREEN_PRESS]);
+                x2 = DrawFormatString(x + 200 * select_px - 4 + (200 - 24 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "Press ");
                 SetFontColor(0xffffffff, 0x000000FF);
                 x2 = DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, "SELECT");
                 SetFontColor(0xffffffff, 0x00000080);
-                DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, " %s", language[DRAWSCREEN_FOPTIONS]);
+                DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, " for Options");
                 SetCurrentFont(FONT_DEFAULT);
             } else  if(mode_favourites && mode_favourites < 65536 && favourites.list[i].title_id[0] != 0) {
                 SetCurrentFont(FONT_BUTTON);
                 SetFontColor(0x7fff00ff, 0x00000080);
                 SetFontSize(8, 16);        
-                x2 = DrawFormatString(x + 200 * select_px - 4 + (200 - 23 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "%s ", language[DRAWSCREEN_PRESS]);
+                x2 = DrawFormatString(x + 200 * select_px - 4 + (200 - 23 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "Press ");
                 SetFontColor(0xffffffff, 0x000000FF);
                 x2 = DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, "SELECT");
                 SetFontColor(0x7fff00ff, 0x00000080);
-                DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, " %s", language[DRAWSCREEN_FDELETE]);
+                DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, " for Delete");
                 SetCurrentFont(FONT_DEFAULT);
             }
         }
@@ -1483,9 +1462,9 @@ void draw_screen1(float x, float y)
     if(flash) {
         SetFontColor(0xffffffff, 0x404040ff);
         SetFontSize(18, 20);
-        x2= DrawFormatString(1024, 0, " %s ", language[DRAWSCREEN_PSTARTG]);
+        x2= DrawFormatString(1024, 0, " Press START for Global Options ");
 
-        DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 + 6, " %s ", language[DRAWSCREEN_PSTARTG]);
+        DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 + 6, " Press START for Global Options ");
     }
    
     DrawBox(x, y + 3 * 150, 1000, 200 * 4 - 8, 40, 0x00000028);
@@ -1504,7 +1483,7 @@ void draw_screen1(float x, float y)
             mode_favourites = 1;
 
         } else {
-            if(DrawDialogYesNo(language[DRAWSCREEN_EXITXMB])==1) {exit_program = 1; return;}
+            if(DrawDialogYesNo("Exit to XMB?")==1) {exit_program = 1; return;}
         }
     }
 
@@ -1542,10 +1521,10 @@ void draw_screen1(float x, float y)
 
         if(Png_offset[i]) {
             if(mode_favourites != 0 && favourites.list[i].index < 0) {
-                DrawDialogOK(language[DRAWSCREEN_CANRUNFAV]);return;
+                DrawDialogOK("Cannot run this favourite");return;
             } else if(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title[0] == '_') {
-                sprintf(temp_buffer, "%s\n\n%s", 
-                    directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title, language[DRAWSCREEN_MARKNOTEXEC]);
+                sprintf(temp_buffer, "%s\n\nMarked as not executable", 
+                    directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title);
                 DrawDialogOK(temp_buffer);return;
             } else {
                 
@@ -1564,7 +1543,7 @@ void draw_screen1(float x, float y)
                 
                 if(game_cfg.xmb && (fdevices & 2048) == 0) {
             
-                    DrawDialogOK(language[DRAWSCREEN_REQBR]);
+                    DrawDialogOK("Required BR-Disc");
                     goto skip_sys8;
                 }
 
@@ -1583,8 +1562,8 @@ void draw_screen1(float x, float y)
                     FILE *fp = fopen(temp_buffer, "rb");
 
                     if(!fp) {
-                        sprintf(temp_buffer, "%s.BIN\n\n%s", 
-                            directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id, language[DRAWSCREEN_EXTEXENOTFND]);
+                        sprintf(temp_buffer, "%s.BIN\n\nexternal executable not found", 
+                            directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id);
                         DrawDialogOK(temp_buffer);
                         goto skip_sys8;
                     } else {
