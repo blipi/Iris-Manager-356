@@ -2328,30 +2328,30 @@ void draw_configs(float x, float y, int index)
 
     x2 = DrawButton1(x + 32, y2, 240, "Fix Permissions", (flash && select_option == 0)) + 16;
     
-    x2 = DrawButton2(x2, y2, 0, " Default ", (game_cfg.perm == 0)) + 8;
-    x2 = DrawButton2(x2, y2, 0, " PS jailbreak ", (game_cfg.perm == 1)) + 8;
-    x2 = DrawButton2(x2, y2, 0, " v4 Perms (F1) ", (game_cfg.perm == 2)) + 8;
+    x2 = DrawButton2(x2, y2, 0, " Default ", /*(game_cfg.perm == 0)*/ 0 ) + 8;
+    x2 = DrawButton2(x2, y2, 0, " PS jailbreak ", /*(game_cfg.perm == 1)*/ 0) + 8;
+    x2 = DrawButton2(x2, y2, 0, " v4 Perms (F1) ", /*(game_cfg.perm == 2)*/ 0) + 8;
     
     y2+= 48;
 
     x2 = DrawButton1(x + 32, y2, 240, "Select XMB", (flash && select_option == 1))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, "  Debug  ", (game_cfg.xmb == 0)) + 8;
-    x2 = DrawButton2(x2, y2, 0, "  Retail  ", (game_cfg.xmb == 1)) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  Debug  ", /*(game_cfg.xmb == 0)*/ 0) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  Retail  ", /*(game_cfg.xmb == 1)*/ 0) + 8;
 
     y2+= 48;
 
     x2 = DrawButton1(x + 32, y2, 240, "Online Updates", (flash && select_option == 2))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, "  On  ", (game_cfg.updates == 0)) + 8;
-    x2 = DrawButton2(x2, y2, 0, "  Off  ", (game_cfg.updates != 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  On  ", /*(game_cfg.updates == 0)*/ 0) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  Off  ", /*(game_cfg.updates != 0)*/ 0) + 8;
 
     y2+= 48;
 
     x2 = DrawButton1(x + 32, y2, 240, "Extern EBOOT.BIN", (flash && select_option == 3))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, "  On  ", (game_cfg.ext_ebootbin != 0)) + 8;
-    x2 = DrawButton2(x2, y2, 0, "  Off  ", (game_cfg.ext_ebootbin == 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  On  ", /*(game_cfg.ext_ebootbin != 0)*/ 0) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  Off  ", /*(game_cfg.ext_ebootbin == 0)*/ 0) + 8;
 
     y2+= 48;
 
