@@ -24,7 +24,7 @@ CXXFLAGS	+= -g -O2 -Wall
 CFLAGS		+=  -DMANAGER_DIR="$(APPID)"
 
 #PPU_EMBEDDED_SRCS += data355/patch.txt data355/payload.bin
-CFLAGS		+=  -DUSE_MEMCPY_SYSCALL
+CFLAGS		+=  -DUSE_MEMCPY_SYSCALL -DWITH_SYS8ASM
 CFLAGS		+=  -DWITH_CFW355
 SOURCE		+=	source/payload355
 INCLUDE		+=	include/payload355

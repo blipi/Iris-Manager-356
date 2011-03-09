@@ -1606,7 +1606,7 @@ void draw_screen1(float x, float y)
                 int use_cache = 0;
 
                 if(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title[0] == '_') {
-                    
+                    #if 0
                     sprintf(temp_buffer, "%s/cache/%s/%s", self_path, 
                     directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id, "/paths.dir");
 
@@ -1626,7 +1626,12 @@ void draw_screen1(float x, float y)
                  
 
                  use_cache = 1;
+                    #endif
 
+                    sprintf(temp_buffer, 
+                            "%s\n\nMarked as not executable - Contains splited files (+2Gb)", 
+                            directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title);
+                    DrawDialogOK(temp_buffer);return;
                 }
                 
                  // load game config
@@ -1770,7 +1775,7 @@ void draw_screen1(float x, float y)
                             }
                            
 
-                            sys8_memcpy(dest_table_addr, (uint64_t) &open_table, sizeof(path_open_table));
+                            sys36_memcpy(dest_table_addr, (uint64_t) &open_table, sizeof(path_open_table));
 
                             // set the path table
                             sys8_path_table( dest_table_addr);
@@ -2408,6 +2413,8 @@ void draw_configs(float x, float y, int index)
     if(new_pad & BUTTON_CROSS) {
      
         switch(select_option) {
+            //removed sys8 calls not supported yet on 3.55
+            #if 0
             case 0:
                 ROT_INC(game_cfg.perm, 2, 0);
                 break;
@@ -2420,6 +2427,7 @@ void draw_configs(float x, float y, int index)
             case 3:
                 ROT_INC(game_cfg.ext_ebootbin, 1, 0);
                 break;
+            #endif
             case 4:
                 ROT_INC(game_cfg.bdemu, 1, 0);
                 break;
@@ -2459,6 +2467,8 @@ void draw_configs(float x, float y, int index)
     if(new_pad & BUTTON_LEFT) {
      
         switch(select_option) {
+            //removed sys8 calls not supported yet on 3.55
+            #if 0
             case 0:
                 ROT_DEC(game_cfg.perm, 0, 2);
                 break;
@@ -2471,6 +2481,7 @@ void draw_configs(float x, float y, int index)
             case 3:
                 ROT_DEC(game_cfg.ext_ebootbin, 0, 1);
                 break;
+            #endif
             case 4:
                 ROT_DEC(game_cfg.bdemu, 0, 1);
                 break;
@@ -2482,6 +2493,8 @@ void draw_configs(float x, float y, int index)
      if(new_pad & BUTTON_RIGHT) {
      
         switch(select_option) {
+            //removed sys8 calls not supported yet on 3.55
+            #if 0
             case 0:
                 ROT_INC(game_cfg.perm, 2, 0);
                 break;
@@ -2494,6 +2507,7 @@ void draw_configs(float x, float y, int index)
             case 3:
                 ROT_INC(game_cfg.ext_ebootbin, 1, 0);
                 break;
+            #endif
             case 4:
                 ROT_INC(game_cfg.bdemu, 1, 0);
                 break;

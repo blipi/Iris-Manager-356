@@ -17,7 +17,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
 #include <psl1ght/lv2.h>
@@ -258,6 +257,14 @@ void remove_new_poke(void)
 	pokeq(NEW_POKE_SYSCALL_ADDR + 8, 0xFBC100F0FBE100F8ULL);
 }
 
+
+/* SYS36 utils */
+void sys36_memcpy( u64 to, const u64 from, size_t sz)
+{
+    install_lv2_memcpy();
+    lv2_memcpy( to, from, sz);
+    remove_lv2_memcpy();
+}
 
 /******************************************************************************************************************************************************/
 /* BDVDEMU FUNCTIONS                                                                                                                                  */
