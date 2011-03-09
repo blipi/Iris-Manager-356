@@ -1629,7 +1629,7 @@ void draw_screen1(float x, float y)
                     #endif
 
                     sprintf(temp_buffer, 
-                            "%s\n\nMarked as not executable - Contains splited files (+2Gb)", 
+                            "%s\n\nMarked as not executable - Contains splited files >= 4GB", 
                             directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title);
                     DrawDialogOK(temp_buffer);return;
                 }

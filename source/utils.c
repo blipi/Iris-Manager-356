@@ -668,6 +668,8 @@ static char filecached[1][2][1024];
 
 static char * path_cache = NULL;
 
+static s64 copy_total_size = 0;
+
 static int fast_copy_add(char *pathr, char *pathw, char *file)
 {
 	int size_mem;
@@ -834,6 +836,7 @@ int fast_copy_process()
 	static int id_r = -1, id_w = -1;
 
 	int error = 0;
+    int time_left = 0;
 
 	int i_reading = 0;
 
@@ -1157,9 +1160,18 @@ int fast_copy_process()
 
             
         int seconds = (int) (time(NULL) - time_start);
+        //calc time left
+        if(seconds)
+        {
+            int tleft = ((copy_total_size - global_device_bytes) * seconds) / global_device_bytes;
+            if( abs(time_left - tleft) >= 5) //more than 5 secs change to update time
+                time_left = tleft;
+        }
+        
 
-        sprintf(string1, "Copying. File: %i Time: %2.2i:%2.2i:%2.2i %2.2i/100 Vol: %1.2f GB\n", file_counter, seconds / 3600, (seconds / 60) % 60, 
-            seconds % 60, (int)(write_end * 100ULL / write_size), ((double) global_device_bytes) / (1024.0* 1024.* 1024.0));
+        sprintf(string1, "Copying. File: %i (%2.2i%%) Time Left: %2.2i:%2.2i:%2.2i %1.2f/%1.2f GB\n", file_counter, (int)(write_end * 100ULL / write_size), 
+                    time_left / 3600, (time_left / 60) % 60, time_left % 60, ((double) global_device_bytes) / (1024.0* 1024.* 1024.0),
+                    ((double) copy_total_size/ (1024.0 * 1024. * 1024.0)));
             
         cls2();
 
@@ -1351,6 +1363,78 @@ static int my_game_test(char *path)
 return 0;
 }
 
+static int my_game_countsize(char *path)
+{
+    DIR  *dir;
+    dir=opendir (path);
+    if(!dir) return -1;
+
+    while(1)
+    {
+		struct dirent *entry=readdir (dir);
+		if(!entry) break;
+
+		if(entry->d_name[0]=='.' && entry->d_name[1]==0) continue;
+		if(entry->d_name[0]=='.' && entry->d_name[1]=='.' && entry->d_name[2]==0) continue;
+
+		if((entry->d_type & DT_DIR))
+		{
+			char *d1= (char *) malloc(1024);
+				
+			if(!d1) {closedir (dir);DPrintf("malloc() Error!!!\n\n");abort_copy=2;return -1;}
+			sprintf(d1,"%s/%s", path, entry->d_name);
+			my_game_countsize(d1);
+			free(d1);
+
+			if(abort_copy) break;
+		}
+		else
+		{
+			char *f= (char *) malloc(1024);
+			struct stat s;
+					
+			s64 size = 0LL;
+
+			if(!f) {DPrintf("malloc() Error!!!\n\n");abort_copy=2;closedir (dir);return -1;}
+			sprintf(f,"%s/%s", path, entry->d_name);
+
+			if(stat(f, &s)<0) {abort_copy=3;DPrintf("File error!!!\n -> %s\n\n", f);if(f) free(f);break;}
+
+			size= s.st_size;
+                
+			if(f) free(f);
+				
+   	        file_counter++;
+				
+		    copy_total_size+=size;
+			
+		    sprintf(string1,"Checking Size of File: %i Vol: %1.2f GB\n", file_counter, ((double) copy_total_size)/(1024.0*1024.*1024.0));
+		    cls2();
+
+            strcpy(dbg_str1, string1);
+            strcpy(dbg_str2, "Hold /\\ to Abort");
+            DbgDraw();
+                
+            tiny3d_Flip();
+
+            ps3pad_read();
+
+            if(new_pad & BUTTON_TRIANGLE)
+			{
+			    abort_copy=1;
+			}
+			
+		    if(abort_copy) break;
+
+		}
+
+	}
+
+	closedir (dir);
+
+return 0;
+}
+
 static int my_game_delete(char *path)
 {
 	DIR  *dir;
@@ -1533,6 +1617,11 @@ static char filename[1024];
 void copy_from_selection(int game_sel)
 {
     copy_split_to_cache = 0;
+    copy_total_size = 0LL;
+    file_counter = 0;
+
+    my_game_countsize(directories[game_sel].path_name);
+    if(abort_copy) return; //abort by user or got an error
 
     if(directories[game_sel].flags & 2048)  {copy_from_bluray();return;}
 
@@ -1553,7 +1642,8 @@ void copy_from_selection(int game_sel)
             
             if((fdevices >> n) & 1) {
 
-                sprintf(filename, "%s\n\n%s HDD0 %s USB00%c?", directories[game_sel].title, "Want to copy from", "to", 47 + n); 
+                sprintf(filename, "%s\n\n%s HDD0 %s USB00%c?\nVol: %1.2f GB", directories[game_sel].title, "Want to copy from", "to", 47 + n,
+                        ((double) copy_total_size)/(1024.0*1024.*1024.0)); 
 
                 ret = msgDialogOpen2( mdialogyesno, filename, my_dialog, (void*) 0x0000aaaa, NULL );
                 
@@ -1584,7 +1674,7 @@ void copy_from_selection(int game_sel)
                 
         }
 
-    } else if(fdevices & 1) {
+    } else if(fdevices & 1) { //is usb
 
         for(n = 1; n < 11; n++) {
             if((directories[game_sel].flags >> n) & 1) break;
@@ -1596,8 +1686,9 @@ void copy_from_selection(int game_sel)
         
         dest = 0;
 
-        sprintf(filename, "%s\n\n%s USB00%c %s HDD0?", directories[game_sel].title, "Want to copy from", 47 + n, "to"); 
-        
+        sprintf(filename, "%s\n\n%s USB00%c %s HDD0?\nVol: %1.2f GB", directories[game_sel].title, "Want to copy from", 47 + n, "to", 
+                        ((double) copy_total_size)/(1024.0*1024.*1024.0)); 
+
         dialog_action = 0;
         ret = msgDialogOpen2( mdialogyesno, filename, my_dialog, (void*)0x0000aaaa, NULL );
             
@@ -1821,8 +1912,8 @@ void copy_from_bluray()
         
         if((fdevices >> n) & 1) {
 
-            if(n == 0) sprintf(filename, "%s\n\n%s BDVD %s HDD0?", bluray_game, "Want to copy from", "to"); 
-            else sprintf(filename, "%s\n\n%s BDVD %s USB00%c?",  bluray_game, "Want to copy from", "to", 47 + n); 
+            if(n == 0) sprintf(filename, "%s\n\n%s BDVD %s HDD0?\nVol: %1.2f GB", bluray_game, "Want to copy from", "to", ((double) copy_total_size)/(1024.0*1024.*1024.0));
+            else sprintf(filename, "%s\n\n%s BDVD %s USB00%c?\nVol: %1.2f GB",  bluray_game, "Want to copy from", "to", 47 + n, ((double) copy_total_size)/(1024.0*1024.*1024.0));
 
             ret = msgDialogOpen2( mdialogyesno, filename, my_dialog, (void*) 0x0000aaaa, NULL);
             
