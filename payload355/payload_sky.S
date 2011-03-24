@@ -82,7 +82,7 @@ buffer:
     nop
 .org 0x298 # If you change that you also need to change the jump in patch.txt
 open_hook:
-#if 0
+/* prev open code
     stdu    %sp, -0xA0(%sp)
     mflr    %r0
     std    %r28, 0x80(%sp)
@@ -92,8 +92,9 @@ open_hook:
     std    %r27, 0x78(%sp)
     std    %r0, 0xB0(%sp)
     mr    %r28, %r4
-#endif
-//overwriten by the jump :D
+    b jump_to_open_hook // prev patched (mr    %r29, %r3)
+*/
+//overwriten by the jump
     mr    %r29, %r3
 
 check_path_dvd:
@@ -142,5 +143,7 @@ aDev_bdvd:    .string    "/dev_bdvd"
 aApp_home:    .string    "/app_home"
 
 .org 0x5B8
-// next lv2 code
-//    stdu    %sp, -0x80(%sp)
+/* next lv2 code
+    stdu    %sp, -0x80(%sp)
+*/
+

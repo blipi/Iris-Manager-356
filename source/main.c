@@ -893,19 +893,20 @@ s32 main(s32 argc, const char* argv[])
             __asm__("sync");
             sleep(1);
 
-    //        flag = sys8_enable(0);
-    //        n = sys8_enable(hmanager_key);
-
             sprintf(temp_buffer, "PAYLOAD LOADED: TEST END!");
             break;
 		case 1:
-            sprintf(temp_buffer, "OLD SYSCALL 36 RESIDENT, RESPECT!\nNO PAYLOAD LOADED");
+            sprintf(temp_buffer, "OLD SYSCALL 36 RESIDENT, RESPECT!\nNO PAYLOAD LOADED, REBOOT");
             break;
 		case 2:
             sprintf(temp_buffer, "PAYLOAD RESIDENT");
             break;
 
 	}
+
+    //check sys8 ?
+    //        flag = sys8_enable(0);
+    //        n = sys8_enable(hmanager_key);
 
     tiny3d_Init(1024*1024*2);
     ioPadInit(7);
@@ -2653,6 +2654,7 @@ void draw_gbloptions(float x, float y)
                 background_sel &= 3;
                 manager_cfg.background_sel = background_sel;
                 SaveManagerCfg();
+
                 break;
 
             case 3:

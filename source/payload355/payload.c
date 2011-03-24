@@ -27,9 +27,6 @@
 
 #include "payload_sky.bin.h"
 #include "payload_syscall36.bin.h"
-#include "payload_syscall36_new.bin.h"
-#include "payload_hermes.bin.h"
-#include "payload_wanin2.bin.h"
 
 /* removed, better use direct memory patch */
 /* quick and safe */
@@ -77,12 +74,12 @@ static inline void _poke32(u64 addr, uint32_t val)
 
 int is_payload_loaded(void)
 {
-	//1st syscall 36 test
+	//1st classic syscall 36 check
 	u64 *tmp = (u64 *) (u64) & payload_syscall36_bin[0]; //syscall 36 payload
 	if(peekq(0x80000000002be4a0ULL) == *tmp)
 	    return 1;
 
-    //2nd syscall 36 sky mod test
+    //2nd new syscall 36 - sky mod check
 	if(peekq(0x800000000000ef50ULL) == 0x534B313000000000ULL) //SK10 HEADER
 	    return 2;
 
@@ -196,7 +193,7 @@ void load_payload(void)
 
 }
 
-
+#if 0
 void load_payload_syscall36old(void)
 {
 
@@ -382,6 +379,7 @@ void load_payload_method2 (void)
 	*/
 
 }
+#endif
 
 int map_lv1(void)
 {
