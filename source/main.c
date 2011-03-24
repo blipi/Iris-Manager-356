@@ -794,7 +794,7 @@ static char filename[1024];
 
 s32 main(s32 argc, const char* argv[])
 {
-	int flag = 0;
+	int mode = 0;
     int n;
     
     int test1 = 0x100;
@@ -803,8 +803,6 @@ s32 main(s32 argc, const char* argv[])
     u32 entry = 0;
     u32 segmentcount = 0;
     sysSpuSegment * segments;
-
-    //flag = send_payload_code();
 
     atexit(fun_exit);
 
@@ -847,28 +845,13 @@ s32 main(s32 argc, const char* argv[])
             }
         }
     }
-#if 0
-    if(!flag) {
-        lv2launch(0x80000000007e0000ULL);
-        __asm__("sync");
-        sleep(1);
-    }
-    
-    if(sys8_enable(0) < 0) {
-        if(sys8_enable(hmanager_key) < 0) {
-            tiny3d_Init(1024*1024);
 
-            ioPadInit(7);
-            
-            DrawDialogOK("Invalid payload or payload locked");
+    mode = is_payload_loaded();
 
-            exit(0);
-        }
-    }
-#endif
-    switch(is_payload_loaded())
+    switch(mode)
     {
-        case 0: //no payload installed
+        case WANIN_PAYLOAD: //payload WaninV2 CFW
+        case ZERO_PAYLOAD: //no payload installed
     		install_new_poke(); /* need for patch lv2 */
 
     		if (!map_lv1()) {
@@ -888,12 +871,12 @@ s32 main(s32 argc, const char* argv[])
             __asm__("sync");
             sleep(1); /* dont touch! nein! */
 
-    		load_payload();
+    		load_payload(mode);
 
             __asm__("sync");
             sleep(1);
 
-            sprintf(temp_buffer, "PAYLOAD LOADED: TEST END!");
+            sprintf(temp_buffer, "PAYLOAD LOADED: TEST END (mode=%i)", mode);
             break;
 		case 1:
             sprintf(temp_buffer, "OLD SYSCALL 36 RESIDENT, RESPECT!\nNO PAYLOAD LOADED, REBOOT");
@@ -948,7 +931,8 @@ s32 main(s32 argc, const char* argv[])
     LoadManagerCfg();
 
 
-    if(flag ==  1) {
+    if(mode ==  WANIN_PAYLOAD) 
+    {
         float x = 0.0f, y = 0.0f;
 
         cls();
@@ -963,9 +947,7 @@ s32 main(s32 argc, const char* argv[])
         DrawBox(x, y, 65535.0f, 640.0f, 360, 0x30003018);
 
         x= 0.0; y = 512.0f/2.0f - 32.0f;
-        if(sys8_enable(0) < 0x102) DrawFormatString(0, y, "Payload Resident Is Old");
-
-            else DrawFormatString(0, y, "Payload Is Resident");
+        DrawFormatString(0, y, "Payload WaninV2 Patched");
         
         SetFontAutoCenter(0);
         tiny3d_Flip();

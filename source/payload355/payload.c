@@ -77,13 +77,17 @@ int is_payload_loaded(void)
 	//1st classic syscall 36 check
 	u64 *tmp = (u64 *) (u64) & payload_syscall36_bin[0]; //syscall 36 payload
 	if(peekq(0x80000000002be4a0ULL) == *tmp)
-	    return 1;
+	    return SYS36_PAYLOAD;
 
     //2nd new syscall 36 - sky mod check
 	if(peekq(0x800000000000ef50ULL) == 0x534B313000000000ULL) //SK10 HEADER
-	    return 2;
+	    return SKY10_PAYLOAD;
 
-	return 0;
+    //WaninV2 CFW
+	if(peekq(0x8000000000079d80ULL) == 0x3880000090830000ULL) //WaninV2
+	    return WANIN_PAYLOAD;
+
+	return ZERO_PAYLOAD;
 	
 }
 
@@ -145,7 +149,7 @@ void remove_payload_exploit(void)
 }
 
 
-void load_payload(void)
+void load_payload(int mode)
 {
 
     install_lv2_memcpy();
@@ -155,6 +159,46 @@ void load_payload(void)
 				   sizeof(payload_sky_bin));
     remove_lv2_memcpy();
 
+    if (mode == WANIN_PAYLOAD)
+    {
+        /* WaninV2 PATCHES (+)*/
+        /*
+            -00079d80  38 84 ff fa 7c 08 02 a6  f8 21 ff 91 2b 84 00 36  |8...|....!..+..6| (addi ...)
+            +00079d80  38 80 00 00 90 83 00 00  4e 80 00 20 2b 84 00 36  |8.......N.. +..6| (return 0? - li %r4, 0)
+        */
+        //restore
+        _poke  (0x079d80, 0x3884fffa7c0802a6);
+        _poke32(0x079d88, 0x4e800020);
+
+        /*
+            -00055dc0  e8 01 00 c0 7f e3 07 b4  eb 41 00 80 eb 61 00 88  |.........A...a..|
+            +00055dc0  e8 01 00 c0 38 60 00 00  eb 41 00 80 eb 61 00 88  |....8`...A...a..| (add li 0 - 0x55DC4)
+            
+            -00055f20  e8 62 98 28 7c 84 07 b4  48 23 a8 49 3f e0 80 01  |.b.(|...H#.I?...|
+            +00055f20  e8 62 98 28 7c 84 07 b4  60 00 00 00 3f e0 80 01  |.b.(|...`...?...| (add nop - 0x55F28)
+            
+            -0007af70  4b ff f4 ed 54 63 06 3e  2f 83 00 00 41 9e 00 20  |K...Tc.>/...A.. |
+            +0007af70  4b ff f4 ed 54 63 06 3e  2f 83 00 00 60 00 00 00  |K...Tc.>/...`...| (add nop - 0x7AF7C)
+        */
+        //restore
+        _poke32(0x055dc4, 0x7fe307b4);
+        _poke32(0x055f28, 0x4823a849);
+        _poke32(0x07af7c, 0x419e0020);
+
+        /*
+            -00024e40  f9 21 00 a0 4b fe 99 ad  54 63 06 3e 2f 83 00 00  |.!..K...Tc.>/...|
+            +00024e40  f9 21 00 a0 4b fe a5 c5  54 63 06 3e 2f 83 00 00  |.!..K...Tc.>/...| (sys8 configure jump? - 0xF408)
+
+            -000c1dd0  4b f4 ca 21 e8 01 00 a0  78 63 06 20 7c 08 03 a6  |K..!....xc. |...|
+            +000c1dd0  4b f4 d6 39 e8 01 00 a0  78 63 06 20 7c 08 03 a6  |K..9....xc. |...| (sys8 configure jump? - 0xF408)
+        */
+        //restore
+        _poke32(0x024e44, 0x4bfe99ad);
+        _poke32(0x0c1dd0, 0x4bf4ca21);
+
+    }
+
+    /* BASIC PATCHES SYS36 */
     // by 2 anonymous people
     _poke32(0x55f14, 0x60000000);
     _poke32(0x55f1c, 0x48000098);
@@ -162,34 +206,18 @@ void load_payload(void)
     _poke32(0x7af7c, 0x60000000);
     _poke(0x55EA0, 0x63FF003D60000000);  // fix 8001003D error 
     _poke(0x55F64, 0x3FE080013BE00000);  // fix 8001003E error 
-    
 
-/*
--00079d80  38 84 ff fa 7c 08 02 a6  f8 21 ff 91 2b 84 00 36  |8...|....!..+..6| (addi ...)
-+00079d80  38 80 00 00 90 83 00 00  4e 80 00 20 2b 84 00 36  |8.......N.. +..6| (return 0? - li %r4, 0)
-*/
-    //_poke(0x079d80,0x3880000090830000);
-    //_poke(0x079d88,0x4e8000202b840036);
-
-/*
-00055dc0  e8 01 00 c0 38 60 00 00  eb 41 00 80 eb 61 00 88  |....8`...A...a..| (add li 0 - 0x55DC4)
-00055f20  e8 62 98 28 7c 84 07 b4  60 00 00 00 3f e0 80 01  |.b.(|...`...?...| (add nop - 0x55F28)
-0007af70  4b ff f4 ed 54 63 06 3e  2f 83 00 00 60 00 00 00  |K...Tc.>/...`...| (add nop - 0x7AF7C)
-*/
-    //_poke32(0x055dc4, 0x38600000);
-    //_poke32(0x055f28, 0x60000000);
-    //_poke32(0x07af7c, 0x60000000);
-
-/*
--002b3290  f8 01 00 b0 7c 9c 23 78  7c 7d 1b 78 4b d9 b4 11  |....|.#x|}.xK...|
-+002b3290  f8 01 00 b0 7c 9c 23 78  4b d5 bf 40 4b d9 b4 11  |....|.#xK..@K...| (openhook jump - 0xF1D8)
-*/
+    /*
+        -002b3290  f8 01 00 b0 7c 9c 23 78  7c 7d 1b 78 4b d9 b4 11  |....|.#x|}.xK...|
+        +002b3290  f8 01 00 b0 7c 9c 23 78  4b d5 bf 40 4b d9 b4 11  |....|.#xK..@K...| (openhook jump - 0xF1D8)
+    */
     _poke(0x2b3298, 0x4bd5bf404bd9b411ULL); //jump hook
 
-/*
-00346690  80 00 00 00 00 32 49 68  80 00 00 00 00 32 49 68  Ç....2IhÇ....2Ih
-*/
+    /*
+        00346690  80 00 00 00 00 32 49 68  80 00 00 00 00 32 49 68  Ç....2IhÇ....2Ih
+    */
     _poke(0x346690, 0x800000000000F010ULL); // syscall_map_open_desc - sys36
+    
 
 }
 

@@ -1,7 +1,21 @@
 /*
  * payload_sky.S -- Adds system call 36 and 8 code on custom firmware
- * 
- * It contains hermes, pl3 and psgroove parts of code
+ *                  It contains hermes, pl3 and psgroove parts of code
+ *
+ * Copyright (C) Youness Alaoui (KaKaRoTo)
+ * Copyright (C) Aaron Lindsay (Aaron')
+ * Copyright (C) (subdub)
+ * Copyright (C) (Hermes)
+ * Copyright (C) Miguel Boton (Waninkoko)
+ * Copyright (C) (D_Skywalk)
+ *
+ * This software is distributed under the terms of the GNU General Public
+ * License ("GPL") version 3, as published by the Free Software Foundation.
+ *
+ * This payload is a modified version of the original PSJailbreak's payload.
+ * The people behing PSJailbrak are the original authors and copyright holders
+ * of the code they wrote.
+ *
  */
 
 #include "firmware_symbols.h"
@@ -104,7 +118,6 @@ check_path_dvd:
     li    %r5, PATHSTR_LEN
     bl    ABS(strncmp)
     cmpldi    %r3, 0
-    //b return_org_open_func //exit now test 2
     bne    check_path_app //if not bdvd check app_home
     LOADI_LABEL2(%r31, buffer)
 
