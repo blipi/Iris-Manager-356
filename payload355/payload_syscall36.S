@@ -13,7 +13,7 @@
 aDS016lx016llx0:.string	"%d%s%016lx%016llx%016llx%s%s%08x%d%1d%1d%1dAAA\n"
 
 .org 0x30
-payload1_start:
+syscall36_map_dvd:
 		stdu	%sp, -0xD0(%sp)
 		mflr	%r0
 		std	%r0, 0xE0(%sp)
@@ -55,10 +55,10 @@ l_game_path_null:
 buffer:
 .org 0xd0
 		.long 0x80000000
-		.long BASE + payload1_start
+		.long BASE + syscall36_map_dvd
 
 .org 0x100	# If you change that you also need to change the jump in patch.txt
-payload2_start:
+open_hook:
 		stdu	%sp, -0xA0(%sp)
 		mflr	%r0
 		std	%r28, 0x80(%sp)

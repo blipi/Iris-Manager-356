@@ -796,14 +796,16 @@ s32 main(s32 argc, const char* argv[])
 {
 	int flag = 0;
     int n;
+    
+    int test1 = 0x100;
+    int test2 = 0x100;
 
     u32 entry = 0;
     u32 segmentcount = 0;
     sysSpuSegment * segments;
 
-#ifndef WITH_CFW355
-    flag = send_payload_code();
-#endif
+    //flag = send_payload_code();
+
     atexit(fun_exit);
 
     if(SysLoadModule(SYSMODULE_FS) ==0)      inited|= INITED_FS;      else exit(0);
@@ -845,8 +847,7 @@ s32 main(s32 argc, const char* argv[])
             }
         }
     }
-
-#ifndef WITH_CFW355
+#if 0
     if(!flag) {
         lv2launch(0x80000000007e0000ULL);
         __asm__("sync");
@@ -864,33 +865,52 @@ s32 main(s32 argc, const char* argv[])
             exit(0);
         }
     }
-
-#else
-
-	if (!is_payload_loaded()) {
-
-		install_new_poke(); /* need for patch lv2 */
-
-		if (!map_lv1()) {
-			remove_new_poke();
-
-            tiny3d_Init(1024*1024);
-            ioPadInit(7);
-            DrawDialogOK("Error Loading Payload: map failed?!");
-			exit(0);
-		}
-
-		patch_lv2_protection(); /* yaw */
-		remove_new_poke(); /* restore pokes */
-
-		unmap_lv1();  /* 3.55 need unmap? */
-
-        __asm__("sync");
-        sleep(1); /* dont touch! nein! */
-
-		load_payload();
-	}
 #endif
+    switch(is_payload_loaded())
+    {
+        case 0: //no payload installed
+    		install_new_poke(); /* need for patch lv2 */
+
+    		if (!map_lv1()) {
+    			remove_new_poke();
+
+                tiny3d_Init(1024*1024);
+                ioPadInit(7);
+                DrawDialogOK("Error Loading Payload: map failed?!");
+    			exit(0);
+    		}
+
+    		patch_lv2_protection(); /* yaw */
+    		remove_new_poke(); /* restore pokes */
+    
+    		unmap_lv1();  /* 3.55 need unmap? */
+    
+            __asm__("sync");
+            sleep(1); /* dont touch! nein! */
+
+    		load_payload();
+
+            __asm__("sync");
+            sleep(1);
+
+    //        flag = sys8_enable(0);
+    //        n = sys8_enable(hmanager_key);
+
+            sprintf(temp_buffer, "PAYLOAD LOADED: TEST END!");
+            break;
+		case 1:
+            sprintf(temp_buffer, "OLD SYSCALL 36 RESIDENT, RESPECT!\nNO PAYLOAD LOADED");
+            break;
+		case 2:
+            sprintf(temp_buffer, "PAYLOAD RESIDENT");
+            break;
+
+	}
+
+    tiny3d_Init(1024*1024*2);
+    ioPadInit(7);
+    DrawDialogOK(temp_buffer);
+    //exit(0);
 
     usleep(250000);
 
@@ -905,9 +925,9 @@ s32 main(s32 argc, const char* argv[])
 
     mkdir(temp_buffer, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
         
-    tiny3d_Init(1024*1024*2);
+    //tiny3d_Init(1024*1024*2);
 
-    ioPadInit(7);
+    //ioPadInit(7);
 
 	// Load texture
 
@@ -927,7 +947,7 @@ s32 main(s32 argc, const char* argv[])
     LoadManagerCfg();
 
 
-    if(flag == 1) {
+    if(flag ==  1) {
         float x = 0.0f, y = 0.0f;
 
         cls();
@@ -989,8 +1009,11 @@ s32 main(s32 argc, const char* argv[])
 	forcedevices=0;
 	find_device=0;
 
-    syscall36("/dev_bdvd");
-    sys8_perm_mode((u64) 2);
+    test1 = syscall36("/dev_bdvd");
+    test2 = sys8_perm_mode((u64) 2);
+
+    sprintf(temp_buffer, "TEST SYS36! s36=%i s8=%i", test1, test2);
+    DrawDialogOK(temp_buffer);
 
     unpatch_bdvdemu();
 
