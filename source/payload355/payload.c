@@ -1,14 +1,15 @@
 /*                                                                                                                                                                                 
- * Copyright (C) 2010 drizzt                                                                                                                                                       
- *                                                                                                                                                                                 
- * Authors:                                                                                                                                                                        
- * drizzt <drizzt@ibeglab.org>                                                                                                                                                     
+ * Copyright (C) 2010 drizzt
+ *
+ * Authors:
+ * drizzt <drizzt@ibeglab.org>
  * flukes1
  * kmeaw
- *                                                                                                                                                                                 
- * This program is free software; you can redistribute it and/or modify                                                                                                            
- * it under the terms of the GNU General Public License as published by                                                                                                            
- * the Free Software Foundation, version 3 of the License.                                                                                                                         
+ * D_Skywalk
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
  */
 
 #include <stdio.h>
@@ -36,58 +37,58 @@ extern char temp_buffer[4096];
 
 u64 peekq(u64 addr)
 {
-	return Lv2Syscall1(6, addr);
+    return Lv2Syscall1(6, addr);
 }
 
 
 void pokeq(u64 addr, u64 val)
 {
-	Lv2Syscall2(poke_syscall, addr, val);
+    Lv2Syscall2(poke_syscall, addr, val);
 }
 
 void pokeq32(u64 addr, uint32_t val)
 {
-	uint32_t next = peekq(addr) & 0xffffffff;
-	pokeq(addr, (u64) val << 32 | next);
+    uint32_t next = peekq(addr) & 0xffffffff;
+    pokeq(addr, (u64) val << 32 | next);
 }
 
 void lv1_poke(u64 address, u64 value)
 {
-	Lv2Syscall2(7, HV_BASE + address, value);
+    Lv2Syscall2(7, HV_BASE + address, value);
 }
 
 static inline void _poke(u64 addr, u64 val)
 {
-	pokeq(0x8000000000000000ULL + addr, val);
+    pokeq(0x8000000000000000ULL + addr, val);
 }
 
 static inline void _poke32(u64 addr, uint32_t val)
 {
-	pokeq32(0x8000000000000000ULL + addr, val);
+    pokeq32(0x8000000000000000ULL + addr, val);
 }
 
 int is_payload_loaded(void)
 {
-	//1st classic syscall 36 check
-	u64 *tmp = (u64 *) (u64) & payload_syscall36_bin[0]; //syscall 36 payload
-	if(peekq(0x80000000002be4a0ULL) == *tmp)
-	    return SYS36_PAYLOAD;
+    //1st classic syscall 36 check
+    u64 *tmp = (u64 *) (u64) & payload_syscall36_bin[0]; //syscall 36 payload
+    if(peekq(0x80000000002be4a0ULL) == *tmp)
+        return SYS36_PAYLOAD;
 
     //2nd new syscall 36 - sky mod check
-	if(peekq(0x800000000000ef50ULL) == 0x534B313000000000ULL) //SK10 HEADER
-	    return SKY10_PAYLOAD;
+    if(peekq(0x800000000000ef50ULL) == 0x534B313000000000ULL) //SK10 HEADER
+        return SKY10_PAYLOAD;
 
     //WaninV2 CFW
-	if(peekq(0x8000000000079d80ULL) == 0x3880000090830000ULL) //WaninV2
-	    return WANIN_PAYLOAD;
+    if(peekq(0x8000000000079d80ULL) == 0x3880000090830000ULL) //WaninV2
+        return WANIN_PAYLOAD;
 
-	return ZERO_PAYLOAD;
-	
+    return ZERO_PAYLOAD;
+    
 }
 
 inline static void lv2_memcpy( u64 to, const u64 from, size_t sz)
 {
-	Lv2Syscall3(NEW_POKE_SYSCALL, to, from, sz);
+    Lv2Syscall3(NEW_POKE_SYSCALL, to, from, sz);
 }
 
 inline static void lv2_memset( u64 dst, const u64 val, size_t sz)
@@ -99,47 +100,47 @@ inline static void lv2_memset( u64 dst, const u64 val, size_t sz)
 
     memset(tmp, val, sz);
     
-	Lv2Syscall3(NEW_POKE_SYSCALL, dst, (u64) tmp, sz);
+    Lv2Syscall3(NEW_POKE_SYSCALL, dst, (u64) tmp, sz);
 
-	free(tmp);
+    free(tmp);
 }
 
 inline void install_lv2_memcpy()
 {
-	/* install memcpy */
-	/* This does not work on some PS3s */
-	pokeq(NEW_POKE_SYSCALL_ADDR, 0x4800000428250000ULL);
-	pokeq(NEW_POKE_SYSCALL_ADDR + 8, 0x4182001438a5ffffULL);
-	pokeq(NEW_POKE_SYSCALL_ADDR + 16, 0x7cc428ae7cc329aeULL);
-	pokeq(NEW_POKE_SYSCALL_ADDR + 24, 0x4bffffec4e800020ULL);
+    /* install memcpy */
+    /* This does not work on some PS3s */
+    pokeq(NEW_POKE_SYSCALL_ADDR, 0x4800000428250000ULL);
+    pokeq(NEW_POKE_SYSCALL_ADDR + 8, 0x4182001438a5ffffULL);
+    pokeq(NEW_POKE_SYSCALL_ADDR + 16, 0x7cc428ae7cc329aeULL);
+    pokeq(NEW_POKE_SYSCALL_ADDR + 24, 0x4bffffec4e800020ULL);
 }
 
 inline void remove_lv2_memcpy()
 {
-	/* restore syscall */
-	remove_new_poke();
-	pokeq(NEW_POKE_SYSCALL_ADDR + 16, 0xebc2fe287c7f1b78ULL);
-	pokeq(NEW_POKE_SYSCALL_ADDR + 24, 0x3860032dfba100e8ULL);
+    /* restore syscall */
+    remove_new_poke();
+    pokeq(NEW_POKE_SYSCALL_ADDR + 16, 0xebc2fe287c7f1b78ULL);
+    pokeq(NEW_POKE_SYSCALL_ADDR + 24, 0x3860032dfba100e8ULL);
 }
 
 void install_payload_exploit(void)
 {
-	/* install jump to exploit */
-	pokeq(NEW_POKE_SYSCALL_ADDR, 0x7C6903A64E800420ULL); //mtctr   %r3 // bctr /* jump to exploit addr */
-	pokeq(NEW_POKE_SYSCALL_ADDR + 8, 0x4E8000204E800020ULL); // blr //blr /* maybe not need it */
-	poke_syscall = NEW_POKE_SYSCALL;
+    /* install jump to exploit */
+    pokeq(NEW_POKE_SYSCALL_ADDR, 0x7C6903A64E800420ULL); //mtctr   %r3 // bctr /* jump to exploit addr */
+    pokeq(NEW_POKE_SYSCALL_ADDR + 8, 0x4E8000204E800020ULL); // blr //blr /* maybe not need it */
+    poke_syscall = NEW_POKE_SYSCALL;
 }
 
 inline static int lv2_call_payload(u64 addr)
 {
-	return Lv2Syscall3(NEW_POKE_SYSCALL, (u64) addr, 0,0); /* call new syscall and jump to exploit */
+    return Lv2Syscall3(NEW_POKE_SYSCALL, (u64) addr, 0,0); /* call new syscall and jump to exploit */
 }
 
 
 void remove_payload_exploit(void)
 {
-	/* restore syscall */
-	remove_new_poke();
+    /* restore syscall */
+    remove_new_poke();
 }
 
 
@@ -147,10 +148,10 @@ void load_payload(int mode)
 {
 
     install_lv2_memcpy();
-	/* WARNING!! It supports only payload with a size multiple of 8 */
+    /* WARNING!! It supports only payload with a size multiple of 8 */
     lv2_memcpy(0x800000000000ef40ULL,
-				   (u64) payload_sky_bin, 
-				   sizeof(payload_sky_bin));
+                   (u64) payload_sky_bin, 
+                   sizeof(payload_sky_bin));
     remove_lv2_memcpy();
 
     /* BASIC PATCHES SYS36 */
@@ -180,10 +181,10 @@ void load_payload_syscall36old(int mode)
 {
 
     install_lv2_memcpy();
-	/* WARNING!! It supports only payload with a size multiple of 8 */
+    /* WARNING!! It supports only payload with a size multiple of 8 */
     lv2_memcpy(0x80000000002be4a0ULL, 
-				   (u64) payload_syscall36_bin, 
-				   sizeof(payload_syscall36_bin));
+                   (u64) payload_syscall36_bin, 
+                   sizeof(payload_syscall36_bin));
     remove_lv2_memcpy();
 
     /* by 2 anonymous people */
@@ -202,47 +203,47 @@ void load_payload_syscall36old(int mode)
 
 int map_lv1(void)
 {
-	int result = lv1_undocumented_function_114(0, 0xC, HV_SIZE, &mmap_lpar_addr);
-	if (result != 0) {
-		return 0;
-	}
+    int result = lv1_undocumented_function_114(0, 0xC, HV_SIZE, &mmap_lpar_addr);
+    if (result != 0) {
+        return 0;
+    }
 
-	result = mm_map_lpar_memory_region(mmap_lpar_addr, HV_BASE, HV_SIZE, 0xC, 0);
-	if (result) {
-		return 0;
-	}
+    result = mm_map_lpar_memory_region(mmap_lpar_addr, HV_BASE, HV_SIZE, 0xC, 0);
+    if (result) {
+        return 0;
+    }
 
-	return 1;
+    return 1;
 }
 
 void unmap_lv1(void)
 {
-	if (mmap_lpar_addr != 0)
-		lv1_undocumented_function_115(mmap_lpar_addr);
+    if (mmap_lpar_addr != 0)
+        lv1_undocumented_function_115(mmap_lpar_addr);
 }
 
 void patch_lv2_protection(void)
 {
-	// changes protected area of lv2 to first byte only
-	lv1_poke(0x363a78, 0x0000000000000001ULL);
-	lv1_poke(0x363a80, 0xe0d251b556c59f05ULL);
-	lv1_poke(0x363a88, 0xc232fcad552c80d7ULL);
-	lv1_poke(0x363a90, 0x65140cd200000000ULL);
+    // changes protected area of lv2 to first byte only
+    lv1_poke(0x363a78, 0x0000000000000001ULL);
+    lv1_poke(0x363a80, 0xe0d251b556c59f05ULL);
+    lv1_poke(0x363a88, 0xc232fcad552c80d7ULL);
+    lv1_poke(0x363a90, 0x65140cd200000000ULL);
 }
 
 void install_new_poke(void)
 {
-	// install poke with icbi instruction
-	pokeq(NEW_POKE_SYSCALL_ADDR, 0xF88300007C001FACULL);
-	pokeq(NEW_POKE_SYSCALL_ADDR + 8, 0x4C00012C4E800020ULL);
-	poke_syscall = NEW_POKE_SYSCALL;
+    // install poke with icbi instruction
+    pokeq(NEW_POKE_SYSCALL_ADDR, 0xF88300007C001FACULL);
+    pokeq(NEW_POKE_SYSCALL_ADDR + 8, 0x4C00012C4E800020ULL);
+    poke_syscall = NEW_POKE_SYSCALL;
 }
 
 void remove_new_poke(void)
 {
-	poke_syscall = 7;
-	pokeq(NEW_POKE_SYSCALL_ADDR, 0xF821FF017C0802A6ULL);
-	pokeq(NEW_POKE_SYSCALL_ADDR + 8, 0xFBC100F0FBE100F8ULL);
+    poke_syscall = 7;
+    pokeq(NEW_POKE_SYSCALL_ADDR, 0xF821FF017C0802A6ULL);
+    pokeq(NEW_POKE_SYSCALL_ADDR + 8, 0xFBC100F0FBE100F8ULL);
 }
 
 
