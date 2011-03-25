@@ -752,11 +752,6 @@ lv2_read_skip00:
 
 	LOADI_LABEL(%r31, GAME_NAME_PTR)
 
-#ifdef USB_MODULE
-	lwz     %r3, 0x10(%r31)
-	cmplwi  %r3, 0
-	beq     proceed
-#endif
 	ld      %r3, 0(%r31)
 	cmpldi  %r3, 0
 	beq     proceed

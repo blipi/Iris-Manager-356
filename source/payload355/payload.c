@@ -28,12 +28,6 @@
 #include "payload_sky.bin.h"
 #include "payload_syscall36.bin.h"
 
-/* removed, better use direct memory patch */
-/* quick and safe */
-#if 0
-#include "patch_syscall36_txt.bin.h"
-#endif
- 
 u64 mmap_lpar_addr;
 static int poke_syscall = 7;
 
@@ -181,7 +175,6 @@ void load_payload(int mode)
     _poke(0x3465b0, 0x80000000002e81e8ULL); // syscall 8 (disabled atm)
 
 }
-
 
 void load_payload_syscall36old(int mode)
 {

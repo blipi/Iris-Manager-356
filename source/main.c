@@ -40,10 +40,7 @@
 #include <libfont.h>
 
 #include "syscall8.h"
-
-#ifdef WITH_CFW355
 #include "payload355/payload.h"
-#endif
 
 #include "spu_soundmodule.bin.h" // load SPU Module
 #include "spu_soundlib.h"
@@ -421,52 +418,9 @@ int lv2launch(u64 addr)
 int syscall36(char * path) 
 { return Lv2Syscall1(36, (u64) path); }
 
-#ifndef WITH_CFW355
-int send_payload_code()
-{
-    int l, n;
-
-    u64 v = lv2peek(0x8000000000017CD0ULL);
-        
-    if(v != 0x4E8000203C608001ULL) return 1; // if syscall 8 is modified payload is resident...
-
-    if(sizeof (payload_groove_hermes_bin) > 0xfff) return 2; // payload too big...
-
-    /* i repeat 25 times the patch because it is possible fail patching (cache instruction problem? maybe only in syscall 9 patch
-    because the call of syscall 7) */
-    
-    for(l = 0; l < 25; l++) {
-        u8 * p = (u8 *) &payload_groove_hermes_bin[0];
-
-        
-        for(n = 0; n < sizeof (payload_groove_hermes_bin); n += 8) {
-        
-            static u64 value;
-
-            memcpy(&value, &p[n], 8);
-
-            lv2poke(0x80000000007e0000ULL + (u64) n, value);
-
-            __asm__("sync");
-
-            value =  lv2peek(0x8000000000000000ULL);
-
-            }
-        
-        // syscall 9 enable
-        lv2poke(0x8000000000017CE0ULL , 0x7C6903A64E800420ULL);
-        __asm__("sync");
-    }
-
-
-    return 0;
-}
-#endif
-
 typedef struct {
 
 	path_open_entry entries[3];
-
 	char arena[0x420*3];
 
 } path_open_table;
@@ -477,6 +431,8 @@ char self_path[MAXPATHLEN]= "/dev_hdd0/game/HMANAGER4";
 
 
 u64 hmanager_key = 0x1759829723742374ULL;
+
+/******************************************************************************************************************************************************/
 
 // manager
 
@@ -791,6 +747,8 @@ void Select_games_folder()
 }
 
 static char filename[1024];
+
+/******************************************************************************************************************************************************/
 
 s32 main(s32 argc, const char* argv[])
 {
@@ -1733,25 +1691,24 @@ void draw_screen1(float x, float y)
                     if(use_cache) {
                         u64 dest_table_addr;
                        
-                        sprintf(temp_buffer + 1024, "%s/cache/%s/%s", self_path, 
+                        sprintf(temp_buffer + 1024, "%s/cache/%s/%s", self_path,  //check replace (1024)
                         directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id, "/paths.dir");
                         
                         char *path = LoadFile(temp_buffer + 1024, &n);
 
                         if(path) {
-                            sprintf(temp_buffer + 1024, "%s/cache/%s/%s", self_path, 
+                            sprintf(temp_buffer + 1024, "%s/cache/%s/%s", self_path, //set replace (1024)
                                 directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id, path + 1024);
                              
                             path = strstr(path, "PS3_GAME/");
-                           
-                            sprintf(temp_buffer, "/dev_bdvd/%s", path);
+                            sprintf(temp_buffer, "/dev_bdvd/%s", path); //set compare (0)
 
                             if(game_cfg.ext_ebootbin) {
-                                sprintf(temp_buffer + 2048, "%s/self/%s.BIN", self_path, 
+                                sprintf(temp_buffer + 2048, "%s/self/%s.BIN", self_path, //set ext (2048)
                                 directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id);
                             }
                         
-                            sys8_path_table(0LL);
+                            sys8_path_table(0LL); //free
 
                             dest_table_addr= 0x80000000007FF000ULL-((sizeof(path_open_table)+15) & ~15);
                             open_table.entries[0].compare_addr= ((uint64_t) &open_table.arena[0]) - ((uint64_t) &open_table) + dest_table_addr;
