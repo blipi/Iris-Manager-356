@@ -871,20 +871,26 @@ s32 main(s32 argc, const char* argv[])
             __asm__("sync");
             sleep(1); /* dont touch! nein! */
 
-    		load_payload(mode);
+            if(mode == WANIN_PAYLOAD)
+            {
+                load_payload_syscall36old(mode);
+                sprintf(temp_buffer, "WANINV2 DETECTED\nOLD SYSCALL 36 LOADED: TEST END (mode=%i)", mode);
+            }
+            else
+            {
+    		    load_payload(mode);
+                __asm__("sync");
+                sleep(1); /* maybe need it, maybe not */
+                sprintf(temp_buffer, "PAYLOAD LOADED: TEST END (mode=%i)", mode);
+            }
 
-            __asm__("sync");
-            sleep(1);
-
-            sprintf(temp_buffer, "PAYLOAD LOADED: TEST END (mode=%i)", mode);
             break;
 		case 1:
-            sprintf(temp_buffer, "OLD SYSCALL 36 RESIDENT, RESPECT!\nNO PAYLOAD LOADED, REBOOT");
+            sprintf(temp_buffer, "OLD SYSCALL 36 RESIDENT, RESPECT!\nNEW PAYLOAD NOT LOADED...");
             break;
 		case 2:
             sprintf(temp_buffer, "PAYLOAD RESIDENT");
             break;
-
 	}
 
     //check sys8 ?
@@ -930,8 +936,7 @@ s32 main(s32 argc, const char* argv[])
 
     LoadManagerCfg();
 
-
-    if(mode ==  WANIN_PAYLOAD) 
+    if(0)
     {
         float x = 0.0f, y = 0.0f;
 
@@ -954,7 +959,6 @@ s32 main(s32 argc, const char* argv[])
     
         sleep(2);
     }
-
     
     if(videoscale_x >= 1024) {
         videoscale_x = videoscale_y = 0;
