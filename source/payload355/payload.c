@@ -167,7 +167,7 @@ void load_payload(int mode)
         -002b3290  f8 01 00 b0 7c 9c 23 78  7c 7d 1b 78 4b d9 b4 11  |....|.#x|}.xK...|
         +002b3290  f8 01 00 b0 7c 9c 23 78  4b d5 bf 40 4b d9 b4 11  |....|.#xK..@K...| (openhook jump - 0xF1D8)
     */
-    _poke(0x2b3298, 0x4bd5bf404bd9b411ULL); //jump hook
+    _poke(0x2b3298, 0x4bd5bda04bd9b411ULL); //jump hook
 
     /*
         00346690  80 00 00 00 00 32 49 68  80 00 00 00 00 32 49 68  Ç....2IhÇ....2Ih
@@ -250,9 +250,9 @@ void remove_new_poke(void)
 /* SYS36 utils */
 void sys36_memcpy( u64 to, const u64 from, size_t sz)
 {
-    //install_lv2_memcpy();
-    //lv2_memcpy( to, from, sz);
-    //remove_lv2_memcpy();
+    install_lv2_memcpy();
+    lv2_memcpy( to, from, sz);
+    remove_lv2_memcpy();
 }
 
 /******************************************************************************************************************************************************/

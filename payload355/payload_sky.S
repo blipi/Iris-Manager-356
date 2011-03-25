@@ -90,11 +90,7 @@ buffer:
     .long 0x80000000
     .long BASE + syscall36_map_dvd
 
-.org 0x28C    
-    nop
-    nop
-    nop
-.org 0x298 # If you change that you also need to change the jump in patch.txt
+.org 0xF8
 open_hook:
 /* prev open code
     stdu    %sp, -0xA0(%sp)
@@ -155,7 +151,7 @@ return_org_open_func:
 aDev_bdvd:    .string    "/dev_bdvd"
 aApp_home:    .string    "/app_home"
 
-.org 0x5B8
+.org 0x5B8 //max 0x5AC?
 /* next lv2 code
     stdu    %sp, -0x80(%sp)
 */

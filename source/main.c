@@ -1574,7 +1574,7 @@ void draw_screen1(float x, float y)
                 int use_cache = 0;
 
                 if(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title[0] == '_') {
-                    #if 0
+                    #if 1
                     sprintf(temp_buffer, "%s/cache/%s/%s", self_path, 
                     directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id, "/paths.dir");
 
@@ -1594,12 +1594,12 @@ void draw_screen1(float x, float y)
                  
 
                  use_cache = 1;
-                    #endif
-
+                    #else
                     sprintf(temp_buffer, 
                             "%s\n\nMarked as not executable - Contains splited files >= 4GB", 
                             directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title);
                     DrawDialogOK(temp_buffer);return;
+                    #endif
                 }
                 
                  // load game config
