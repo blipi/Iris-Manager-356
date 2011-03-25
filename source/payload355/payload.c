@@ -196,6 +196,20 @@ void load_payload(int mode)
         _poke32(0x024e44, 0x4bfe99ad);
         _poke32(0x0c1dd0, 0x4bf4ca21);
 
+        //other syscalls patch in WaninV2
+        //atm no need patch this, originals wanin patches above
+        //_poke(0x346688, 0x800000000000F1C4); //wanin patch syscall 35 (working?)
+        // it disables on 0x8000000000324968 ?
+        /*
+            -00019360  3c 60 80 01 60 63 00 03  4e 80 00 20 3c 60 80 01  |<`..`c..N.. <`..|
+            -00019370  60 63 00 03 4e 80 00 20  3c 60 80 01 60 63 00 03  |`c..N.. <`..`c..|
+            +00019360  7c 00 1f ac 4c 00 01 2c  4e 80 00 20 7c 00 18 ac  ||...L..,N.. |...|
+            +00019370  7c 00 04 ac 4e 80 00 20  3c 60 80 01 60 63 00 03  ||...N.. <`..`c..|
+        */
+        //_poke(0x019360,0x7c001fac4c00012c); //wanin patch syscall9
+        //_poke32(0x01936c, 0x4bfea5c5);      //wanin patch syscall10 (1/2)
+        //_poke32(0x019370, 0x7c0004ac);      //wanin patch syscall10 (2/2)
+
     }
 
     /* BASIC PATCHES SYS36 */
@@ -217,12 +231,12 @@ void load_payload(int mode)
         00346690  80 00 00 00 00 32 49 68  80 00 00 00 00 32 49 68  Ç....2IhÇ....2Ih
     */
     _poke(0x346690, 0x800000000000F010ULL); // syscall_map_open_desc - sys36
-    
+    _poke(0x3465b0, 0x80000000002e81e8ULL); // syscall 8 (disabled atm)
 
 }
 
-#if 0
-void load_payload_syscall36old(void)
+
+void load_payload_syscall36old(int mode)
 {
 
     install_lv2_memcpy();
@@ -246,6 +260,7 @@ void load_payload_syscall36old(void)
 
 }
 
+#if 0
 void load_payload_wanin2 (void) //_method3 - wanin2
 {
     install_lv2_memcpy();
@@ -278,7 +293,7 @@ void load_payload_wanin2 (void) //_method3 - wanin2
 
 //syscalls patch
     _poke(0x3465b0,0x800000000000F2E0); //syscall 8
-    _poke(0x346688,0x800000000000F1C4); //syscall 35 ?
+    _poke(0x346688,0x800000000000F1C4); //syscall 35 ?80 00 00 00 00 32 49 68
     //_poke(0x346690,0x800000000000F1C4); //syscall 36 ?
 
 //syscall 9/10 patch | we need this?
