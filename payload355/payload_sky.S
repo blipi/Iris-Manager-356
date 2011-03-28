@@ -22,6 +22,12 @@
 
 #define BASE        0xEF40
 #define PATHSTR_LEN    0x9
+#define PATHUSB_LEN    0xB //11
+
+#define DEBUG_HOOK 0
+
+#define SYS8_VERSION 0x6
+
 #define ABS(target) ((target) - (BASE) - .)
 
 // Dynamic macros to load a label into a register
@@ -86,35 +92,70 @@ l_game_path_null:
     blr
 
 buffer:
+    .quad 0
+    .quad 0
 .org 0xD0
     .long 0x80000000
     .long BASE + syscall36_map_dvd
+buffer_alloc:
+    .quad 0
+    .quad 0
+
+/*********************************************************************/
 
 .org 0xF8
 open_hook:
-/* prev open code
-    stdu    %sp, -0xA0(%sp)
-    mflr    %r0
-    std    %r28, 0x80(%sp)
-    std    %r29, 0x88(%sp)
-    std    %r31, 0x98(%sp)
-    std    %r26, 0x70(%sp)
-    std    %r27, 0x78(%sp)
-    std    %r0, 0xB0(%sp)
-    mr    %r28, %r4
-    b jump_to_open_hook // prev patched (mr    %r29, %r3)
-*/
-//overwriten by the jump
-    mr    %r29, %r3
+    //overwriten by the jump
+    mr        %r29, %r3 
+
+    MEM_BASE(%r31)
+    
+    LOAD_LABEL2(%r27, %r31, str_open_cmp)
+    ld        %r26, 0(%r27)
+    cmpldi    %r26, 0 // if open_table is null go to optimized hook sky 
+    beq        hook_open_sky
+
+open_table_loop: // hermes loop with love :D
+    mr      %r3, %r29 //restore ptr? (loop)
+    ld        %r4, 0(%r26)  // get compare path (%r27 open_table and %r26 contains the 1st ptr)
+    cmpldi    %r4, 0 // check null ptr
+    beq        hook_open_sky // null? then we finished...
+    
+    lwz        %r5, 16(%r26) // get len of compare path
+    bl      ABS(strncmp)
+
+    cmpldi    %r3, 0 // if ptr is null
+    bne        open_table_nextvalue
+
+    lwz        %r5, 16(%r26) 
+    add        %r4, %r29, %r5 // &open_path[compare_path_len]
+
+    ld        %r3, 8(%r26) // get new path
+    mr      %r29, %r3    // changes open_path
+    lwz        %r5, 20(%r26) // get len of new path
+
+    add        %r3, %r3, %r5 // prepare for copy
+
+    bl        ABS(strcpy)
+    b        return_org_open_func
+
+open_table_nextvalue:
+    addi    %r26, %r26, 24 // next ptr?
+    //mr      %r3, %r29 // move here?
+    b        open_table_loop
+
+/*********************************************************************/
+
+hook_open_sky:
+//start new code
 
 check_path_dvd:
-//start new code
-    MEM_BASE(%r31)
     LOAD_LABEL2(%r4, %r31, aDev_bdvd)
     li    %r5, PATHSTR_LEN
     bl    ABS(strncmp)
     cmpldi    %r3, 0
     bne    check_path_app //if not bdvd check app_home
+
     LOADI_LABEL2(%r31, buffer)
 
     ld    %r3, 0(%r31)
@@ -128,12 +169,13 @@ check_path_dvd:
 
 check_path_app:
     mr    %r3, %r29
-    MEM_BASE(%r31)
+
     LOAD_LABEL2(%r4, %r31, aApp_home)
     li    %r5, PATHSTR_LEN
     bl    ABS(strncmp)
     cmpldi    %r3, 0
     bne    return_org_open_func
+
     LOADI_LABEL2(%r31, buffer)
 
     ld    %r3, 0(%r31)
@@ -144,12 +186,144 @@ check_path_app:
     bl    ABS(strcpy)
     ld    %r29, 0(%r31)
 
-return_org_open_func:
-    mr    %r3, %r29
+return_org_open_func: // end
+    mr    %r3, %r29 // overwrite
     b    ABS(memory_patch_func)
 
 aDev_bdvd:    .string    "/dev_bdvd"
 aApp_home:    .string    "/app_home"
+
+/*********************************************************************/
+
+.org 0x320
+syscall8_table:
+    .long 0x80000000
+    .long BASE + sys8_disable       //0 - not work yet
+    .long 0x80000000
+    .long BASE + sys8_enable        //1 - not work yet
+    .long 0x80000000
+    .long BASE + sys8_memcpy        //2
+    .long 0x80000000
+    .long BASE + sys8_memset        //3
+    .long 0x80000000
+    .long BASE + sys8_call          //4
+    .long 0x80000000
+    .long BASE + sys8_alloc         //5
+    .long 0x80000000
+    .long BASE + sys8_free          //6
+    .long 0x80000000
+    .long BASE + sys8_stealth       //7 - sys8_panic
+    .long 0x80000000
+    .long BASE + syscall8_stealth   //8 - sys8_perm_mode
+    .long 0x80000000
+    .long BASE + sys8_open_table    //9 
+    .long 0x80000000
+    .long BASE + syscall8_stealth   //10 - sys8_configure ?
+    .long 0x80000000
+    .long BASE + syscall8_stealth   //11 - sys8_lv1call
+str_open_cmp:
+    .quad 0
+
+.org 0x3A0
+syscall_8_desc:
+    .long 0x80000000
+    .long BASE + syscall8
+
+.org 0x3C0
+syscall8:
+    mflr    %r0
+    stdu    %sp, -0xA0(%sp)
+    std     %r27, 0x78(%sp)
+    std     %r28, 0x80(%sp)
+    std     %r29, 0x88(%sp)
+    std     %r30, 0x90(%sp)
+    std     %r31, 0x98(%sp)
+    std     %r0, 0xB0(%sp)
+
+// hermes stealth code no supported yet
+// syscall switch
+    andi.   %r3, %r3, 0xff
+    cmpldi  %r3, 12
+    bge     syscall8_stealth //org unsupported 
+
+    MEM_BASE(%r31)
+    LOAD_LABEL2(%r27, %r31, syscall8_table)
+    sldi     %r28, %r3, 3
+    add     %r27, %r27, %r28
+
+    ld        %r29, 0(%r27)
+
+// move param registers
+    mr      %r3, %r4
+    mr      %r4, %r5
+    mr      %r5, %r6
+
+// jump to register address with link
+    bl        syscall8_bl
+
+syscall8_end:
+    ld      %r27, 0x78(%sp)
+    ld      %r28, 0x80(%sp)
+    ld      %r29, 0x88(%sp)
+    ld      %r30, 0x90(%sp)
+    ld      %r31, 0x98(%sp)
+    ld      %r0, 0xB0(%sp)
+    addi    %sp, %sp, 0xA0
+    mtlr    %r0
+    blr
+
+syscall8_stealth:
+    lis     %r3, -0x7FFF
+    ori     %r3, %r3, 3
+    b       syscall8_end
+
+syscall8_unsupported:
+    li     %r3, -1
+    b      syscall8_end
+
+syscall8_bl:
+    mtctr   %r29
+    bctr
+
+sys8_disable: // system_call_2(8, 0, key)
+    // hermes stealth code no ported yet
+    b syscall8_stealth
+
+sys8_enable: // system_call_2(8, 1, key) when syscalls are enabled
+    // hermes stealth code no supported yet
+    li        %r3, SYS8_VERSION
+    blr
+
+sys8_memcpy: // system_call_4(8, 2, dest, src, len)
+    b      ABS(memcpy)
+
+sys8_memset: // system_call_4(8, 3, dest, dat, len)
+    b      ABS(memset)
+
+sys8_call: // system_call_4(8, 4, addr, param1, param2)
+    mtctr   %r3
+    mr        %r3, %r4
+    mr        %r4, %r5
+    bctr
+
+sys8_alloc: // system_call_3(8, 5, size, pool)
+    b      ABS(alloc)
+
+sys8_free: // system_call_3(8, 6, ptr, pool)
+    b      ABS(free)
+
+sys8_perm_mode: // system_call_2(8, 8, perm)
+    b syscall8_unsupported
+
+sys8_open_table:  // system_call_2(8, 9, ptr)
+    mr        %r4, %r3
+    LOAD_LABEL2(%r27, %r31, str_open_cmp)
+    ld        %r3, 0(%r27)
+    std       %r4, 0(%r27)
+    blr
+
+sys8_lv1call:
+    b syscall8_unsupported
 
 .org 0x5B8 //max 0x5AC?
 /* next lv2 code

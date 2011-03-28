@@ -955,7 +955,9 @@ s32 main(s32 argc, const char* argv[])
 	find_device=0;
 
     test1 = syscall36("/dev_bdvd");
-    test2 = sys8_perm_mode((u64) 2);
+    sys8_perm_mode((u64) 2);
+
+    test2 = sys8_enable(0ULL); //disabled key atm
 
     sprintf(temp_buffer, "TEST SYS36! s36=%i s8=%i", test1, test2);
     DrawDialogOK(temp_buffer);

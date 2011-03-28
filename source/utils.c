@@ -1621,6 +1621,7 @@ void copy_from_selection(int game_sel)
     file_counter = 0;
     abort_copy = 0;
 
+    cls2();
     my_game_countsize(directories[game_sel].path_name);
     if(abort_copy){ DrawDialogOK("Checking Files: Aborted - Copy Aborted!"); forcedevices = 1; return; } //abort by user or got an error
 

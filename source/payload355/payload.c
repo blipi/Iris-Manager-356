@@ -173,7 +173,7 @@ void load_payload(int mode)
         00346690  80 00 00 00 00 32 49 68  80 00 00 00 00 32 49 68  Ç....2IhÇ....2Ih
     */
     _poke(0x346690, 0x800000000000F010ULL); // syscall_map_open_desc - sys36
-    _poke(0x3465b0, 0x80000000002e81e8ULL); // syscall 8 (disabled atm)
+    _poke(0x3465b0, 0x800000000000F2E0ULL); // syscall_8_desc - sys8
 
 }
 
