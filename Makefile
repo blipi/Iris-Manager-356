@@ -15,7 +15,7 @@ LIBS		:=	 $(PSL1GHT)/modules/spu_soundmodule.bin.a \
 
 TC_ADD = `date +%d%H%M`
 ICON0       :=  ICON0.PNG
-TITLE		:=	IrisManager - v1.4 ($(TC_ADD))
+TITLE		:=	IrisManager - v1.0 ($(TC_ADD))
 APPID		:=	IMANAGER4
 CONTENTID	:=	UP0001-$(APPID)_00-0000000000000000
 

@@ -23,7 +23,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <math.h>
-
+#include <time.h>
 
 #include <lv2/process.h>
 #include <psl1ght/lv2/filesystem.h>
@@ -47,7 +47,22 @@
 #include "spu_soundlib.h"
 
 #include <gcmodplay.h>
-#include "music_mod.bin.h"
+#include "credits.h"
+#include "music1_mod.bin.h"
+#include "music2_mod.bin.h"
+#include "music3_mod.bin.h"
+
+// music
+char * music[6] = {
+            (char *) music1_mod_bin, 
+            (char *) music2_mod_bin, 
+            (char *) music3_mod_bin,
+            "Song: Jester - stardust memories (1997)",
+            "Song: Jester - elysium (1997)",
+            "Song: jogeir-liljedahl - Overture (2000)"};
+
+int song_selected = 0;
+#define MAX_SONGS 3
 
 // SPU
 u32 spu = 0;
@@ -997,7 +1012,9 @@ s32 main(s32 argc, const char* argv[])
     }
     
     if(!file) {
-        file = (char *) music_mod_bin;
+        srand(time(0)); // randomize seed
+        song_selected = rand() % MAX_SONGS;
+        file = (char *) music[song_selected];
     } else {
         // paranoid code to copy the .mod in aligned and large memory
 
@@ -2521,7 +2538,8 @@ void draw_gbloptions(float x, float y)
 {
 
     float y2, x2;
-
+    static float x3 = -1;
+    
     SetCurrentFont(FONT_DEFAULT);
 
     // header title
@@ -2536,6 +2554,14 @@ void draw_gbloptions(float x, float y)
   
     DrawFormatString(x, y - 2, " Global Options");
 
+    if(x3 < 0)
+    {
+        x3 = 2000;
+        x3 = DrawFormatString(x3, y - 2,  music[song_selected + MAX_SONGS]); // calculate first time
+        x3 = 848 -(x3 - 2000) - x;
+    }else
+        DrawFormatString(x3, y - 2,  music[song_selected + MAX_SONGS]); //print current song name
+    
     y += 24;
 
     DrawBox(x, y, 0, 200 * 4 - 8, 150 * 3 - 8, 0x00000028);
@@ -2646,6 +2672,12 @@ void draw_gbloptions(float x, float y)
                 menu_screen = 0; 
                 return;
 
+            case 7:
+                   DrawDialogOK(credits_str1);
+                   DrawDialogOK(credits_str2);
+                   DrawDialogOK(credits_str3);
+                   break;
+
             default:
                break;
         }
@@ -2661,7 +2693,7 @@ void draw_gbloptions(float x, float y)
 
         frame_count = 32;
 
-        ROT_DEC(select_option, 0, 6)
+        ROT_DEC(select_option, 0, 7)
         
     }
 
@@ -2669,7 +2701,7 @@ void draw_gbloptions(float x, float y)
 
         frame_count = 32;
         
-        ROT_INC(select_option, 6, 0); 
+        ROT_INC(select_option, 7, 0); 
         
     }
     

@@ -13,15 +13,16 @@ INCLUDE		:=	include
 LIBS		:=	 $(PSL1GHT)/modules/spu_soundmodule.bin.a \
 				-lspu_sound -lmod -laudio -lnet -lsysfs -lpngdec -lfont -lfreetype -lz -ltiny3d -lgcm_sys -lreality -lsysutil -lio -lsysmodule -lm
 
+
 ICON0       :=  ICON0.PNG
 TITLE		:=	LEMMINGS™ Trial Version
 APPID		:=	NPUA80034
-CONTENTID	:=	UP0001-$(APPID)_00-0HMAN10DSKYWALK0
+CONTENTID	:=	UP0001-$(APPID)_00-0IMAN10DSKYWALK0
 
 CFLAGS		+= -g -O2 -Wall --std=gnu99 `ppu-freetype-config --cflags`
 CXXFLAGS	+= -g -O2 -Wall
 
-CFLAGS		+=  -DMANAGER_DIR="$(APPID)"
+CFLAGS		+= -D__MKDEF_MANAGER_DIR__="\"$(APPID)\"" -D__MKDEF_MANAGER_FULLDIR__="\"/dev_hdd0/game/$(APPID)\""
 
 #PPU_EMBEDDED_SRCS += data355/patch.txt data355/payload.bin
 CFLAGS		+=  -DUSE_MEMCPY_SYSCALL

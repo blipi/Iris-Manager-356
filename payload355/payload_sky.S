@@ -16,6 +16,22 @@
  * The people behing PSJailbrak are the original authors and copyright holders
  * of the code they wrote.
  *
+ *******************************************************************************
+ *
+ * Note some developers with close source projects that does not respect the GPL
+ *
+ * If you benefit from this code, then you SHOULD contribute back.
+ * And it is very clear how I expect you to contribute back - by providing full
+ * access to the COMPLETE system which is using my code. At the core of GPL, the
+ * intention is that someone else should be able to make modifications to such a
+ * system and build other things from it.
+ *
+ * No source? Syscall8 and new hook is not welcomed in your disturbing projects.
+ * I am not interested in any line from your source, but scene play together... 
+ *
+ * - D_Skywalk, syscall8 + hook_table for 3.55 developer -
+ *
+ ********************************************************************************
  */
 
 #include "firmware_symbols.h"
@@ -115,7 +131,8 @@ open_hook:
     cmpldi    %r26, 0 // if open_table is null go to optimized hook sky 
     beq        hook_open_sky
 
-open_table_loop: // hermes loop with love :D
+open_table_loop:
+// hermes loop with love :D
     mr      %r3, %r29 //restore ptr? (loop)
     ld        %r4, 0(%r26)  // get compare path (%r27 open_table and %r26 contains the 1st ptr)
     cmpldi    %r4, 0 // check null ptr

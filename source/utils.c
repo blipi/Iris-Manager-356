@@ -1669,9 +1669,15 @@ void copy_from_selection(int game_sel)
             dialog_action = 0;
             
             if((fdevices >> n) & 1) {
-
-                sprintf(filename, "%s\n\n%s HDD0 %s USB00%c?\nVol: %1.2f GB", directories[game_sel].title, "Want to copy from", "to", 47 + n,
+                if(copy_total_size)
+                {
+                    sprintf(filename, "%s\n\n%s HDD0 %s USB00%c?\nVol: %1.2f GB", directories[game_sel].title, "Want to copy from", "to", 47 + n,
                         ((double) copy_total_size)/(1024.0*1024.*1024.0)); 
+                }
+                else
+                {
+                    sprintf(filename, "%s\n\n%s HDD0 %s USB00%c?", directories[game_sel].title, "Want to copy from", "to", 47 + n); 
+                }
 
                 ret = msgDialogOpen2( mdialogyesno, filename, my_dialog, (void*) 0x0000aaaa, NULL );
                 
