@@ -13,15 +13,16 @@ INCLUDE		:=	include
 LIBS		:=	 $(PSL1GHT)/modules/spu_soundmodule.bin.a \
 				-lspu_sound -lmod -laudio -lnet -lsysfs -lpngdec -lfont -lfreetype -lz -ltiny3d -lgcm_sys -lreality -lsysutil -lio -lsysmodule -lm
 
+TC_ADD = `date +%d%H%M`
 ICON0       :=  ICON0.PNG
-TITLE		:=	Hermes Manager - v1.4-T25
-APPID		:=	HMANAGER4
+TITLE		:=	IrisManager - v1.4 ($(TC_ADD))
+APPID		:=	IMANAGER4
 CONTENTID	:=	UP0001-$(APPID)_00-0000000000000000
 
 CFLAGS		+= -g -O2 -Wall --std=gnu99 `ppu-freetype-config --cflags`
 CXXFLAGS	+= -g -O2 -Wall
 
-CFLAGS		+=  -DMANAGER_DIR="$(APPID)"
+CFLAGS		+= -D__MKDEF_MANAGER_DIR__="\"$(APPID)\"" -D__MKDEF_MANAGER_FULLDIR__="\"/dev_hdd0/game/$(APPID)\""
 
 #PPU_EMBEDDED_SRCS += data355/patch.txt data355/payload.bin
 CFLAGS		+=  -DUSE_MEMCPY_SYSCALL

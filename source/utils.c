@@ -1161,17 +1161,22 @@ int fast_copy_process()
             
         int seconds = (int) (time(NULL) - time_start);
         //calc time left
-        if(seconds)
+        if(!copy_total_size)
+        {
+            sprintf(string1, "Copying. File: %i (%2.2i%%) Time: %2.2i:%2.2i:%2.2i  Vol: %1.2f GB\n", file_counter, 
+                    (int)(write_end * 100ULL / write_size), seconds / 3600, (seconds / 60) % 60, seconds % 60, 
+                    ((double) global_device_bytes) / (1024.0* 1024.* 1024.0));
+        }
+        else
         {
             int tleft = ((copy_total_size - global_device_bytes) * seconds) / global_device_bytes;
-            if( abs(time_left - tleft) >= 10) //more than 10 secs change to update time
+            if(abs(time_left - tleft) >= 10) //more than 10 secs diff, update time
                 time_left = tleft;
-        }
         
-
-        sprintf(string1, "Copying. File: %i (%2.2i%%) Time Left: %2.2i:%2.2i:%2.2i %1.2f/%1.2f GB\n", file_counter, (int)(write_end * 100ULL / write_size), 
-                    time_left / 3600, (time_left / 60) % 60, time_left % 60, ((double) global_device_bytes) / (1024.0* 1024.* 1024.0),
-                    ((double) copy_total_size/ (1024.0 * 1024. * 1024.0)));
+            sprintf(string1, "Copying. File: %i (%2.2i%%) Time Left: %2.2i:%2.2i:%2.2i %1.2f/%1.2f GB\n", file_counter, 
+                    (int)(write_end * 100ULL / write_size), time_left / 3600, (time_left / 60) % 60, time_left % 60, 
+                    ((double) global_device_bytes) / (1024.0* 1024.* 1024.0), ((double) copy_total_size/ (1024.0 * 1024. * 1024.0)));
+        }
             
         cls2();
 
@@ -1368,7 +1373,9 @@ static int my_game_countsize(char *path)
     DIR  *dir;
     dir=opendir (path);
     if(!dir) return -1;
-
+    
+    DPrintf("count in %s\n", path);
+    
     while(1)
     {
 		struct dirent *entry=readdir (dir);
@@ -1621,9 +1628,21 @@ void copy_from_selection(int game_sel)
     file_counter = 0;
     abort_copy = 0;
 
-    cls2();
+    initConsole();
     my_game_countsize(directories[game_sel].path_name);
-    if(abort_copy){ DrawDialogOK("Checking Files: Aborted - Copy Aborted!"); forcedevices = 1; return; } //abort by user or got an error
+    if(abort_copy) //abort by user or got an error
+    { 
+        if(DrawDialogYesNo("Get Size: Aborted - Continue the copy?") != 1)
+        {
+            forcedevices = 2046;
+            return;
+        }
+        else
+        {
+            //old mode
+            copy_total_size = 0;
+        }
+    } 
 
     if(directories[game_sel].flags & 2048)  {copy_from_bluray();return;}
 
@@ -1733,10 +1752,10 @@ void copy_from_selection(int game_sel)
         
     }
 
+    // reset to update datas
+    forcedevices = (1 << curr_device);
+
     if(dialog_action == 1) {
-        // reset to update datas
-        
-        forcedevices = (1 << curr_device);
         time_start = time(NULL);
 
         abort_copy = 0;
@@ -1925,6 +1944,9 @@ void copy_from_bluray()
         }
     }
         
+    // reset to update datas
+    forcedevices = (1 << curr_device);
+
     if(dialog_action == 1) {
                 
             if(curr_device == 0) sprintf(name, "/dev_hdd0");
@@ -1932,9 +1954,6 @@ void copy_from_bluray()
             
             if (sysFsStat(name, &status) == 0 && !parse_ps3_disc((char *) "/dev_bdvd/PS3_DISC.SFB", id)) {
                 
-                // reset to update datas
-               
-                forcedevices = (1 << curr_device);
                 
                 if(curr_device == 0) {
                     if(!memcmp(hdd_folder,"dev_hdd0", 9)) {
@@ -2206,9 +2225,11 @@ void copy_to_cache(int game_sel, char * hmanager_path)
         sprintf(name, "%s/cache/%s", hmanager_path, directories[game_sel].title_id);	
         mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
 
-        cache_need_free = 0.0f;
+        copy_total_size = global_device_bytes;
 
+        cache_need_free = 0.0f;
         global_device_bytes = 0;
+
         ////////////////
 
         DPrintf("Starting... \n copy %s\n to %s\n\n", directories[game_sel].path_name, name);
@@ -2323,13 +2344,12 @@ void delete_game(int game_sel)
          
     wait_dialog();
             
+    // reset to update datas
+    forcedevices = (1 << n);
+
     if(dialog_action == 1) {
 
         time_start = time(NULL);
-        
-        // reset to update datas
-        
-        forcedevices = (1 << n);
         
         abort_copy = 0;
         initConsole();

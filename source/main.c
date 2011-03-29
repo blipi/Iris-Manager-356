@@ -1,5 +1,6 @@
 /* 
     (c) 2011 Hermes <www.elotrolado.net>
+    IrisManager (HMANAGER port) (c) 2011 D_Skywalk <http://david.dantoine.org>
 
     HMANAGER4 is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,7 +47,7 @@
 #include "spu_soundlib.h"
 
 #include <gcmodplay.h>
-#include "beauty_mod.bin.h"
+#include "music_mod.bin.h"
 
 // SPU
 u32 spu = 0;
@@ -427,7 +428,7 @@ typedef struct {
 
 static path_open_table open_table __attribute__((aligned(8)));
 
-char self_path[MAXPATHLEN]= "/dev_hdd0/game/HMANAGER4";
+char self_path[MAXPATHLEN]= __MKDEF_MANAGER_FULLDIR__; // /dev_hdd0/game/APPID
 
 
 u64 hmanager_key = 0x1759829723742374ULL;
@@ -437,6 +438,7 @@ u64 hmanager_key = 0x1759829723742374ULL;
 // manager
 
 char temp_buffer[4096];
+char payload_str[256];
 
 int videoscale_x = 0;
 int videoscale_y = 0;
@@ -666,6 +668,7 @@ void Select_games_folder()
 
     DIR  *dir, *dir2;
     int selected = 0;
+    char tmp[256];
 
     dir = opendir ("/dev_hdd0/GAMES");
     if(dir) {
@@ -736,11 +739,12 @@ void Select_games_folder()
             strncpy(manager_cfg.hdd_folder, "dev_hdd0", 64); 
             mkdir("/dev_hdd0/GAMEZ", S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
         } else {
-            strncpy(hdd_folder, "HMANAGER4", 64);
-            strncpy(manager_cfg.hdd_folder, "HMANAGER4", 64);
-            mkdir("/dev_hdd0/game/HMANAGER4/GAMEZ", S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
+            strncpy(hdd_folder, __MKDEF_MANAGER_DIR__, 64);
+            strncpy(manager_cfg.hdd_folder, __MKDEF_MANAGER_DIR__, 64);
+            sprintf(tmp, "%s/GAMEZ", __MKDEF_MANAGER_FULLDIR__);
+            mkdir(tmp, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
 
-            sprintf(temp_buffer, "%s %s %s", "Using", "dev_hdd0/game/HMANAGER4/GAMEZ", "to install the game");
+            sprintf(temp_buffer, "%s %s %s", "Using", tmp, "to install the game");
             DrawDialogOK(temp_buffer);
         }
     }
@@ -755,8 +759,8 @@ s32 main(s32 argc, const char* argv[])
 	int mode = 0;
     int n;
     
-    int test1 = 0x100;
-    int test2 = 0x100;
+    int test = 0x100;
+    //int test2 = 0x100;
 
     u32 entry = 0;
     u32 segmentcount = 0;
@@ -832,33 +836,24 @@ s32 main(s32 argc, const char* argv[])
             if(mode == WANIN_PAYLOAD)
             {
                 load_payload_syscall36old(mode);
-                sprintf(temp_buffer, "WANINV2 DETECTED\nOLD SYSCALL 36 LOADED: TEST END (mode=%i)", mode);
+                sprintf(temp_buffer, "WANINV2 DETECTED\nOLD SYSCALL 36 LOADED (mode=%i)\n - no big files allowed with this payload.", mode);
+                sprintf(payload_str, "wanin cfw - old syscall36, no bigfiles allowed");
             }
             else
             {
     		    load_payload(mode);
                 __asm__("sync");
                 sleep(1); /* maybe need it, maybe not */
-                sprintf(temp_buffer, "PAYLOAD LOADED: TEST END (mode=%i)", mode);
+                
             }
-
             break;
-		case 1:
-            sprintf(temp_buffer, "OLD SYSCALL 36 RESIDENT, RESPECT!\nNEW PAYLOAD NOT LOADED...");
+		case SYS36_PAYLOAD:
+            sprintf(temp_buffer, "OLD SYSCALL 36 RESIDENT, RESPECT!\nNEW PAYLOAD NOT LOADED...\n - no big files allowed with this payload.");
+            sprintf(payload_str, "syscall36 resident - new payload no loaded, no bigfiles allowed");
             break;
-		case 2:
-            sprintf(temp_buffer, "PAYLOAD RESIDENT");
+		case SKY10_PAYLOAD:
             break;
 	}
-
-    //check sys8 ?
-    //        flag = sys8_enable(0);
-    //        n = sys8_enable(hmanager_key);
-
-    tiny3d_Init(1024*1024*2);
-    ioPadInit(7);
-    DrawDialogOK(temp_buffer);
-    //exit(0);
 
     usleep(250000);
 
@@ -873,9 +868,29 @@ s32 main(s32 argc, const char* argv[])
 
     mkdir(temp_buffer, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
         
-    //tiny3d_Init(1024*1024*2);
+    tiny3d_Init(1024*1024*2);
+    ioPadInit(7);
 
-    //ioPadInit(7);
+    if(mode < ZERO_PAYLOAD) //if mode is wanin or worse, launch advert
+    {
+        DrawDialogOK(temp_buffer);
+    }
+    else
+    {
+        //check syscall8 status
+        test = sys8_enable(0ULL);
+        if(test < 6)
+        {
+                sprintf(payload_str, "payload-sk10 - new syscall8 Err?! v(%i)", test);
+        }
+        else
+        {
+            if(mode == ZERO_PAYLOAD)
+                sprintf(payload_str, "payload-sk10 - new syscall8 v%i", test);
+            else if (mode == SKY10_PAYLOAD)
+                sprintf(payload_str, "payload-sk10 resident - new syscall8 v%i", test);
+        }
+    }
 
 	// Load texture
 
@@ -927,7 +942,7 @@ s32 main(s32 argc, const char* argv[])
         
         Select_games_folder();
      
-        if(manager_cfg.hdd_folder[0] == 0) strcpy(manager_cfg.hdd_folder, "HMANAGER4");
+        if(manager_cfg.hdd_folder[0] == 0) strcpy(manager_cfg.hdd_folder, __MKDEF_MANAGER_DIR__);
         SaveManagerCfg();
     } 
     
@@ -954,13 +969,13 @@ s32 main(s32 argc, const char* argv[])
 	forcedevices=0;
 	find_device=0;
 
-    test1 = syscall36("/dev_bdvd");
+    syscall36("/dev_bdvd");
     sys8_perm_mode((u64) 2);
 
-    test2 = sys8_enable(0ULL); //disabled key atm
+    //test2 = sys8_enable(0ULL);
 
-    sprintf(temp_buffer, "TEST SYS36! s36=%i s8=%i", test1, test2);
-    DrawDialogOK(temp_buffer);
+    //sprintf(temp_buffer, "TEST SYS36! s36=%i s8=%i (%s)", test1, test2, __MKDEF_MANAGER_DIR__);
+    //DrawDialogOK(temp_buffer);
 
     unpatch_bdvdemu();
 
@@ -982,7 +997,7 @@ s32 main(s32 argc, const char* argv[])
     }
     
     if(!file) {
-        file = (char *) beauty_mod_bin;
+        file = (char *) music_mod_bin;
     } else {
         // paranoid code to copy the .mod in aligned and large memory
 
@@ -2297,36 +2312,36 @@ void draw_configs(float x, float y, int index)
 
     x2 = DrawButton1(x + 32, y2, 240, "Fix Permissions", (flash && select_option == 0)) + 16;
     
-    x2 = DrawButton2(x2, y2, 0, " Default ", /*(game_cfg.perm == 0)*/ 0 ) + 8;
-    x2 = DrawButton2(x2, y2, 0, " PS jailbreak ", /*(game_cfg.perm == 1)*/ 0) + 8;
-    x2 = DrawButton2(x2, y2, 0, " v4 Perms (F1) ", /*(game_cfg.perm == 2)*/ 0) + 8;
+    x2 = DrawButton2(x2, y2, 0, " Default ", /*(game_cfg.perm == 0)*/ 1 ) + 8;
+    x2 = DrawButton2(x2, y2, 0, " PS jailbreak ", /*(game_cfg.perm == 1)*/ -1) + 8;
+    x2 = DrawButton2(x2, y2, 0, " v4 Perms (F1) ", /*(game_cfg.perm == 2)*/ -1) + 8;
     
     y2+= 48;
 
     x2 = DrawButton1(x + 32, y2, 240, "Select XMB", (flash && select_option == 1))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, "  Debug  ", /*(game_cfg.xmb == 0)*/ 0) + 8;
-    x2 = DrawButton2(x2, y2, 0, "  Retail  ", /*(game_cfg.xmb == 1)*/ 0) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  Debug  ", /*(game_cfg.xmb == 0)*/ 1) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  Retail  ", /*(game_cfg.xmb == 1)*/ -1) + 8;
 
     y2+= 48;
 
     x2 = DrawButton1(x + 32, y2, 240, "Online Updates", (flash && select_option == 2))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, "  On  ", /*(game_cfg.updates == 0)*/ 0) + 8;
-    x2 = DrawButton2(x2, y2, 0, "  Off  ", /*(game_cfg.updates != 0)*/ 0) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  On  ", /*(game_cfg.updates == 0)*/ -1) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  Off  ", /*(game_cfg.updates != 0)*/ 1) + 8;
 
     y2+= 48;
 
     x2 = DrawButton1(x + 32, y2, 240, "Extern EBOOT.BIN", (flash && select_option == 3))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, "  On  ", /*(game_cfg.ext_ebootbin != 0)*/ 0) + 8;
-    x2 = DrawButton2(x2, y2, 0, "  Off  ", /*(game_cfg.ext_ebootbin == 0)*/ 0) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  On  ", /*(game_cfg.ext_ebootbin != 0)*/ -1) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  Off  ", /*(game_cfg.ext_ebootbin == 0)*/ 1) + 8;
 
     y2+= 48;
 
     x2 = DrawButton1(x + 32, y2, 240, "BD Emu (for USB)", (flash && select_option == 4))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, "  On  ", (game_cfg.bdemu != 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  On  ", (directories[currentgamedir].title[0] == '_') ? -1: (game_cfg.bdemu != 0)) + 8;
     x2 = DrawButton2(x2, y2, 0, "  Off  ", (game_cfg.bdemu == 0)) + 8;
 
     y2+= 48;
@@ -2398,7 +2413,8 @@ void draw_configs(float x, float y, int index)
                 break;
             #endif
             case 4:
-                ROT_INC(game_cfg.bdemu, 1, 0);
+                if(directories[currentgamedir].title[0] != '_')
+                    ROT_INC(game_cfg.bdemu, 1, 0);
                 break;
             case 5:
                 // save game config
@@ -2452,7 +2468,8 @@ void draw_configs(float x, float y, int index)
                 break;
             #endif
             case 4:
-                ROT_DEC(game_cfg.bdemu, 0, 1);
+                if(directories[currentgamedir].title[0] != '_')
+                    ROT_DEC(game_cfg.bdemu, 0, 1);
                 break;
             default:
                 break;
@@ -2478,7 +2495,8 @@ void draw_configs(float x, float y, int index)
                 break;
             #endif
             case 4:
-                ROT_INC(game_cfg.bdemu, 1, 0);
+                if(directories[currentgamedir].title[0] != '_')
+                    ROT_INC(game_cfg.bdemu, 1, 0);
                 break;
             default:
                 break;
@@ -2490,10 +2508,7 @@ void draw_configs(float x, float y, int index)
 void draw_gbloptions(float x, float y)
 {
 
-    int n;
-
     float y2, x2;
-    
 
     SetCurrentFont(FONT_DEFAULT);
 
@@ -2545,22 +2560,19 @@ void draw_gbloptions(float x, float y)
     
     y2+= 48;
     
-    for(n = 0; n < 1; n++) {
-        
-        DrawButton1((848 - 520) / 2, y2, 520, "", -1);
-    
-        y2+= 48;
-    }
-
-
-    SetCurrentFont(FONT_DEFAULT);
-
-    // draw game name
+    DrawButton1((848 - 520) / 2, y2, 520, "Credits", (flash && select_option == 7));
+   
+    y2+= 48;
 
     DrawBox(x, y + 3 * 150, 0, 200 * 4 - 8, 40, 0x00000028);
 
-    SetFontColor(0xffffffff, 0x00000000);
+    // draw sys version
+    SetCurrentFont(FONT_DEFAULT);
 
+    SetFontColor(0xccccffff, 0x00000000);
+    SetFontSize(18, 20);
+    SetFontAutoCenter(1);
+    DrawFormatString(0, y2 + 40, payload_str );
 
     tiny3d_Flip();
 
@@ -2579,7 +2591,7 @@ void draw_gbloptions(float x, float y)
                 menu_screen = 0;
                 Select_games_folder();
      
-                if(manager_cfg.hdd_folder[0] == 0) strcpy(manager_cfg.hdd_folder, "HMANAGER4");
+                if(manager_cfg.hdd_folder[0] == 0) strcpy(manager_cfg.hdd_folder, __MKDEF_MANAGER_DIR__);
                 SaveManagerCfg();
                 currentgamedir = currentdir = 0;
                 select_px = select_py = 0;

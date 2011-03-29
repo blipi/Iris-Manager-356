@@ -4,11 +4,11 @@
 
 #include <unistd.h>
 
+#define SKY10_PAYLOAD 1
 #define ZERO_PAYLOAD 0
-#define SYS36_PAYLOAD 1
-#define SKY10_PAYLOAD 2
 
-#define WANIN_PAYLOAD -1
+#define SYS36_PAYLOAD -1
+#define WANIN_PAYLOAD -2
 
 extern uint64_t peekq(uint64_t addr);
 extern void pokeq(uint64_t addr, uint64_t val);
