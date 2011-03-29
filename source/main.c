@@ -385,9 +385,9 @@ void LoadTexture()
 int background_sel = 0;
 
 u32 background_colors[4] = {
+    0xff80804f,
     0xff0040ff,
     0xff606060,
-    0xff80804f,
     0xff904f80,
 };
 
