@@ -422,7 +422,14 @@ void fill_entries_from_device(char *path, t_directories *list, int *max, u32 fla
 			// read name in PARAM.SFO
 			sprintf(file, "%s/PS3_GAME/PARAM.SFO", list[*max ].path_name);
 
-			parse_param_sfo(file, list[*max ].title+1*(list[*max ].title[0]=='_')); // move +1 with '_' 
+            //add splitted icon
+            if(list[*max ].title[0]=='_')
+                list[*max ].splitted = 1;
+            else
+                list[*max ].splitted = 0;
+
+            //get tittle from sfo
+			parse_param_sfo(file, list[*max ].title);
 			list[*max ].title[63]=0;
 
             sprintf(file, "%s/%s",  list[*max ].path_name, "PS3_DISC.SFB" );
@@ -1419,7 +1426,7 @@ static int my_game_countsize(char *path)
 		    cls2();
 
             strcpy(dbg_str1, string1);
-            strcpy(dbg_str2, "Hold /\\ to Abort");
+            strcpy(dbg_str2, "Hold /\\ to Skip");
             DbgDraw();
                 
             tiny3d_Flip();

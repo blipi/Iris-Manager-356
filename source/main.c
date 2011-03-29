@@ -751,12 +751,12 @@ void Select_games_folder()
 }
 
 static char filename[1024];
+int payload_mode = 0;
 
 /******************************************************************************************************************************************************/
 
 s32 main(s32 argc, const char* argv[])
 {
-	int mode = 0;
     int n;
     
     int test = 0x100;
@@ -808,9 +808,9 @@ s32 main(s32 argc, const char* argv[])
         }
     }
 
-    mode = is_payload_loaded();
+    payload_mode = is_payload_loaded();
 
-    switch(mode)
+    switch(payload_mode)
     {
         case WANIN_PAYLOAD: //payload WaninV2 CFW
         case ZERO_PAYLOAD: //no payload installed
@@ -833,15 +833,15 @@ s32 main(s32 argc, const char* argv[])
             __asm__("sync");
             sleep(1); /* dont touch! nein! */
 
-            if(mode == WANIN_PAYLOAD)
+            if(payload_mode == WANIN_PAYLOAD)
             {
-                load_payload_syscall36old(mode);
-                sprintf(temp_buffer, "WANINV2 DETECTED\nOLD SYSCALL 36 LOADED (mode=%i)\n - no big files allowed with this payload.", mode);
+                load_payload_syscall36old(payload_mode);
+                sprintf(temp_buffer, "WANINV2 DETECTED\nOLD SYSCALL 36 LOADED (mode=%i)\n - no big files allowed with this payload.", payload_mode);
                 sprintf(payload_str, "wanin cfw - old syscall36, no bigfiles allowed");
             }
             else
             {
-    		    load_payload(mode);
+    		    load_payload(payload_mode);
                 __asm__("sync");
                 sleep(1); /* maybe need it, maybe not */
                 
@@ -871,7 +871,7 @@ s32 main(s32 argc, const char* argv[])
     tiny3d_Init(1024*1024*2);
     ioPadInit(7);
 
-    if(mode < ZERO_PAYLOAD) //if mode is wanin or worse, launch advert
+    if(payload_mode < ZERO_PAYLOAD) //if mode is wanin or worse, launch advert
     {
         DrawDialogOK(temp_buffer);
     }
@@ -885,9 +885,9 @@ s32 main(s32 argc, const char* argv[])
         }
         else
         {
-            if(mode == ZERO_PAYLOAD)
+            if(payload_mode == ZERO_PAYLOAD)
                 sprintf(payload_str, "payload-sk10 - new syscall8 v%i", test);
-            else if (mode == SKY10_PAYLOAD)
+            else if (payload_mode == SKY10_PAYLOAD)
                 sprintf(payload_str, "payload-sk10 resident - new syscall8 v%i", test);
         }
     }
@@ -1382,6 +1382,10 @@ void draw_screen1(float x, float y)
             int f = flash != 0 && select_px == m && select_py == n;
 
             DrawBox(x + 200 * m, y + n * 150, 0, 192, 142, 0x00000028 );
+
+            //draw Splited box
+            //if(directories[currentgamedir].splitted)
+            //    DrawBox(x + 198 * m, (y - 2) + n * 150, 0, 194, 144, 0x55ff3328 );
             
             if(Png_offset[i]) {
                
@@ -1408,7 +1412,12 @@ void draw_screen1(float x, float y)
                         tiny3d_SetTextureWrap(0, Png_res_offset[1], Png_res[1].width, 
                         Png_res[1].height, Png_res[1].wpitch, 
                             TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
-                        DrawTextBox(x + 200 * m + 4 - 4 * f, y + n * 150 + 4 - 4 * f, 0, 32, 24, 0xffffffcf);    
+
+                        if(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].splitted)
+                            DrawTextBox(x + 200 * m + 4 - 4 * f, y + n * 150 + 4 - 4 * f, 0, 32, 24, 0xff9999aa);
+                        else
+                            DrawTextBox(x + 200 * m + 4 - 4 * f, y + n * 150 + 4 - 4 * f, 0, 32, 24, 0xffffffcf);
+                        
                     }
                 }
 
@@ -1590,33 +1599,36 @@ void draw_screen1(float x, float y)
 
                 int use_cache = 0;
 
-                if(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title[0] == '_') {
-                    #if 1
-                    sprintf(temp_buffer, "%s/cache/%s/%s", self_path, 
-                    directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id, "/paths.dir");
-
-                    struct stat s;
-                    
-                    if(stat(temp_buffer, &s)<0) {
-                        sprintf(temp_buffer + 1024, "%s\n\nMarked as non executable. Trying to install in HDD0 cache", 
-                        directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title);
-                        DrawDialogOK(temp_buffer + 1024);
-                        
-                        copy_to_cache((mode_favourites !=0) ? favourites.list[i].index : (currentdir + i), self_path);
-
+                if(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].splitted == 1) {
+                    if( payload_mode >= ZERO_PAYLOAD )
+                    {
                         sprintf(temp_buffer, "%s/cache/%s/%s", self_path, 
                         directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id, "/paths.dir");
-                        if(stat(temp_buffer, &s)<0) return; // cannot launch without cache files
-                    }
-                 
 
-                 use_cache = 1;
-                    #else
-                    sprintf(temp_buffer, 
+                        struct stat s;
+                    
+                        if(stat(temp_buffer, &s)<0) {
+                            sprintf(temp_buffer + 1024, "%s\n\nMarked as non executable. Trying to install in HDD0 cache", 
+                            directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title);
+                            DrawDialogOK(temp_buffer + 1024);
+                            
+                            copy_to_cache((mode_favourites !=0) ? favourites.list[i].index : (currentdir + i), self_path);
+    
+                            sprintf(temp_buffer, "%s/cache/%s/%s", self_path, 
+                            directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id, "/paths.dir");
+                            if(stat(temp_buffer, &s)<0) return; // cannot launch without cache files
+                        }
+                     
+
+                        use_cache = 1;
+                    }
+                    else
+                    {
+                        sprintf(temp_buffer, 
                             "%s\n\nMarked as not executable - Contains splited files >= 4GB", 
                             directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title);
-                    DrawDialogOK(temp_buffer);return;
-                    #endif
+                        DrawDialogOK(temp_buffer);return;
+                    }
                 }
                 
                  // load game config
@@ -2341,7 +2353,7 @@ void draw_configs(float x, float y, int index)
 
     x2 = DrawButton1(x + 32, y2, 240, "BD Emu (for USB)", (flash && select_option == 4))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, "  On  ", (directories[currentgamedir].title[0] == '_') ? -1: (game_cfg.bdemu != 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  On  ", (directories[currentgamedir].splitted) ? -1: (game_cfg.bdemu != 0)) + 8;
     x2 = DrawButton2(x2, y2, 0, "  Off  ", (game_cfg.bdemu == 0)) + 8;
 
     y2+= 48;
@@ -2413,7 +2425,7 @@ void draw_configs(float x, float y, int index)
                 break;
             #endif
             case 4:
-                if(directories[currentgamedir].title[0] != '_')
+                if((!directories[currentgamedir].splitted)&&(payload_mode >= ZERO_PAYLOAD))
                     ROT_INC(game_cfg.bdemu, 1, 0);
                 break;
             case 5:
@@ -2468,7 +2480,7 @@ void draw_configs(float x, float y, int index)
                 break;
             #endif
             case 4:
-                if(directories[currentgamedir].title[0] != '_')
+                if((!directories[currentgamedir].splitted)&&(payload_mode >= ZERO_PAYLOAD))
                     ROT_DEC(game_cfg.bdemu, 0, 1);
                 break;
             default:
@@ -2495,7 +2507,7 @@ void draw_configs(float x, float y, int index)
                 break;
             #endif
             case 4:
-                if(directories[currentgamedir].title[0] != '_')
+                if((!directories[currentgamedir].splitted)&&(payload_mode >= ZERO_PAYLOAD))
                     ROT_INC(game_cfg.bdemu, 1, 0);
                 break;
             default:
