@@ -1,0 +1,54 @@
+IrisManager v1.0
+================
+
+Por el momento no he trasladado la documentacion usa el leeme_hmanager.txt para conocer el funcionamiento del manager.
+
+CHANGELOG - IrisManager:
+ v1.0 - r38 (commit - 9958fa2644c63e62546efd0601f2e55f352e81f8)
+    + Soporte Syscall 8
+    + Soporte Big Files + Nuevo Payload y Hook
+    + Ahora el proyecto pasa a llamarse IrisManager
+    + Desactivado soporte del nuevo payload a CFW Wanin, que se ha abandonado por el autor.
+
+CHANGELOG - HManager 3.55:
+ v1.3a - 3.55 r21 (commit - 28a666751a4d055fa9ae42746c4bed75d1a4ab57)
+    + Ahora al copiar un archivo de un dispositivo a otro, indica el tiempo restante y los gb que quedan por transferir.
+    + Las opciones que no están disponibles (en 3.55) ahora no se pueden cambiar.
+    + tiny3d lib actualizada (esto debería arreglar los posibles cuelgues que quedaban).
+    + Código actualizado a 1.4 pero aun no se podemos usar sus características (ficheros cacheados +4gb)
+
+ v1.3 - 3.55 r14
+    + Actualizacion a HManager 1.3
+
+ v1.2 - 3.55 r12 (NO PUBLICADA)
+    + Conversion BD-Emu a 3.55
+    + Actualizacion a HManager 1.2
+
+ v1.1F - 3.55 r9
+    + Arreglada la deteccion de Waninkoko v2 (3.55)
+    + Agregado LV2 Patcher (syscall36) al manager
+    + Actualizacion a HManager 1.1F
+
+ v1.0 - 3.55 beta 1
+    + Por el momento el patcher no esta integrado, aunque si la deteccion.
+    + Se incluye el diff completo, por si se puede aprovechar ;)
+    + La version 3.55 stealth usa el ID del Lemmings (NPUA80034) 
+    + La version normal usa el ID oficial de hermes (HMANAGER4)
+
+
+Testers
+========
+Algesat, Crescencio, dark_on_5dreamsder, Jericho_Delgado, junno, Mincho, morogoku, patitomx, Xulofuenla...
+
+Kudos
+======
+Hermes ftw
+Kmeaw + drizzt (syscall36)
+dark_on_5 great logo
+& PS3 scene :)
+
+Musica de ModArchive.org bajo licencia Mod Archive Distribution license y Creative Commons - ver licenses
+
+I made this work, just for fun. enjoy!
+D_Skywalk (2011) - http://david.dantoine.org
+
