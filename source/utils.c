@@ -671,7 +671,7 @@ static int fast_copy_process();
 
 static int nfilecached = 0;
 
-static char filecached[1][2][1024];
+static char filecached[4][2][1024];
 
 static char * path_cache = NULL;
 
@@ -720,18 +720,24 @@ static int fast_copy_add(char *pathr, char *pathw, char *file)
 	if(sysFsStat(fast_files[fast_num_files].pathr, &s) < 0) 
         {DPrintf("Failed in stat()\n"); abort_copy = 1; return -1;}
     
-    if(copy_split_to_cache) {
-        if(nfilecached > 0) return 0;
-        sprintf(&filecached[nfilecached][0][0], "%s/%s", pathr, file);
-        sprintf(&filecached[nfilecached][1][0], "%s", file);
+    if(copy_split_to_cache)
+    {
+        if(nfilecached <= 0) return 0;
 
-        char * a = strstr((char *) &filecached[nfilecached][0][0], ".66600");
+        sprintf(buff, "%s/%s", pathr, file);
+
+        char * a = strstr((char *) buff, ".66600");
         if(a) a[0] = 0;
-        a = strstr((char *) &filecached[nfilecached][1][0], ".66600");
-        if(a) a[0] = 0;
+
+        int n;
+
+        for(n = 0; n < nfilecached; n++)
+            if(!strcmp(&filecached[n][0][0], buff)) break;
+        
+        if(n == nfilecached) return 0;
 
         sprintf(fast_files[fast_num_files].pathw, "%s/%s", path_cache, file);
-        nfilecached++;
+
     } else
 	    sprintf(fast_files[fast_num_files].pathw, "%s/%s", pathw, file);
 
@@ -1316,18 +1322,54 @@ static int my_game_test(char *path)
 				size= s.st_size;
 
 				if(strlen(entry->d_name)>6)
-					{
+				{
 					char *p= f;
 					p+= strlen(f)-6; // adjust for .666xx
 					if(p[0]== '.' && p[1]== '6' && p[2]== '6' && p[3]== '6')
-						{  
+					{
 						DPrintf("Split file %lli MB %s\n\n", size/0x100000LL, f);
 						num_files_split++;
                         is_split = 1;
-								
-						}
-							
+
+                        if(copy_split_to_cache && p[4] == '0' && p[5] == '0') 
+                        {
+
+                            if(nfilecached < 4) 
+                            {
+
+                                if(nfilecached == 1 && copy_split_to_cache == 1) 
+                                {
+                                    copy_split_to_cache = 2;
+                                    sprintf(buff, "Found %s\n\nWant to install?", &filecached[0][0][0]);
+                                    if(DrawDialogYesNo(buff) != 1) {
+                                        nfilecached--;
+                                    }
+                                }
+
+                                sprintf(&filecached[nfilecached][0][0], "%s/%s", path, entry->d_name);
+                                sprintf(&filecached[nfilecached][1][0], "%s", entry->d_name);
+
+                                char * a = strstr((char *) &filecached[nfilecached][0][0], ".66600");
+                                if(a) a[0] = 0;
+                                a = strstr((char *) &filecached[nfilecached][1][0], ".66600");
+                                if(a) a[0] = 0;
+
+                                if(nfilecached == 0 && copy_split_to_cache == 1) nfilecached++;
+                                else 
+                                {
+                                    sprintf(buff, "Found %s\n\nWant to install?", &filecached[nfilecached][0][0]);
+                                    if(DrawDialogYesNo(buff) == 1)
+                                    {
+                                        nfilecached++; 
+                                    }
+                                }
+                            }
+                            
+                        }
+
 					}
+							
+			    }
 			
 				if(size>=0x100000000LL)	{DPrintf("Big file %lli MB %s\n\n", size/0x100000LL, f);num_files_big++;}
 
@@ -2190,6 +2232,25 @@ void copy_to_cache(int game_sel, char * hmanager_path)
         my_game_test((char *) name2);
         copy_split_to_cache = 0;
 
+        if(!nfilecached)
+        {
+            sprintf(string1, "Sorry, but you needs to install at least a bigfile");
+
+            DrawDialogOK(string1);
+
+            cache_need_free = 0.0f;
+
+            global_device_bytes = 0;
+
+            abort_copy = 0;
+            file_counter = 0;
+            copy_mode = 0;
+
+            new_pad = 0;
+
+            return;
+        }
+
         u32 blockSize;
         u64 freeSize;
         float freeSpace;
@@ -2324,7 +2385,7 @@ void copy_to_cache(int game_sel, char * hmanager_path)
         } else {
         
            sprintf(name, "%s/cache/%s/paths.dir", hmanager_path, directories[game_sel].title_id);
-           SaveFile(name, (char *) filecached, sizeof(filecached));
+           SaveFile(name, (char *) filecached, 2048 * nfilecached);
            sprintf(name, "%s/cache/%s/name_entry", hmanager_path, directories[game_sel].title_id);
            SaveFile(name, (char *) directories[game_sel].title, 64);
         }
@@ -2802,3 +2863,116 @@ int param_sfo_util(char * path, int patch_app)
 	return -1;
 
 }
+
+/*******************************************************************************************************************************************************/
+/* sys8 path table                                                                                                                                     */
+/*******************************************************************************************************************************************************/
+
+
+static char *table_compare[17];
+static char *table_replace[17];
+
+static int ntable = 0;
+
+void reset_sys8_path_table()
+{
+    while(ntable > 0) {
+
+        if(table_compare[ntable - 1]) free(table_compare[ntable - 1]);
+        if(table_replace[ntable - 1]) free(table_replace[ntable - 1]);
+
+        ntable --;
+    }
+}
+
+void add_sys8_path_table(char * compare, char * replace)
+{
+    if(ntable >= 16) return;
+
+    table_compare[ntable] = malloc(strlen(compare) + 1);
+    if(!table_compare[ntable]) return;
+    strncpy(table_compare[ntable], compare, strlen(compare) + 1);
+    
+    table_replace[ntable] = malloc(strlen(replace) + 1);
+    if(!table_replace[ntable]) return;
+    strncpy(table_replace[ntable], replace, strlen(replace) + 1);
+
+    ntable++;
+
+    table_compare[ntable] = NULL;
+}
+
+
+void build_sys8_path_table()
+{
+
+    path_open_entry *pentries;
+
+    int entries = 0;
+
+    int arena_size = 0;
+
+    int n, m;
+
+    sys8_path_table(0LL);
+
+    if(ntable <= 0) return;
+
+    while(table_compare[entries] != NULL) {
+        int l = strlen(table_compare[entries]);
+
+        arena_size += 0x420;
+        for(m = 0x80; m <= 0x420; m += 0x20)
+            if(l < m) {arena_size += m;break;}
+
+    entries++;
+    }
+
+    if(!entries) return;
+
+    char * datas = memalign(16, arena_size + sizeof(path_open_entry) * (entries + 1));
+    
+    if(!datas) return;
+
+    u64 dest_table_addr = 0x80000000007FF000ULL - (u64)((arena_size + sizeof(path_open_entry) * (entries + 1) + 15) & ~15);
+
+    u32 arena_offset = (sizeof(path_open_entry) * (entries + 1));
+
+    pentries = (path_open_entry *) datas;
+
+    for(n = 0; n < entries; n++) {
+    
+        int l = strlen(table_compare[n]);
+
+        int size = 0;
+        for(m = 0x80; m <= 0x420; m += 0x20)
+            if(l < m) {size += m; break;}
+
+        pentries->compare_addr = dest_table_addr + (u64) (arena_offset);
+
+        pentries->replace_addr = dest_table_addr + (u64) (arena_offset + size);
+        
+
+        strncpy(&datas[arena_offset], table_compare[n], size);
+        strncpy(&datas[arena_offset + size], table_replace[n], 0x420);
+
+        pentries->compare_len = strlen(&datas[arena_offset]);
+        pentries->replace_len = strlen(&datas[arena_offset + size]);
+
+        arena_offset += size + 0x420;
+        pentries ++;
+       
+    }
+    
+    pentries->compare_addr = 0ULL;
+
+    sys8_memcpy(dest_table_addr, (u64) datas, (u64) (arena_size + sizeof(path_open_entry) * (entries + 1)));
+
+    free(datas);
+
+    reset_sys8_path_table();
+
+    // set the path table
+    sys8_path_table( dest_table_addr);
+}
+

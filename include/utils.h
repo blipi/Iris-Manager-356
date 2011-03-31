@@ -26,6 +26,8 @@
 #include <tiny3d.h>
 #include <libfont.h>
 
+#include "syscall8.h"
+
 #define FONT_DEFAULT 0
 #define FONT_BUTTON  2
 
@@ -107,6 +109,10 @@ void AddFavourites(int indx, t_directories *list, int position_list);
 int DeleteFavouritesIfExits(char *id);
 
 int param_sfo_util(char * path, int patch_app);
+
+void reset_sys8_path_table();
+void add_sys8_path_table(char * compare, char * replace);
+void build_sys8_path_table();
 
 #endif
 

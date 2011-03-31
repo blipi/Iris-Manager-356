@@ -286,7 +286,7 @@ int lv2_unpatch_bdvdemu(void)
 
         if(!memcmp(mem + n, "CELL_FS_IOS:USB_MASS_STORAGE0", 29)) 
         {
-            if(!memcmp(mem + n + 0x69, "dev_bdvd", 9)) 
+            if(!memcmp(mem + n + 0x69, "dev_bdvd", 9) || !memcmp(mem + n + 0x69, "temp_usb", 9))
             {
                 lv2_memcpy(LV2MOUNTADDR_355 + n + 0x69, (u64) (mem + n + 0x79), 11);
                 lv2_memset(LV2MOUNTADDR_355 + n + 0x79, 0ULL, 12);

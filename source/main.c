@@ -452,15 +452,6 @@ int lv2launch(u64 addr)
 int syscall36(char * path) 
 { return Lv2Syscall1(36, (u64) path); }
 
-typedef struct {
-
-	path_open_entry entries[3];
-	char arena[0x420*3];
-
-} path_open_table;
-
-static path_open_table open_table __attribute__((aligned(8)));
-
 u64 hmanager_key = 0x1759829723742374ULL;
 
 /******************************************************************************************************************************************************/
@@ -531,7 +522,8 @@ struct {
     int updates;
     int ext_ebootbin;
     int bdemu;
-    int pad[8];
+    int exthdd0emu;
+    int pad[7];
 } game_cfg;
 
 int load_ps3loadx = 0;
@@ -1662,25 +1654,31 @@ void draw_screen1(float x, float y)
                 DrawDialogOK("Cannot run this favourite");return;
             } else {
 
+                currentgamedir = (mode_favourites !=0) ? favourites.list[i].index : (currentdir + i);
+
+                if(currentgamedir < 0 || currentgamedir >= ndirectories) return;
+
+                reset_sys8_path_table();
+
                 int use_cache = 0;
 
-                if(directories[get_currentdir(i)].splitted == 1) {
+                if(directories[currentgamedir].splitted == 1) {
                     if( payload_mode >= ZERO_PAYLOAD )
                     {
                         sprintf(temp_buffer, "%s/cache/%s/%s", self_path, 
-                        directories[get_currentdir(i)].title_id, "/paths.dir");
+                        directories[currentgamedir].title_id, "/paths.dir");
 
                         struct stat s;
                     
                         if(stat(temp_buffer, &s)<0) {
                             sprintf(temp_buffer + 1024, "%s\n\nMarked as non executable. Trying to install in HDD0 cache", 
-                            directories[get_currentdir(i)].title);
+                            directories[currentgamedir].title);
                             DrawDialogOK(temp_buffer + 1024);
                             
-                            copy_to_cache(get_currentdir(i), self_path);
+                            copy_to_cache(currentgamedir, self_path);
     
                             sprintf(temp_buffer, "%s/cache/%s/%s", self_path, 
-                            directories[get_currentdir(i)].title_id, "/paths.dir");
+                            directories[currentgamedir].title_id, "/paths.dir");
                             if(stat(temp_buffer, &s)<0) return; // cannot launch without cache files
                         }
                      
@@ -1698,7 +1696,7 @@ void draw_screen1(float x, float y)
                 
                  // load game config
                 sprintf(temp_buffer, "%s/config/%s.cfg", 
-                    self_path, directories[get_currentdir(i)].title_id);
+                    self_path, directories[currentgamedir].title_id);
                 memset(&game_cfg, 0, sizeof(game_cfg));
                 
                 int file_size;
@@ -1708,20 +1706,81 @@ void draw_screen1(float x, float y)
                     memcpy(&game_cfg, file, file_size);
                     free(file);
                 }
-                
+
+                if(game_cfg.exthdd0emu) {
+
+                    if((directories[currentgamedir].flags & 2046) != 0) {
+                        
+                        for(n = 1; n < 11 ; n++) if(directories[currentgamedir].flags == (1 << n)) break;
+                        sprintf(temp_buffer, "/dev_usb00%c/GAMEI", 47 + n);
+                        mkdir(temp_buffer, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
+                        add_sys8_path_table(self_path, self_path);
+                        
+                        if(game_cfg.bdemu) 
+                            add_sys8_path_table("/dev_hdd0/game", "/dev_bdvd/GAMEI");
+                        else
+                            add_sys8_path_table("/dev_hdd0/game", temp_buffer);
+
+                    } else if((fdevices & 2046) != 0){
+
+                        for(n = 1; n < 11; n++) { // searching directory
+                            if(fdevices & (1 << n)) {
+                                DIR  *dir;
+                                
+                                sprintf(temp_buffer, "/dev_usb00%c/GAMEI", 47 + n);
+                                dir = opendir (temp_buffer);
+                                if(dir) {
+                                    closedir (dir);
+                                    
+                                    add_sys8_path_table(self_path, self_path);
+                                    add_sys8_path_table("/dev_hdd0/game", temp_buffer);
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if(n == 11) { // directory not found, Asking to create one
+                        
+                             for(n = 1; n < 11 ; n++) {
+                                if(fdevices & (1 << n)) {
+                                    sprintf(temp_buffer, "I cannot find one folder to mount /dev_hdd0/game from USB\n\n"
+                                                        "Want to create in /dev_usb00%c?", 47 + n);
+                                    if(DrawDialogYesNo(temp_buffer) == 1) {
+                                        sprintf(temp_buffer, "/dev_usb00%c/GAMEI", 47 + n);
+                                        mkdir(temp_buffer, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
+                                        add_sys8_path_table(self_path, self_path);
+                                        add_sys8_path_table("/dev_hdd0/game", temp_buffer);
+                                        break;
+                                    }
+                                }
+                             }
+                             
+                             if(n == 11) {
+                                 if(DrawDialogYesNo("I cannot find an USB device to mount /dev_hdd0/game from USB\n\n"
+                                        "Want to launch the Game?") != 1) return;
+                             }
+                        }
+                    }
+
+                    if((fdevices & 2046) == 0) {
+                        if(DrawDialogYesNo("I cannot find an USB device to mount /dev_hdd0/game from USB\n\n"
+                                "Want to launch the Game?") != 1) return;
+                    }
+
+                }
+
+
                 if(game_cfg.xmb && (fdevices & 2048) == 0) {
             
                     DrawDialogOK("Required BR-Disc");
-                    goto skip_sys8;
+                    return;
                 }
                 
-                if(!(directories[get_currentdir(i)].flags & 2048))
-                    param_sfo_util(directories[get_currentdir(i)].path_name, (game_cfg.updates != 0));
+                if(!(directories[currentgamedir].flags & 2048))
+                    param_sfo_util(directories[currentgamedir].path_name, (game_cfg.updates != 0));
 
                 if(!game_cfg.ext_ebootbin) sys8_path_table(0LL);
                 else {
-                        
-                    u64 dest_table_addr;
 
                     sprintf(temp_buffer, "%s/self/%s.BIN", self_path, 
                         directories[get_currentdir(i)].title_id);
@@ -1730,30 +1789,13 @@ void draw_screen1(float x, float y)
 
                     if(!fp) {
                         sprintf(temp_buffer, "%s.BIN\n\nexternal executable not found", 
-                            directories[get_currentdir(i)].title_id);
+                            directories[currentgamedir].title_id);
                         DrawDialogOK(temp_buffer);
                         goto skip_sys8;
                     } else {
 
                         fclose(fp);
-
-                        sys8_path_table(0LL);
-
-                        dest_table_addr= 0x80000000007FF000ULL-((sizeof(path_open_table)+15) & ~15);
-                        open_table.entries[0].compare_addr= ((uint64_t) &open_table.arena[0]) - ((uint64_t) &open_table) + dest_table_addr;
-                        open_table.entries[0].replace_addr= ((uint64_t) &open_table.arena[0x420])- ((uint64_t) &open_table) + dest_table_addr;
-                        open_table.entries[1].compare_addr= 0ULL; // the last entry always 0
-                        
-                        strncpy(&open_table.arena[0], "/dev_bdvd/PS3_GAME/USRDIR/EBOOT.BIN", 0x100); // compare 1
-                        strncpy(&open_table.arena[0x420], temp_buffer, 0x420);     // replace 1
-
-                        open_table.entries[0].compare_len= strlen(&open_table.arena[0]);		// 1
-                        open_table.entries[0].replace_len= strlen(&open_table.arena[0x420]);
-
-                        sys8_memcpy(dest_table_addr, (uint64_t) &open_table, sizeof(path_open_table));
-
-                        // set the path table
-                        sys8_path_table( dest_table_addr);
+                        add_sys8_path_table("/dev_bdvd/PS3_GAME/USRDIR/EBOOT.BIN", temp_buffer);
                     }
                 
                 }
@@ -1764,7 +1806,7 @@ void draw_screen1(float x, float y)
                 sys8_sys_configure(CFG_UNPATCH_APPVER + (game_cfg.updates != 0));
                 
                 if(game_cfg.bdemu) {
-                    n = move_origin_to_bdemubackup(directories[get_currentdir(i)].path_name);
+                    n = move_origin_to_bdemubackup(directories[currentgamedir].path_name);
                     if(n < 0) {
                         syscall36("/dev_bdvd"); // in error exits
                         sys8_perm_mode((u64) 1);
@@ -1776,76 +1818,49 @@ void draw_screen1(float x, float y)
                 }
 
                 if(game_cfg.bdemu && 
-                    patch_bdvdemu(directories[get_currentdir(i)].flags) == 0) {
+                    patch_bdvdemu(directories[currentgamedir].flags) == 0) {
 
                     syscall36("//dev_bdvd");
                 }
                 else {
 
                     if(use_cache) {
-                        u64 dest_table_addr;
                        
                         sprintf(temp_buffer + 1024, "%s/cache/%s/%s", self_path,  //check replace (1024)
-                        directories[get_currentdir(i)].title_id, "/paths.dir");
+                        directories[currentgamedir].title_id, "/paths.dir");
                         
                         char *path = LoadFile(temp_buffer + 1024, &n);
+                        char *mem = path;
 
-                        if(path) {
-                            sprintf(temp_buffer + 1024, "%s/cache/%s/%s", self_path, //set replace (1024)
-                                directories[get_currentdir(i)].title_id, path + 1024);
-                             
-                            path = strstr(path, "PS3_GAME/");
-                            sprintf(temp_buffer, "/dev_bdvd/%s", path); //set compare (0)
+                        n = n & ~2047; // if file truncated break bad datas...
 
-                            if(game_cfg.ext_ebootbin) {
-                                sprintf(temp_buffer + 2048, "%s/self/%s.BIN", self_path, //set ext (2048)
-                                directories[get_currentdir(i)].title_id);
+                        if(path)
+                        {
+                            while(n > 0)
+                            {
+                                char *t = path;
+
+                                sprintf(temp_buffer + 1024, "%s/cache/%s/%s", self_path, 
+                                    directories[currentgamedir].title_id, path + 1024);
+                                 
+                                path = strstr(path, "PS3_GAME/");
+                               
+                                sprintf(temp_buffer, "/dev_bdvd/%s", path);
+
+                                add_sys8_path_table(temp_buffer, temp_buffer + 1024);
+
+                                path = t + 2048;
+                                n   -= 2048;
                             }
-                        
-                            sys8_path_table(0LL); //free
-
-                            dest_table_addr= 0x80000000007FF000ULL-((sizeof(path_open_table)+15) & ~15);
-                            open_table.entries[0].compare_addr= ((uint64_t) &open_table.arena[0]) - ((uint64_t) &open_table) + dest_table_addr;
-                            open_table.entries[0].replace_addr= ((uint64_t) &open_table.arena[0x420])- ((uint64_t) &open_table) + dest_table_addr;
-                           
-                            if(game_cfg.ext_ebootbin) {
-                                open_table.entries[1].compare_addr= ((uint64_t) (&open_table.arena[0x840])) 
-                                    - ((uint64_t) &open_table) + dest_table_addr;
-                                open_table.entries[1].replace_addr= ((uint64_t) (&open_table.arena[0x940]))
-                                    - ((uint64_t) &open_table) + dest_table_addr;
-                                open_table.entries[2].compare_addr= 0ULL; // the last entry always 0
-                            }
-                            else
-                                open_table.entries[1].compare_addr= 0ULL; // the last entry always 0
-                            
-                          
-                            strncpy(&open_table.arena[0], temp_buffer, 0x100); // compare 1
-                            strncpy(&open_table.arena[0x420], temp_buffer + 1024, 0x420);     // replace 1
-
-
-                            open_table.entries[0].compare_len= strlen(&open_table.arena[0]);		// 1
-                            open_table.entries[0].replace_len= strlen(&open_table.arena[0x420]);
-
-
-                            if(game_cfg.ext_ebootbin) {
-                                strncpy(&open_table.arena[0] + 0x840, "/dev_bdvd/PS3_GAME/USRDIR/EBOOT.BIN", 0x100); // compare 2
-                                strncpy(&open_table.arena[0] + 0x940, temp_buffer + 2048, 0x420);     // replace 2
-
-                                open_table.entries[1].compare_len= strlen((&open_table.arena[0x840]));		// 1
-                                open_table.entries[1].replace_len= strlen((&open_table.arena[0x940]));
-                            }
-                           
-
-                            sys36_memcpy(dest_table_addr, (uint64_t) &open_table, sizeof(path_open_table));
-
-                            // set the path table
-                            sys8_path_table( dest_table_addr);
+                            free(mem);
                         }
                     }
 
-                    syscall36(directories[get_currentdir(i)].path_name);
+
+                    syscall36(directories[currentgamedir].path_name);
                 }
 
+                build_sys8_path_table();
                 sys8_perm_mode((u64) (game_cfg.perm & 3));
             
                 exit_program = 1; 
@@ -1900,9 +1915,17 @@ void draw_screen1(float x, float y)
         }
     }
 
+    static int auto_up = 0, auto_down = 0, auto_left = 0, auto_right = 0;
+
+    AUTO_BUTTON_REP(auto_up, BUTTON_UP)
+    AUTO_BUTTON_REP(auto_down, BUTTON_DOWN)
+    AUTO_BUTTON_REP(auto_left, BUTTON_LEFT)
+    AUTO_BUTTON_REP(auto_right, BUTTON_RIGHT)
+
     if(new_pad & BUTTON_UP) {
         select_py--;
 
+        auto_up = 1;
         frame_count = 32;
 
         if(select_py < 0) {
@@ -1922,6 +1945,7 @@ void draw_screen1(float x, float y)
         
         select_py++;
 
+        auto_down = 1;
         frame_count = 32;
         
         if(select_py > 2) {
@@ -1942,6 +1966,7 @@ void draw_screen1(float x, float y)
         
         select_px--;
 
+        auto_left = 1;
         frame_count = 32;
 
         if(select_px < 0) {
@@ -1962,6 +1987,7 @@ void draw_screen1(float x, float y)
         
         select_px++; 
 
+        auto_right = 1;
         frame_count = 32;
 
         if(select_px > 3) {
@@ -2422,10 +2448,17 @@ void draw_configs(float x, float y, int index)
 
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "Save Config", (flash && select_option == 5))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, "Ext /dev_hdd0/game", (flash && select_option == 5))  + 16;
+        
+    x2 = DrawButton2(x2, y2, 0, "  On  ", (game_cfg.exthdd0emu != 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  Off  ", (game_cfg.exthdd0emu == 0)) + 8;
+
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "Return", (flash && select_option == 6))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, "Save Config", (flash && select_option == 6))  + 16;
+    y2+= 48;
+
+    x2 = DrawButton1(x + 32, y2, 240, "Return", (flash && select_option == 7))  + 16;
     y2+= 48;
 
 
@@ -2493,6 +2526,9 @@ void draw_configs(float x, float y, int index)
                     ROT_INC(game_cfg.bdemu, 1, 0);
                 break;
             case 5:
+                ROT_INC(game_cfg.exthdd0emu, 1, 0);
+                break;
+            case 6:
                 // save game config
                 sprintf(temp_buffer, "%s/config/%s.cfg", self_path, directories[currentgamedir].title_id);
               
@@ -2513,7 +2549,7 @@ void draw_configs(float x, float y, int index)
 
         frame_count = 32;
 
-        ROT_DEC(select_option, 0, 6)
+        ROT_DEC(select_option, 0, 7)
         
     }
 
@@ -2521,7 +2557,7 @@ void draw_configs(float x, float y, int index)
         
         frame_count = 32;
 
-        ROT_INC(select_option, 6, 0); 
+        ROT_INC(select_option, 7, 0); 
         
     }
 
@@ -2546,6 +2582,9 @@ void draw_configs(float x, float y, int index)
             case 4:
                 if((!directories[currentgamedir].splitted)&&(payload_mode >= ZERO_PAYLOAD))
                     ROT_DEC(game_cfg.bdemu, 0, 1);
+                break;
+             case 5:
+                ROT_DEC(game_cfg.exthdd0emu, 0, 1);
                 break;
             default:
                 break;
@@ -2573,6 +2612,9 @@ void draw_configs(float x, float y, int index)
             case 4:
                 if((!directories[currentgamedir].splitted)&&(payload_mode >= ZERO_PAYLOAD))
                     ROT_INC(game_cfg.bdemu, 1, 0);
+                break;
+            case 5:
+                ROT_INC(game_cfg.exthdd0emu, 1, 0);
                 break;
             default:
                 break;

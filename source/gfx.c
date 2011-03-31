@@ -138,6 +138,8 @@ float DrawButton2(float x, float y, float w, char * t, int select)
     SetCurrentFont(FONT_BUTTON);
     SetFontSize(10, 32);
 
+    if(select == 2) {rgba = 0xffffffff; brgba = 0xc01000ff;}
+        else
     if(select == 1) {rgba = 0xffffffff; brgba = 0x00c000ff;}
         else
     if(select == -1) {rgba = 0xffffff6f; brgba = 0x00c0006f;}
