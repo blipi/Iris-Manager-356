@@ -48,6 +48,7 @@
 
 #include <gcmodplay.h>
 #include "credits.h"
+#include "main.h"
 #include "music1_mod.bin.h"
 #include "music2_mod.bin.h"
 #include "music3_mod.bin.h"
@@ -510,7 +511,18 @@ struct {
     char hdd_folder[64];
     u32 usekey;
     char pad[156];
+} manager_oldcfg;
+
+struct {
+    int videoscale_x[4];
+    int videoscale_y[4];
+    int background_sel;
+    char hdd_folder[64];
+    u32 usekey;
+    char pad[156];
+    u32 opt_flags;
 } manager_cfg;
+
 
 struct {
     int version;
@@ -576,8 +588,11 @@ void LoadManagerCfg()
     int file_size;
     char *file = LoadFile(temp_buffer, &file_size);
 
-    if(file) {
-        if(file_size > sizeof(manager_cfg)) file_size = sizeof(manager_cfg);
+    if(file)
+    {
+        if((file_size != sizeof(manager_cfg)) && (file_size != sizeof(manager_oldcfg)))
+            file_size = sizeof(manager_oldcfg); // safe
+        
         memcpy(&manager_cfg, file, file_size);
         free(file);
     } 
@@ -777,6 +792,50 @@ void Select_games_folder()
             DrawDialogOK(temp_buffer);
         }
     }
+}
+
+void pause_music(int pause)
+{
+    if((pause) || (manager_cfg.opt_flags & OPTFLAGS_PLAYMUSIC))
+        SND_Pause(pause);
+}
+
+void init_music()
+{
+    MODPlay_Init(&mod_track);
+    
+    int file_size;
+    char *file;
+
+    sprintf(temp_buffer, "%s/music.mod", self_path);
+    file = LoadFile(temp_buffer, &file_size);
+
+    if(!file) {
+   
+        sprintf(temp_buffer, "%s/MUSIC.MOD", self_path);
+        file = LoadFile(temp_buffer, &file_size);
+    }
+    
+    if(!file) {
+        srand(time(0)); // randomize seed
+        song_selected = rand() % MAX_SONGS;
+        file = (char *) music[song_selected];
+    } else {
+        // paranoid code to copy the .mod in aligned and large memory
+
+        char *file2 = memalign(32, file_size + 32768);
+        if(file2) {memcpy(file2, file, file_size);free(file); file = file2;}
+    }
+
+    if(MODPlay_SetMOD (&mod_track, file)<0) {
+        MODPlay_Unload (&mod_track);
+    } else {
+        MODPlay_SetVolume( &mod_track, 6, 6); // fix the volume to 16 (max 64)
+	    MODPlay_Start (&mod_track); // Play the MOD
+        inited |= INITED_MODLIB;
+        SND_Pause(1); //force pause here
+    }
+
 }
 
 static char filename[1024];
@@ -1008,44 +1067,7 @@ s32 main(s32 argc, const char* argv[])
 
     unpatch_bdvdemu();
 
-    MODPlay_Init(&mod_track);
-    
-    // modplayer init
-    {
-    
-    int file_size;
-    char *file;
-
-    sprintf(temp_buffer, "%s/music.mod", self_path);
-    file = LoadFile(temp_buffer, &file_size);
-
-    if(!file) {
-   
-        sprintf(temp_buffer, "%s/MUSIC.MOD", self_path);
-        file = LoadFile(temp_buffer, &file_size);
-    }
-    
-    if(!file) {
-        srand(time(0)); // randomize seed
-        song_selected = rand() % MAX_SONGS;
-        file = (char *) music[song_selected];
-    } else {
-        // paranoid code to copy the .mod in aligned and large memory
-
-        char *file2 = memalign(32, file_size + 32768);
-        if(file2) {memcpy(file2, file, file_size);free(file); file = file2;}
-    }
-
-    if(MODPlay_SetMOD (&mod_track, file)<0) {
-        MODPlay_Unload (&mod_track);
-    } else {
-        MODPlay_SetVolume( &mod_track, 6, 6); // fix the volume to 16 (max 64)
-	    MODPlay_Start (&mod_track); // Play the MOD
-        inited |= INITED_MODLIB;
-        SND_Pause(1);
-    }
-    
-    }
+    init_music();
 
     sprintf(temp_buffer, "%s/config/favourites.bin", self_path);
 
@@ -1200,7 +1222,7 @@ s32 main(s32 argc, const char* argv[])
         found_game_remove=0;
         found_game_insert=0;
 
-        SND_Pause(0);
+        pause_music(0);
 
         /////////////////////////////////////
 
@@ -2138,11 +2160,11 @@ void draw_options(float x, float y, int index)
 
                  if(Png_offset[i]) {
 
-                    SND_Pause(1);
+                    pause_music(1);
 
                     copy_from_selection(currentgamedir);
 
-                    SND_Pause(0);
+                    pause_music(0);
 
                     currentgamedir = currentdir = 0;
                     select_px = select_py = 0;
@@ -2156,11 +2178,11 @@ void draw_options(float x, float y, int index)
 
                  if(Png_offset[i]) {
                     
-                    SND_Pause(1);
+                    pause_music(1);
                     
                     delete_game(currentgamedir);
                     
-                    SND_Pause(0);
+                    pause_music(0);
 
                     currentgamedir = currentdir = 0;
                     select_px = select_py = 0;
@@ -2173,11 +2195,11 @@ void draw_options(float x, float y, int index)
 
                  if(Png_offset[i]) {
 
-                    SND_Pause(1);                
+                    pause_music(1);                
 
                     FixDirectory(directories[currentgamedir].path_name);
 
-                    SND_Pause(0);
+                    pause_music(0);
 
                     DrawDialogOK("Fix Permissions Done!");
              
@@ -2188,11 +2210,11 @@ void draw_options(float x, float y, int index)
 
                  if(Png_offset[i]) {
 
-                    SND_Pause(1);
+                    pause_music(1);
 
                     test_game(currentgamedir);
 
-                    SND_Pause(0);
+                    pause_music(0);
                     
                  }
                  break;
@@ -2577,7 +2599,8 @@ void draw_gbloptions(float x, float y)
 
     SetFontAutoCenter(0);
   
-    DrawFormatString(x, y - 2, " Global Options");
+    sprintf(temp_buffer, " Global Options (%u)", manager_cfg.opt_flags);
+    DrawFormatString(x, y - 2, temp_buffer);
 
     if(x3 < 0)
     {
@@ -2607,7 +2630,7 @@ void draw_gbloptions(float x, float y)
     
     y2+= 48;
 
-    DrawButton1((848 - 520) / 2, y2, 520, "Load PS3LoadX", (flash && select_option == 3));
+    DrawButton1((848 - 520) / 2, y2, 520, (manager_cfg.opt_flags & OPTFLAGS_PLAYMUSIC)? "Music Off" : "Music On" , (flash && select_option == 3));
     
     y2+= 48;
 
@@ -2674,12 +2697,12 @@ void draw_gbloptions(float x, float y)
                 background_sel &= 3;
                 manager_cfg.background_sel = background_sel;
                 SaveManagerCfg();
-
                 break;
 
             case 3:
-                load_ps3loadx = 1;
-                exit(0);
+                manager_cfg.opt_flags ^= OPTFLAGS_PLAYMUSIC; //change bit
+                pause_music((manager_cfg.opt_flags & OPTFLAGS_PLAYMUSIC)? 0 : 1);
+                SaveManagerCfg();
                 break;
 
             case 4:
@@ -2774,12 +2797,15 @@ void draw_toolsoptions(float x, float y)
     
     y2+= 48;
 
+    DrawButton1((848 - 520) / 2, y2, 520, "Load PS3LoadX", (flash && select_option == 2));
+    
+    y2+= 48;
 
-    DrawButton1((848 - 520) / 2, y2, 520, "Return", (flash && select_option == 2));
+    DrawButton1((848 - 520) / 2, y2, 520, "Return", (flash && select_option == 3));
     
     y2+= 48;
     
-    for(n = 0; n < 5; n++) {
+    for(n = 0; n < 4; n++) {
         
         DrawButton1((848 - 520) / 2, y2, 520, "", -1);
     
@@ -2820,6 +2846,11 @@ void draw_toolsoptions(float x, float y)
                 break;
 
             case 2:
+                load_ps3loadx = 1;
+                exit(0);
+                break;
+
+            case 3:
                 select_option = 0;
                 menu_screen = 0; 
                 return;
@@ -2839,7 +2870,7 @@ void draw_toolsoptions(float x, float y)
 
         frame_count = 32;
 
-        ROT_DEC(select_option, 0, 2)
+        ROT_DEC(select_option, 0, 3)
         
     }
 
@@ -2847,7 +2878,7 @@ void draw_toolsoptions(float x, float y)
 
         frame_count = 32;
         
-        ROT_INC(select_option, 2, 0); 
+        ROT_INC(select_option, 3, 0); 
         
     }
     
