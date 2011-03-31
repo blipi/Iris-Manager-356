@@ -91,13 +91,14 @@ static u64 frame_count = 0;
 #endif
 
 // include fonts
-
-#include "andika_ttf.bin.h"
+#include "comfortaa_ttf.bin.h"
+#include "comfortaa_bold_ttf.bin.h"
 
 // font 2: 224 chr from 32 to 255, 16 x 32 pix 2 bit depth
 #include "font_b.h"
 #include "bluray_png.bin.h"
 #include "usb_png.bin.h"
+#include "missing_png.bin.h"
 
 #define ROT_INC(x ,y , z) {x++; if(x > y) x = z;}
 #define ROT_DEC(x ,y , z) {x--; if(x < y) x = z;}
@@ -142,6 +143,8 @@ void Load_PNG_resources()
     Png_res[1].png_in   = (void *) usb_png_bin;
     Png_res[1].png_size = sizeof  (usb_png_bin);
 
+    Png_res[2].png_in   = (void *) missing_png_bin;
+    Png_res[2].png_size = sizeof  (missing_png_bin);
    
     
     // load PNG from memory
@@ -367,12 +370,18 @@ void LoadTexture()
 
     ResetFont();
 
-    TTFLoadFont(NULL, (void *) andika_ttf_bin, sizeof(andika_ttf_bin));
+    TTFLoadFont(NULL, (void *) comfortaa_ttf_bin, sizeof(comfortaa_ttf_bin));
     texture_pointer = (u32 *) AddFontFromTTF((u8 *) texture_pointer, 32, 255, 32, 32, TTF_to_Bitmap);
     texture_pointer = (u32 *) AddFontFromTTF((u8 *) texture_pointer, 32, 255, 64, 64, TTF_to_Bitmap);
     TTFUnloadFont();
 
+    //debug font
     texture_pointer = (u32 *) AddFontFromBitmapArray((u8 *) font_b, (u8 *) texture_pointer, 32, 255, 16, 32, 2, BIT0_FIRST_PIXEL);
+
+    //new button font
+    //TTFLoadFont(NULL, (void *) comfortaa_bold_ttf_bin, sizeof(comfortaa_bold_ttf_bin));
+    //texture_pointer = (u32 *) AddFontFromTTF((u8 *) texture_pointer, 32, 255, 32, 32, TTF_to_Bitmap);
+    //TTFUnloadFont();
 
     Load_PNG_resources();
 
@@ -788,8 +797,10 @@ void Select_games_folder()
 
 void pause_music(int pause)
 {
-    if((pause) || (manager_cfg.opt_flags & OPTFLAGS_PLAYMUSIC))
-        SND_Pause(pause);
+    if((!pause)&&(!(manager_cfg.opt_flags & OPTFLAGS_PLAYMUSIC)))
+        return;
+
+    SND_Pause(pause);
 }
 
 void init_music()
@@ -1462,7 +1473,7 @@ void draw_screen1(float x, float y)
                         Png_res[0].height, Png_res[0].wpitch, 
                             TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
 
-                        DrawTextBox(x + 200 * m + 32 - 4 * f, y + n * 150 + 7 - 4 * f, 0, 128 + 8 * f, 128 + 8 * f, 0xffffffcf);    
+                        DrawTextBox(x + 200 * m + 4 - 4 * f, y + n * 150 + 4 - 4 * f, 0, 32, 32, 0xffffffcf);
                     } else 
                     // draw Usb icon    
                     if(directories[get_currentdir(i)].flags > 1) {
@@ -1479,8 +1490,8 @@ void draw_screen1(float x, float y)
                 }
 
             } else if(mode_favourites && favourites.list[i].title_id[0] != 0) {
-                tiny3d_SetTextureWrap(0, Png_res_offset[0], Png_res[0].width, 
-                    Png_res[0].height, Png_res[0].wpitch, 
+                tiny3d_SetTextureWrap(0, Png_res_offset[2], Png_res[2].width, 
+                    Png_res[2].height, Png_res[2].wpitch, 
                         TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
                     DrawTextBox(x + 200 * m + 32 - 4 * f, y + n * 150 + 7 - 4 * f, 0, 128 + 8 * f, 128 + 8 * f, 0xffffff3f); 
             }
@@ -1529,11 +1540,10 @@ void draw_screen1(float x, float y)
 
             if(png_on)
                 DrawTextBox(x + 200 * select_px - 4, y + select_py * 150 - 4 , 0, 200, 150, 0x8fff8fcf);
-        } else {
+        }/* else {
             i = selected;
 
             if(Png_offset[i]) {
-                SetCurrentFont(FONT_BUTTON);
                 SetFontColor(0xffffffff, 0x00000080);
                 SetFontSize(8, 16);        
                 x2 = DrawFormatString(x + 200 * select_px - 4 + (200 - 24 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "Press ");
@@ -1541,9 +1551,7 @@ void draw_screen1(float x, float y)
                 x2 = DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, "SELECT");
                 SetFontColor(0xffffffff, 0x00000080);
                 DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, " for Options");
-                SetCurrentFont(FONT_DEFAULT);
             } else  if(mode_favourites && mode_favourites < 65536 && favourites.list[i].title_id[0] != 0) {
-                SetCurrentFont(FONT_BUTTON);
                 SetFontColor(0x7fff00ff, 0x00000080);
                 SetFontSize(8, 16);        
                 x2 = DrawFormatString(x + 200 * select_px - 4 + (200 - 23 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "Press ");
@@ -1551,9 +1559,8 @@ void draw_screen1(float x, float y)
                 x2 = DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, "SELECT");
                 SetFontColor(0x7fff00ff, 0x00000080);
                 DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, " for Delete");
-                SetCurrentFont(FONT_DEFAULT);
             }
-        }
+        }*/
     
     }
 
@@ -1579,8 +1586,8 @@ void draw_screen1(float x, float y)
 
         temp_buffer[65] = 0;
 
-        if(strlen(temp_buffer) < 50) SetFontSize(18, 32); 
-        else SetFontSize(14, 32);
+        if(strlen(temp_buffer) < 50) SetFontSize(22, 32); 
+        else SetFontSize(18, 32);
 
         SetFontAutoCenter(0);
   
@@ -1589,15 +1596,26 @@ void draw_screen1(float x, float y)
         SetFontAutoCenter(0);
     }
 
-    if(flash) {
-        SetFontColor(0xffffffff, 0x404040ff);
-        SetFontSize(18, 20);
-        x2= DrawFormatString(1024, 0, " Press START for Global Options ");
+    SetFontColor(0xffffffff, 0x00000000);
+    SetFontSize(20, 20);
 
-        DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 + 6, " Press START for Global Options ");
+    if(Png_offset[i])
+    {
+        x2= DrawFormatString(1024, 0, " SELECT: Game Options ");
+        DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 - 4, " SELECT: Game Options ");
     }
+    else if(mode_favourites && mode_favourites < 65536 && favourites.list[i].title_id[0] != 0) 
+    {
+        x2= DrawFormatString(1024, 0, " SELECT: Delete Favourite ");
+        DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 - 4, " SELECT: Delete Favourite ");
+    }
+
+    
+    x2= DrawFormatString(1024, 0, " START: Global Options ");
+
+    DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 + 18, " START: Global Options ");
    
-    DrawBox(x, y + 3 * 150, 1000, 200 * 4 - 8, 40, 0x00000028);
+    //DrawBox(x, y + 3 * 150, 1000, 200 * 4 - 8, 40, 0xcccccccc);
 
     tiny3d_Flip();
 
@@ -2146,8 +2164,8 @@ void draw_options(float x, float y, int index)
 
         temp_buffer[65] = 0;
 
-        if(strlen(temp_buffer) < 50) SetFontSize(18, 32); 
-        else SetFontSize(14, 32);
+        if(strlen(temp_buffer) < 50) SetFontSize(22, 32); 
+        else SetFontSize(18, 32);
 
         SetFontAutoCenter(1);
   
@@ -2481,8 +2499,8 @@ void draw_configs(float x, float y, int index)
 
         temp_buffer[65] = 0;
 
-        if(strlen(temp_buffer) < 50) SetFontSize(18, 32); 
-        else SetFontSize(14, 32);
+        if(strlen(temp_buffer) < 50) SetFontSize(22, 32); 
+        else SetFontSize(18, 32);
 
         SetFontAutoCenter(1);
   
@@ -2641,8 +2659,7 @@ void draw_gbloptions(float x, float y)
 
     SetFontAutoCenter(0);
   
-    sprintf(temp_buffer, " Global Options (%u)", manager_cfg.opt_flags);
-    DrawFormatString(x, y - 2, temp_buffer);
+    DrawFormatString(x, y - 2, " Global Options");
 
     if(x3 < 0)
     {
@@ -2672,7 +2689,7 @@ void draw_gbloptions(float x, float y)
     
     y2+= 48;
 
-    DrawButton1((848 - 520) / 2, y2, 520, (manager_cfg.opt_flags & OPTFLAGS_PLAYMUSIC)? "Music Off" : "Music On" , (flash && select_option == 3));
+    DrawButton1((848 - 520) / 2, y2, 520, (manager_cfg.opt_flags & OPTFLAGS_PLAYMUSIC)? "Switch Music Off" : "Switch Music On" , (flash && select_option == 3));
     
     y2+= 48;
 
@@ -3003,8 +3020,8 @@ void draw_cachesel(float x, float y)
 
     
     if(flash && cache_need_free != 0) {
-        SetCurrentFont(FONT_BUTTON);
-        SetFontSize(18, 20);
+        SetCurrentFont(FONT_DEFAULT);
+        SetFontSize(20, 20);
         SetFontColor(0xffff00ff, 0x00000000);
         SetFontAutoCenter(1);
         DrawFormatString(0, y + 3 * 150 + 6, "You need %1.2f GB free to install", cache_need_free);
