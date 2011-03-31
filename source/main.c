@@ -119,16 +119,20 @@ int move_bdemubackup_to_origin(u32 flags);
 u8 * png_texture = NULL;
 PngDatas Png_datas[16];
 u32 Png_offset[16];
+int Png_iscover[16];
 
 PngDatas Png_res[16];
 u32 Png_res_offset[16];
 
+char self_path[MAXPATHLEN]= __MKDEF_MANAGER_FULLDIR__;
 
 void Load_PNG_resources()
 {
     int i;
 
     for(i = 0; i < 16; i++) Png_res[i].png_in = NULL;
+    for(i = 0; i < 16; i++) Png_iscover[i] = 0;
+
     // datas for PNG from memory
 
     Png_res[0].png_in   = (void *) bluray_png_bin;
@@ -193,6 +197,22 @@ int LoadTexturePNG(char * filename, int index)
 
 char path_name[MAXPATHLEN];
 
+inline int get_icon(char * path, const int num_dir)
+{
+    struct stat s;
+
+    sprintf(path, "%s/COVERS/%s.PNG", self_path, directories[num_dir].title_id);
+
+    if(stat(path, &s)<0)
+    {
+        sprintf(path, "%s/PS3_GAME/ICON0.PNG", directories[num_dir].path_name);
+        return 0;
+    }
+    else
+        return 1;
+
+}
+
 void get_games() 
 {
     int n;
@@ -204,10 +224,8 @@ void get_games()
         
             if(favourites.list[n].index < 0 || favourites.list[n].title_id[0] == 0 || favourites.list[n].index >= ndirectories) Png_offset[n] = 0;
             else {
-                
 
-                sprintf(path_name, "%s/PS3_GAME/ICON0.PNG", directories[favourites.list[n].index].path_name);
-
+                Png_iscover[n] = get_icon(path_name, favourites.list[n].index);
                 if(LoadTexturePNG(path_name, n) < 0) ;//Png_offset[n] = 0;
 
             }
@@ -219,8 +237,7 @@ void get_games()
     for(n = 0; n < 12; n++) {
         if((currentdir + n) < ndirectories) {
             
-            sprintf(path_name, "%s/PS3_GAME/ICON0.PNG", directories[currentdir + n].path_name);
-
+            Png_iscover[n] = get_icon(path_name, (currentdir + n));
             if(LoadTexturePNG(path_name, n) < 0) ;//Png_offset[n] = 0;
 
         } else Png_offset[n] = 0;
@@ -386,7 +403,7 @@ int background_sel = 0;
 
 u32 background_colors[4] = {
     0xff80804f,
-    0xff0040ff,
+    0xff10000F,
     0xff606060,
     0xff904f80,
 };
@@ -442,9 +459,6 @@ typedef struct {
 } path_open_table;
 
 static path_open_table open_table __attribute__((aligned(8)));
-
-char self_path[MAXPATHLEN]= __MKDEF_MANAGER_FULLDIR__; // /dev_hdd0/game/APPID
-
 
 u64 hmanager_key = 0x1759829723742374ULL;
 
@@ -872,20 +886,6 @@ s32 main(s32 argc, const char* argv[])
 
     usleep(250000);
 
-    sys8_perm_mode(2);
-    sys8_path_table(0LL);
-
-    sprintf(temp_buffer, "%s/config", self_path);
-
-    mkdir(temp_buffer, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
-
-    sprintf(temp_buffer, "%s/self", self_path);
-
-    mkdir(temp_buffer, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
-        
-    tiny3d_Init(1024*1024*2);
-    ioPadInit(7);
-
     if(payload_mode < ZERO_PAYLOAD) //if mode is wanin or worse, launch advert
     {
         DrawDialogOK(temp_buffer);
@@ -906,6 +906,20 @@ s32 main(s32 argc, const char* argv[])
                 sprintf(payload_str, "payload-sk10 resident - new syscall8 v%i", test);
         }
     }
+
+    sys8_perm_mode(2);
+    sys8_path_table(0LL);
+
+    sprintf(temp_buffer, "%s/config", self_path);
+
+    mkdir(temp_buffer, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
+
+    sprintf(temp_buffer, "%s/self", self_path);
+
+    mkdir(temp_buffer, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
+        
+    tiny3d_Init(1024*1024*2);
+    ioPadInit(7);
 
 	// Load texture
 
@@ -1324,6 +1338,14 @@ void LoadCacheDatas()
     }
 }
 
+inline int get_currentdir(int i)
+{
+    if(mode_favourites !=0)
+        return favourites.list[i].index;
+
+    return (currentdir + i);
+}
+
 void draw_screen1(float x, float y)
 {
 
@@ -1399,6 +1421,7 @@ void draw_screen1(float x, float y)
             int f = flash != 0 && select_px == m && select_py == n;
 
             DrawBox(x + 200 * m, y + n * 150, 0, 192, 142, 0x00000028 );
+           
 
             //draw Splited box
             //if(directories[currentgamedir].splitted)
@@ -1410,14 +1433,17 @@ void draw_screen1(float x, float y)
                 Png_datas[i].height, Png_datas[i].wpitch, 
                     TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
 
-                DrawTextBox(x + 200 * m - 4 * f, y + n * 150  - 4 * f, 0, 192 + 8 * f, 142 + 8 * f, 0xffffffff);
+                if(Png_iscover[i])
+                    DrawTextBox(x + 36 + 200 * m - 4 * f, y + n * 150  - 4 * f, 0, 124 + 8 * f, 142 + 8 * f, 0xffffffff);
+                else
+                    DrawTextBox(x + 200 * m - 4 * f, y + n * 150  - 4 * f, 0, 192 + 8 * f, 142 + 8 * f, 0xffffffff);
                 
                // if((mode_favourites !=0) && favourites.list[i].index < 0) exit(0);
                 if((mode_favourites !=0) && favourites.list[i].index < 0) exit(0);
 
                 if(!mode_favourites || ((mode_favourites !=0) && favourites.list[i].index >= 0)) {
                     // draw Bluray icon
-                    if(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].flags == (1<<11)) {
+                    if(directories[get_currentdir(i)].flags == (1<<11)) {
                         tiny3d_SetTextureWrap(0, Png_res_offset[0], Png_res[0].width, 
                         Png_res[0].height, Png_res[0].wpitch, 
                             TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
@@ -1425,12 +1451,12 @@ void draw_screen1(float x, float y)
                         DrawTextBox(x + 200 * m + 32 - 4 * f, y + n * 150 + 7 - 4 * f, 0, 128 + 8 * f, 128 + 8 * f, 0xffffffcf);    
                     } else 
                     // draw Usb icon    
-                    if(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].flags > 1) {
+                    if(directories[get_currentdir(i)].flags > 1) {
                         tiny3d_SetTextureWrap(0, Png_res_offset[1], Png_res[1].width, 
                         Png_res[1].height, Png_res[1].wpitch, 
                             TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
 
-                        if(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].splitted)
+                        if(directories[get_currentdir(i)].splitted)
                             DrawTextBox(x + 200 * m + 4 - 4 * f, y + n * 150 + 4 - 4 * f, 0, 32, 24, 0xff9999aa);
                         else
                             DrawTextBox(x + 200 * m + 4 - 4 * f, y + n * 150 + 4 - 4 * f, 0, 32, 24, 0xffffffcf);
@@ -1616,23 +1642,23 @@ void draw_screen1(float x, float y)
 
                 int use_cache = 0;
 
-                if(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].splitted == 1) {
+                if(directories[get_currentdir(i)].splitted == 1) {
                     if( payload_mode >= ZERO_PAYLOAD )
                     {
                         sprintf(temp_buffer, "%s/cache/%s/%s", self_path, 
-                        directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id, "/paths.dir");
+                        directories[get_currentdir(i)].title_id, "/paths.dir");
 
                         struct stat s;
                     
                         if(stat(temp_buffer, &s)<0) {
                             sprintf(temp_buffer + 1024, "%s\n\nMarked as non executable. Trying to install in HDD0 cache", 
-                            directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title);
+                            directories[get_currentdir(i)].title);
                             DrawDialogOK(temp_buffer + 1024);
                             
-                            copy_to_cache((mode_favourites !=0) ? favourites.list[i].index : (currentdir + i), self_path);
+                            copy_to_cache(get_currentdir(i), self_path);
     
                             sprintf(temp_buffer, "%s/cache/%s/%s", self_path, 
-                            directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id, "/paths.dir");
+                            directories[get_currentdir(i)].title_id, "/paths.dir");
                             if(stat(temp_buffer, &s)<0) return; // cannot launch without cache files
                         }
                      
@@ -1643,14 +1669,14 @@ void draw_screen1(float x, float y)
                     {
                         sprintf(temp_buffer, 
                             "%s\n\nMarked as not executable - Contains splited files >= 4GB", 
-                            directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title);
+                            directories[get_currentdir(i)].title);
                         DrawDialogOK(temp_buffer);return;
                     }
                 }
                 
                  // load game config
                 sprintf(temp_buffer, "%s/config/%s.cfg", 
-                    self_path, directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id);
+                    self_path, directories[get_currentdir(i)].title_id);
                 memset(&game_cfg, 0, sizeof(game_cfg));
                 
                 int file_size;
@@ -1667,8 +1693,8 @@ void draw_screen1(float x, float y)
                     goto skip_sys8;
                 }
                 
-                if(!(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].flags & 2048))
-                    param_sfo_util(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].path_name, (game_cfg.updates != 0));
+                if(!(directories[get_currentdir(i)].flags & 2048))
+                    param_sfo_util(directories[get_currentdir(i)].path_name, (game_cfg.updates != 0));
 
                 if(!game_cfg.ext_ebootbin) sys8_path_table(0LL);
                 else {
@@ -1676,13 +1702,13 @@ void draw_screen1(float x, float y)
                     u64 dest_table_addr;
 
                     sprintf(temp_buffer, "%s/self/%s.BIN", self_path, 
-                        directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id);
+                        directories[get_currentdir(i)].title_id);
 
                     FILE *fp = fopen(temp_buffer, "rb");
 
                     if(!fp) {
                         sprintf(temp_buffer, "%s.BIN\n\nexternal executable not found", 
-                            directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id);
+                            directories[get_currentdir(i)].title_id);
                         DrawDialogOK(temp_buffer);
                         goto skip_sys8;
                     } else {
@@ -1716,7 +1742,7 @@ void draw_screen1(float x, float y)
                 sys8_sys_configure(CFG_UNPATCH_APPVER + (game_cfg.updates != 0));
                 
                 if(game_cfg.bdemu) {
-                    n = move_origin_to_bdemubackup(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].path_name);
+                    n = move_origin_to_bdemubackup(directories[get_currentdir(i)].path_name);
                     if(n < 0) {
                         syscall36("/dev_bdvd"); // in error exits
                         sys8_perm_mode((u64) 1);
@@ -1728,7 +1754,7 @@ void draw_screen1(float x, float y)
                 }
 
                 if(game_cfg.bdemu && 
-                    patch_bdvdemu(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].flags) == 0) {
+                    patch_bdvdemu(directories[get_currentdir(i)].flags) == 0) {
 
                     syscall36("//dev_bdvd");
                 }
@@ -1738,20 +1764,20 @@ void draw_screen1(float x, float y)
                         u64 dest_table_addr;
                        
                         sprintf(temp_buffer + 1024, "%s/cache/%s/%s", self_path,  //check replace (1024)
-                        directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id, "/paths.dir");
+                        directories[get_currentdir(i)].title_id, "/paths.dir");
                         
                         char *path = LoadFile(temp_buffer + 1024, &n);
 
                         if(path) {
                             sprintf(temp_buffer + 1024, "%s/cache/%s/%s", self_path, //set replace (1024)
-                                directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id, path + 1024);
+                                directories[get_currentdir(i)].title_id, path + 1024);
                              
                             path = strstr(path, "PS3_GAME/");
                             sprintf(temp_buffer, "/dev_bdvd/%s", path); //set compare (0)
 
                             if(game_cfg.ext_ebootbin) {
                                 sprintf(temp_buffer + 2048, "%s/self/%s.BIN", self_path, //set ext (2048)
-                                directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].title_id);
+                                directories[get_currentdir(i)].title_id);
                             }
                         
                             sys8_path_table(0LL); //free
@@ -1795,7 +1821,7 @@ void draw_screen1(float x, float y)
                         }
                     }
 
-                    syscall36(directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].path_name);
+                    syscall36(directories[get_currentdir(i)].path_name);
                 }
 
                 sys8_perm_mode((u64) (game_cfg.perm & 3));
@@ -1832,7 +1858,7 @@ void draw_screen1(float x, float y)
             Png_offset[12] = 0;
 
             if(!mode_favourites || (mode_favourites != 0 && favourites.list[i].index >= 0)) {
-                sprintf(temp_buffer, "%s/PS3_GAME/PIC1.PNG", directories[(mode_favourites !=0) ? favourites.list[i].index : (currentdir + i)].path_name);
+                sprintf(temp_buffer, "%s/PS3_GAME/PIC1.PNG", directories[get_currentdir(i)].path_name);
                 
                 if(LoadTexturePNG(temp_buffer, 12) < 0) {
                     sprintf(temp_buffer, "%s/PS3_GAME/PIC0.PNG", directories[(mode_favourites != 0) 
@@ -1845,7 +1871,7 @@ void draw_screen1(float x, float y)
                 }
             }
             
-            currentgamedir = (mode_favourites !=0) ? favourites.list[i].index : (currentdir + i);
+            currentgamedir = get_currentdir(i);
             if(currentgamedir >= 0 && currentgamedir < ndirectories) {
                 menu_screen = 1; return;
             }
@@ -2213,8 +2239,7 @@ void draw_options(float x, float y, int index)
                 else {
                     mode_favourites = currentgamedir  | 65536;
                     
-
-                    sprintf(path_name, "%s/PS3_GAME/ICON0.PNG", directories[currentgamedir].path_name);
+                    get_icon(path_name, currentgamedir);
                     if(LoadTexturePNG(path_name, 12) < 0) ;
                     get_games();
                     select_option = 0;
@@ -3196,3 +3221,4 @@ int move_bdemubackup_to_origin(u32 flags)
 
     return 0;
 }
+
