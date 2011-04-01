@@ -372,16 +372,16 @@ void LoadTexture()
 
     TTFLoadFont(NULL, (void *) comfortaa_ttf_bin, sizeof(comfortaa_ttf_bin));
     texture_pointer = (u32 *) AddFontFromTTF((u8 *) texture_pointer, 32, 255, 32, 32, TTF_to_Bitmap);
-    texture_pointer = (u32 *) AddFontFromTTF((u8 *) texture_pointer, 32, 255, 64, 64, TTF_to_Bitmap);
+    texture_pointer = (u32 *) AddFontFromTTF((u8 *) texture_pointer, 32, 255, 20, 20, TTF_to_Bitmap);
     TTFUnloadFont();
 
     //debug font
     texture_pointer = (u32 *) AddFontFromBitmapArray((u8 *) font_b, (u8 *) texture_pointer, 32, 255, 16, 32, 2, BIT0_FIRST_PIXEL);
 
     //new button font
-    //TTFLoadFont(NULL, (void *) comfortaa_bold_ttf_bin, sizeof(comfortaa_bold_ttf_bin));
-    //texture_pointer = (u32 *) AddFontFromTTF((u8 *) texture_pointer, 32, 255, 32, 32, TTF_to_Bitmap);
-    //TTFUnloadFont();
+    TTFLoadFont(NULL, (void *) comfortaa_bold_ttf_bin, sizeof(comfortaa_bold_ttf_bin));
+    texture_pointer = (u32 *) AddFontFromTTF((u8 *) texture_pointer, 32, 255, 24, 24, TTF_to_Bitmap);
+    TTFUnloadFont();
 
     Load_PNG_resources();
 
@@ -1443,7 +1443,7 @@ void draw_screen1(float x, float y)
     for(n = 0; n < 3; n++) 
         for(m = 0; m < 4; m++) {
             
-            int f = flash != 0 && select_px == m && select_py == n;
+            int f = select_px == m && select_py == n;
 
             DrawBox(x + 200 * m, y + n * 150, 0, 192, 142, 0x00000028 );
            
@@ -1505,7 +1505,7 @@ void draw_screen1(float x, float y)
 
         int png_on = 0;
 
-        DrawBox(x + 200 * select_px - 4, y + select_py * 150 - 4 , 0, 200, 150, 0xa0a06080);
+        //DrawBox(x + 200 * select_px - 4, y + select_py * 150 - 4 , 0, 200, 150, 0xa0a06080);
             
 
         if(mode_favourites >= 65536) {
@@ -1564,9 +1564,7 @@ void draw_screen1(float x, float y)
     
     }
 
-
     // draw game name
-
     i = selected;
 
     DrawBox(x, y + 3 * 150, 0, 200 * 4 - 8, 40, 0x00000028);
@@ -1586,8 +1584,8 @@ void draw_screen1(float x, float y)
 
         temp_buffer[65] = 0;
 
-        if(strlen(temp_buffer) < 50) SetFontSize(22, 32); 
-        else SetFontSize(18, 32);
+        if(strlen(temp_buffer) < 50) SetFontSize(28, 28); 
+        else SetFontSize(20, 20);
 
         SetFontAutoCenter(0);
   
@@ -1597,25 +1595,45 @@ void draw_screen1(float x, float y)
     }
 
     SetFontColor(0xffffffff, 0x00000000);
-    SetFontSize(20, 20);
 
     if(Png_offset[i])
     {
+    
+        DrawBox(x + 200 * select_px - 8 + (200 - 24 * 8)/2, y + select_py * 150 - 4 + 150 - 40, 0, 200, 40, 0x404040ac);
+        SetCurrentFont(FONT_NEWBUTTON);
+        SetFontSize(24, 24);
+        x2 = DrawFormatString(x + 200 * select_px - 4 + (200 - 24 * 8)/2, y + select_py * 150 - 4 + 150 - 40, "  Play ");
+
+        SetCurrentFont(FONT_DEFAULT);
+        SetFontSize(20, 20);
         x2= DrawFormatString(1024, 0, " SELECT: Game Options ");
         DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 - 4, " SELECT: Game Options ");
+   
     }
     else if(mode_favourites && mode_favourites < 65536 && favourites.list[i].title_id[0] != 0) 
     {
+        DrawBox(x + 200 * select_px - 8 + (200 - 24 * 8)/2, y + select_py * 150 - 4 + 150 - 40, 0, 200, 40, 0x404040ac);
+        SetCurrentFont(FONT_NEWBUTTON);
+        SetFontSize(24, 24);
+        x2= DrawFormatString(x + 200 * select_px - 4 + (200 - 23 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "  Play ");
+
+        SetCurrentFont(FONT_DEFAULT);
+        SetFontSize(20, 20);
         x2= DrawFormatString(1024, 0, " SELECT: Delete Favourite ");
         DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 - 4, " SELECT: Delete Favourite ");
     }
-
+    else
+    {
+        DrawBox(x + 200 * select_px , y + select_py * 150 , 0, 192, 142, 0x40404040);
+        SetCurrentFont(FONT_DEFAULT); // get default
+        SetFontSize(20, 20);
+    }
     
     x2= DrawFormatString(1024, 0, " START: Global Options ");
 
     DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 + 18, " START: Global Options ");
-   
-    //DrawBox(x, y + 3 * 150, 1000, 200 * 4 - 8, 40, 0xcccccccc);
+    
+    //SetCurrentFont(FONT_DEFAULT);
 
     tiny3d_Flip();
 

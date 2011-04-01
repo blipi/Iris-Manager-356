@@ -30,7 +30,7 @@
 
 #define FONT_DEFAULT 0
 #define FONT_BUTTON  2
-//#define FONT_NEWBUTTON  3
+#define FONT_NEWBUTTON  3
 
 #define DT_DIR 1
 
