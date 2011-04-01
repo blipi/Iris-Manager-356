@@ -591,12 +591,19 @@ void LoadManagerCfg()
 
     if(file)
     {
-        if((file_size != sizeof(manager_cfg)) && (file_size != sizeof(manager_oldcfg)))
+        if(file_size != sizeof(manager_cfg))
+        {
             file_size = sizeof(manager_oldcfg); // safe
+            manager_cfg.opt_flags |= OPTFLAGS_PLAYMUSIC; // enabled by default
+        }
         
         memcpy(&manager_cfg, file, file_size);
         free(file);
-    } 
+    }
+    else
+    {
+        manager_cfg.opt_flags |= OPTFLAGS_PLAYMUSIC; // enabled by default
+    }
 
     background_sel = manager_cfg.background_sel & 3;
 
