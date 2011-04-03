@@ -734,10 +734,10 @@ void Select_games_folder()
         }
     }
     
-    dir = opendir ("/dev_hdd0/GAMEZ");
+    dir = opendir ("/dev_hdd0/" __MKDEF_GAMES_DIR);
     if(dir) {
         closedir (dir);
-        sprintf(temp_buffer, "%s %s %s", "Want to use", "/dev_hdd0/GAMEZ", "to install the game?"); 
+        sprintf(temp_buffer, "%s %s %s", "Want to use", "/dev_hdd0/" __MKDEF_GAMES_DIR, "to install the game?"); 
 
         if(DrawDialogYesNo(temp_buffer) == 1) {
             strncpy(hdd_folder, "dev_hdd0", 64);
@@ -760,7 +760,7 @@ void Select_games_folder()
 
             if(!(entry->d_type & DT_DIR)) continue;
 
-            sprintf(temp_buffer, "/dev_hdd0/game/%s/GAMEZ", entry->d_name);
+            sprintf(temp_buffer, "/dev_hdd0/game/%s/" __MKDEF_GAMES_DIR, entry->d_name);
         
             dir2 = opendir (temp_buffer);
 
@@ -784,16 +784,16 @@ void Select_games_folder()
 
     if(!selected) {
         
-        sprintf(temp_buffer, "%s %s %s", "Want to use", "/dev_hdd0/GAMEZ", "to install the game?");
+        sprintf(temp_buffer, "%s %s %s", "Want to use", "/dev_hdd0/" __MKDEF_GAMES_DIR, "to install the game?");
 
         if(DrawDialogYesNo(temp_buffer) == 1) {
             strncpy(hdd_folder, "dev_hdd0", 64);
             strncpy(manager_cfg.hdd_folder, "dev_hdd0", 64); 
-            mkdir("/dev_hdd0/GAMEZ", S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
+            mkdir("/dev_hdd0/" __MKDEF_GAMES_DIR, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
         } else {
             strncpy(hdd_folder, __MKDEF_MANAGER_DIR__, 64);
             strncpy(manager_cfg.hdd_folder, __MKDEF_MANAGER_DIR__, 64);
-            sprintf(tmp, "%s/GAMEZ", __MKDEF_MANAGER_FULLDIR__);
+            sprintf(tmp, "%s/" __MKDEF_GAMES_DIR, __MKDEF_MANAGER_FULLDIR__);
             mkdir(tmp, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
 
             sprintf(temp_buffer, "%s %s %s", "Using", tmp, "to install the game");
@@ -1180,12 +1180,12 @@ s32 main(s32 argc, const char* argv[])
 
 				if(find_device==0) {
                     if (!memcmp(hdd_folder,"dev_hdd0",9)) {
-                        sprintf(filename, "/%s/GAMEZ",hdd_folder); 
+                        sprintf(filename, "/%s/" __MKDEF_GAMES_DIR,hdd_folder); 
                     } else if (!memcmp(hdd_folder,"dev_hdd0_2", 11)) {
                         sprintf(filename, "/%s/GAMES", "dev_hdd0"); 
                     } 
                     else {
-                        sprintf(filename, "/dev_hdd0/game/%s/GAMEZ",hdd_folder);  
+                        sprintf(filename, "/dev_hdd0/game/%s/" __MKDEF_GAMES_DIR,hdd_folder);  
                     }
  
                     sysFsGetFreeSize("/dev_hdd0/", &blockSize, &freeSize);
@@ -1197,7 +1197,7 @@ s32 main(s32 argc, const char* argv[])
                     sysFsGetFreeSize(filename, &blockSize, &freeSize);
                     double space = ( ((double)blockSize) * ((double) freeSize) ) /  1073741824.0;
                     freeSpace[find_device] = (float) space;
-                    sprintf(filename, "/dev_usb00%c/GAMEZ", 47+find_device);
+                    sprintf(filename, "/dev_usb00%c/" __MKDEF_GAMES_DIR, 47+find_device);
                 }
 
 		        if((fdevices>>find_device) & 1) {

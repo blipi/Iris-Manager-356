@@ -1735,17 +1735,17 @@ void copy_from_selection(int game_sel)
 
        if(dialog_action == 1) {
 
-            sprintf(name, "/dev_usb00%c/GAMEZ", 47 + curr_device);
+            sprintf(name, "/dev_usb00%c/" __MKDEF_GAMES_DIR, 47 + curr_device);
             mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
-            sprintf(name, "/dev_usb00%c/GAMEZ", 47 + curr_device);
+            sprintf(name, "/dev_usb00%c/" __MKDEF_GAMES_DIR, 47 + curr_device);
             mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
 
-            char * p = strstr(directories[game_sel].path_name, "/GAMEZ");
+            char * p = strstr(directories[game_sel].path_name, "/" __MKDEF_GAMES_DIR);
             if(!p) p = strstr(directories[game_sel].path_name, "/GAMES");
 
             if(!p) p = "NULL"; else p+= 7;
 
-            sprintf(name, "/dev_usb00%c/GAMEZ/%s", 47 + curr_device, p);
+            sprintf(name, "/dev_usb00%c/" __MKDEF_GAMES_DIR "/%s", 47 + curr_device, p);
             mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
                 
         }
@@ -1772,7 +1772,7 @@ void copy_from_selection(int game_sel)
 
         if(dialog_action == 1) {
 
-            char *p = strstr(directories[game_sel].path_name, "/GAMEZ");
+            char *p = strstr(directories[game_sel].path_name, "/" __MKDEF_GAMES_DIR);
 
             if(!p) p= strstr(directories[game_sel].path_name, "/GAMES");
             
@@ -1782,9 +1782,9 @@ void copy_from_selection(int game_sel)
 
             if(!memcmp(hdd_folder,"dev_hdd0", 9)){
 
-                sprintf(name, "/%s/GAMEZ", hdd_folder);	
+                sprintf(name, "/%s/" __MKDEF_GAMES_DIR, hdd_folder);	
                 mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
-                sprintf(name, "/%s/GAMEZ/%s", hdd_folder, p);	
+                sprintf(name, "/%s/" __MKDEF_GAMES_DIR "/%s", hdd_folder, p);	
                 mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
 
             } else if (!memcmp(hdd_folder,"dev_hdd0_2", 11)){
@@ -1798,9 +1798,9 @@ void copy_from_selection(int game_sel)
 
                 sprintf(name, "/dev_hdd0/game/%s", hdd_folder);	
                 mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
-                sprintf(name, "/dev_hdd0/game/%s/GAMEZ", hdd_folder);	
+                sprintf(name, "/dev_hdd0/game/%s/" __MKDEF_GAMES_DIR, hdd_folder);	
                 mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
-                sprintf(name, "/dev_hdd0/game/%s/GAMEZ/%s", hdd_folder, p);	
+                sprintf(name, "/dev_hdd0/game/%s/" __MKDEF_GAMES_DIR "/%s", hdd_folder, p);	
                 mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
             }
         }
@@ -1834,7 +1834,7 @@ void copy_from_selection(int game_sel)
         
         if(copy_is_split && !abort_copy) {
                 
-            char *p = strstr(directories[game_sel].path_name, "/GAMEZ");
+            char *p = strstr(directories[game_sel].path_name, "/" __MKDEF_GAMES_DIR);
 
             if(!p) p = strstr(directories[game_sel].path_name, "/GAMES");
 
@@ -1849,15 +1849,14 @@ void copy_from_selection(int game_sel)
                 
 
                 if(!memcmp(hdd_folder,"dev_hdd0", 9)) {
-                    sprintf(filename, "/%s/GAMEZ/_%s", hdd_folder, p);
+                    sprintf(filename, "/%s/" __MKDEF_GAMES_DIR "/_%s", hdd_folder, p);
                 } else if(!memcmp(hdd_folder,"dev_hdd0_2", 11)) {
                     sprintf(filename, "/%s/GAMES/_%s", "dev_hdd0", p);
                 } else{
-                    sprintf(filename, "/dev_hdd0/game/%s/GAMEZ/_%s", hdd_folder, p);
+                    sprintf(filename, "/dev_hdd0/game/%s/" __MKDEF_GAMES_DIR "/_%s", hdd_folder, p);
                 }
             } else {
-                
-                sprintf(filename, "/dev_usb00%c/GAMEZ/_%s", 47+dest, p);
+                sprintf(filename, "/dev_usb00%c/" __MKDEF_GAMES_DIR "/_%s", 47+dest, p);
             }
 
             // try rename
@@ -1935,7 +1934,7 @@ void copy_from_selection(int game_sel)
 
             } else {
                 
-                char *p = strstr(directories[game_sel].path_name, "/GAMEZ");
+                char *p = strstr(directories[game_sel].path_name, "/" __MKDEF_GAMES_DIR);
 
                 if(!p) p = strstr(directories[game_sel].path_name, "/GAMES");
 
@@ -1946,15 +1945,14 @@ void copy_from_selection(int game_sel)
                 if(dest == 0) {
 
                     if (!memcmp(hdd_folder,"dev_hdd0", 9)) {
-                        sprintf(filename, "/%s/GAMEZ/_%s", hdd_folder, p);
+                        sprintf(filename, "/%s/" __MKDEF_GAMES_DIR "/_%s", hdd_folder, p);
                     } else if (!memcmp(hdd_folder,"dev_hdd0_2", 11)) {
                         sprintf(filename, "/%s/GAMES/_%s", "dev_hdd0", p);
                     } else{
-                        sprintf(filename, "/dev_hdd0/game/%s/GAMEZ/_%s", hdd_folder, p);
+                        sprintf(filename, "/dev_hdd0/game/%s/" __MKDEF_GAMES_DIR "/_%s", hdd_folder, p);
                     }
                 } else {
-                    
-                    sprintf(filename, "/dev_usb00%c/GAMEZ/_%s", 47 + dest, p);
+                    sprintf(filename, "/dev_usb00%c/" __MKDEF_GAMES_DIR "/_%s", 47 + dest, p);
                 }
                     
                 ret = rename(name, filename);
@@ -2013,9 +2011,9 @@ void copy_from_bluray()
                 if(curr_device == 0) {
                     if(!memcmp(hdd_folder,"dev_hdd0", 9)) {
 
-                        sprintf(name, "/%s/GAMEZ", hdd_folder);	
+                        sprintf(name, "/%s/" __MKDEF_GAMES_DIR, hdd_folder);	
                         mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
-                        sprintf(name, "/%s/GAMEZ/%s", hdd_folder, id);	
+                        sprintf(name, "/%s/" __MKDEF_GAMES_DIR "/%s", hdd_folder, id);	
                         mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
 
                     } else if(!memcmp(hdd_folder,"dev_hdd0_2", 11)) {
@@ -2029,18 +2027,18 @@ void copy_from_bluray()
                         
                         sprintf(name, "/dev_hdd0/game/%s", hdd_folder);	
                         mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
-                        sprintf(name, "/dev_hdd0/game/%s/GAMEZ", hdd_folder);	
+                        sprintf(name, "/dev_hdd0/game/%s/" __MKDEF_GAMES_DIR, hdd_folder);	
                         mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
-                        sprintf(name, "/dev_hdd0/game/%s/GAMEZ/%s", hdd_folder, id);	
+                        sprintf(name, "/dev_hdd0/game/%s/" __MKDEF_GAMES_DIR "/%s", hdd_folder, id);	
                         mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
                     }
                 } else {
                     
-                    sprintf(name, "/dev_usb00%c/GAMEZ", 47 + curr_device);
+                    sprintf(name, "/dev_usb00%c/" __MKDEF_GAMES_DIR, 47 + curr_device);
                     mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
-                    sprintf(name, "/dev_usb00%c/GAMEZ", 47 + curr_device);
+                    sprintf(name, "/dev_usb00%c/" __MKDEF_GAMES_DIR, 47 + curr_device);
                     mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
-                    sprintf(name, "/dev_usb00%c/GAMEZ/%s", 47 + curr_device, id);
+                    sprintf(name, "/dev_usb00%c/" __MKDEF_GAMES_DIR "/%s", 47 + curr_device, id);
                     mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
                 }
 
@@ -2066,17 +2064,17 @@ void copy_from_bluray()
 
                         if (!memcmp(hdd_folder,"dev_hdd0", 9)) {
 
-                            sprintf(filename, "/%s/GAMEZ/_%s", hdd_folder, id);
+                            sprintf(filename, "/%s/" __MKDEF_GAMES_DIR "/_%s", hdd_folder, id);
 
                         } else if (!memcmp(hdd_folder,"dev_hdd0_2", 11)) {
 
                             sprintf(filename, "/%s/GAMES/_%s", "dev_hdd0", id);
 
                         } else {
-                            sprintf(filename, "/dev_hdd0/game/%s/GAMEZ/_%s", hdd_folder, id);	
+                            sprintf(filename, "/dev_hdd0/game/%s/" __MKDEF_GAMES_DIR "/_%s", hdd_folder, id);	
                         }
                     } else {
-                            sprintf(filename, "/dev_usb00%c/GAMEZ/_%s", 47 + curr_device, id);
+                            sprintf(filename, "/dev_usb00%c/" __MKDEF_GAMES_DIR "/_%s", 47 + curr_device, id);
                     }
                         
             ret = rename(name, filename);
@@ -2147,15 +2145,14 @@ void copy_from_bluray()
                 } else {
                     if(curr_device == 0) {
                         if(!memcmp(hdd_folder,"dev_hdd0", 9)) {
-                            sprintf(filename, "/%s/GAMEZ/_%s", hdd_folder, id);	
+                            sprintf(filename, "/%s/" __MKDEF_GAMES_DIR "/_%s", hdd_folder, id);	
                         } else if(!memcmp(hdd_folder,"dev_hdd0_2", 11)) {
                             sprintf(filename, "/%s/GAMES/_%s", "dev_hdd0", id);	
                         } else {
-                            sprintf(filename, "/dev_hdd0/game/%s/GAMEZ/_%s", hdd_folder, id);	
+                            sprintf(filename, "/dev_hdd0/game/%s/" __MKDEF_GAMES_DIR "/_%s", hdd_folder, id);	
                         }
                     } else {
-                
-                        sprintf(filename, "/dev_usb00%c/GAMEZ/_%s", 47 + curr_device, id);
+                        sprintf(filename, "/dev_usb00%c/" __MKDEF_GAMES_DIR "/_%s", 47 + curr_device, id);
                     }
                     
                 ret = rename(name, filename);
@@ -2534,7 +2531,7 @@ void test_game(int game_sel)
     // rename in test for non executable games
     if(num_files_split && (directories[game_sel].flags & 2046)) {
        
-        char *str = strstr(directories[game_sel].path_name, "/GAMEZ/");
+        char *str = strstr(directories[game_sel].path_name, __MKDEF_GAMES_DIR);
 
             if(str && str[7] != '_') {
                 int n = (str - directories[game_sel].path_name);

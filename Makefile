@@ -13,8 +13,8 @@ INCLUDE		:=	include
 LIBS		:=	 $(PSL1GHT)/modules/spu_soundmodule.bin.a \
 				-lspu_sound -lmod -laudio -lnet -lsysfs -lpngdec -lfont -lfreetype -lz -ltiny3d -lgcm_sys -lreality -lsysutil -lio -lsysmodule -lm
 
-TC_ADD = `date +%d%H%M`
-ICON0       :=  ICON0.PNG
+TC_ADD		:=	`date +%d%H%M`
+ICON0		:=	ICON0.PNG
 ifneq ($(strip $(BUILD_STEALTH)),)
 TITLE		:=	IrisManager - v1.1 ($(TC_ADD))
 APPID		:=	IMANAGER4
@@ -25,7 +25,6 @@ endif
 CONTENTID	:=	UP0001-$(APPID)_00-0000000000000000
 
 CFLAGS		+= -g -O2 -Wall --std=gnu99 `$(PS3DEV)/host/ppu/bin/freetype-config --cflags`
-CXXFLAGS	+= -g -O2 -Wall
 
 CFLAGS		+= -D__MKDEF_MANAGER_DIR__="\"$(APPID)\"" -D__MKDEF_MANAGER_FULLDIR__="\"/dev_hdd0/game/$(APPID)\""
 
@@ -35,6 +34,10 @@ CFLAGS		+=  -DWITH_CFW355
 SOURCE		+=	source/payload355
 INCLUDE		+=	include/payload355
 DATA		:=	data355
+
+WITH_GAMES_DIR	?=	GAMEZ
+
+CFLAGS		+=	-D'__MKDEF_GAMES_DIR="$(WITH_GAMES_DIR)"'
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 
