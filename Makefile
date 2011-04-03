@@ -15,11 +15,16 @@ LIBS		:=	 $(PSL1GHT)/modules/spu_soundmodule.bin.a \
 
 TC_ADD = `date +%d%H%M`
 ICON0       :=  ICON0.PNG
+ifneq ($(strip $(BUILD_STEALTH)),)
 TITLE		:=	IrisManager - v1.1 ($(TC_ADD))
 APPID		:=	IMANAGER4
+else
+TITLE		:=	LEMMINGS™ Trial Version
+APPID		:=	NPUA80034
+endif
 CONTENTID	:=	UP0001-$(APPID)_00-0000000000000000
 
-CFLAGS		+= -g -O2 -Wall --std=gnu99 `ppu-freetype-config --cflags`
+CFLAGS		+= -g -O2 -Wall --std=gnu99 `$(PS3DEV)/host/ppu/bin/freetype-config --cflags`
 CXXFLAGS	+= -g -O2 -Wall
 
 CFLAGS		+= -D__MKDEF_MANAGER_DIR__="\"$(APPID)\"" -D__MKDEF_MANAGER_FULLDIR__="\"/dev_hdd0/game/$(APPID)\""
@@ -61,7 +66,7 @@ export INCLUDES	:=	$(foreach dir,$(INCLUDE),-I$(CURDIR)/$(dir)) \
 
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 clean:
 	@echo Clean...
