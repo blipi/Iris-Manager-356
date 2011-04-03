@@ -1410,7 +1410,7 @@ void draw_screen1(float x, float y)
     if(mode_favourites >= 131072) DrawFormatString(x, y - 2, " Favourites Swap");
     else if(mode_favourites >= 65536) DrawFormatString(x, y - 2, " Favourites Insert"); 
     else if(mode_favourites) DrawFormatString(x, y - 2, " Favourites");
-    else DrawFormatString(x, y - 2, " Page %i", currentdir/12 + 1);
+    else DrawFormatString(x, y - 2, " Page %i/%i (%i Games)", currentdir/12 + 1, ROUND_UP12(ndirectories)/12, ndirectories);
 
     // list device space
 
@@ -2053,6 +2053,33 @@ void draw_screen1(float x, float y)
 
         return;
     }
+
+    if(new_pad & BUTTON_L1) //change page
+    {
+        
+        frame_count = 32;
+            
+        if(mode_favourites >= 65536) ;
+        else if(mode_favourites) {mode_favourites = 0; get_games();}
+        else if(currentdir >= 12) {mode_favourites = 0; currentdir -= 12; get_games();}
+        else {mode_favourites = (!mode_favourites && havefavourites); currentdir = ROUND_UP12(ndirectories) - 12; get_games();}
+
+        return;
+    }
+    
+    if(new_pad & BUTTON_R1) //change page
+    {
+        //maybe wait some seconds here...
+        frame_count = 32;
+            
+        if(mode_favourites >= 65536) ;
+        else if(mode_favourites) {mode_favourites = 0; get_games();}
+        else if(currentdir < (ROUND_UP12(ndirectories) - 12)) {mode_favourites = 0; currentdir += 12; get_games();}
+        else {mode_favourites = (!mode_favourites && havefavourites); currentdir = 0; get_games();}
+
+        return;
+    }
+    
 }
 
 
