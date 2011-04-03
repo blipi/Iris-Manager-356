@@ -1006,6 +1006,7 @@ int ftp_init()
     //ipaddr_get(0ULL);
 
     ftp_initialized = 1;
+    exitapp = 0;
 
 	return 0;
 }
@@ -1022,4 +1023,6 @@ void ftp_deinit()
     sys_ppu_thread_join(thread_id, &retval);
 
     ftp_initialized = 0;
+
+    memset(ftp_ip_str, 0, sizeof(ftp_ip_str));
 }

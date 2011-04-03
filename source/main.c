@@ -596,13 +596,21 @@ void LoadManagerCfg()
             file_size = sizeof(manager_oldcfg); // safe
             manager_cfg.opt_flags |= OPTFLAGS_PLAYMUSIC; // enabled by default
         }
-        
+
         memcpy(&manager_cfg, file, file_size);
         free(file);
     }
     else
     {
         manager_cfg.opt_flags |= OPTFLAGS_PLAYMUSIC; // enabled by default
+    }
+
+    if (manager_cfg.opt_flags & OPTFLAGS_FTP) // maybe we need add an icon to user...
+    {
+        if(ftp_init() == 0)
+        {
+            DrawDialogOK("FTP Service init on boot: OK");
+        }
     }
 
     background_sel = manager_cfg.background_sel & 3;
@@ -2790,8 +2798,26 @@ void draw_gbloptions(float x, float y)
                 break;
 
             case 4:
-                if(ftp_init()==0) DrawDialogOK("Server FTP initialized");
-                else DrawDialogOK("Server FTP already initialized");
+                if ((manager_cfg.opt_flags & OPTFLAGS_FTP) == 0)
+                {
+                    if(ftp_init() == 0)
+                    {
+                        if(DrawDialogYesNo("Server FTP initialized\nDo you want auto-enable FTP service on init? ") != 1)
+                            break;
+                    }
+                    else
+                    {
+                        DrawDialogOK("Server FTP already initialized");
+                        break;
+                    }
+                }
+                else
+                {
+                        DrawDialogOK("Server FTP Stoped\nRemoved FTP service on init.");
+                        ftp_deinit();
+                }
+                manager_cfg.opt_flags ^= OPTFLAGS_FTP;
+                SaveManagerCfg();
                 break;
 
             case 5:
