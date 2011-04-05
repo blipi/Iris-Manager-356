@@ -75,7 +75,7 @@ int is_payload_loaded(void)
         return SYS36_PAYLOAD;
 
     //2nd new syscall 36 - sky mod check
-    if(peekq(0x800000000000ef50ULL) == 0x534B313000000000ULL) //SK10 HEADER
+    if(peekq(0x800000000000ef58ULL) == 0x534B313000000000ULL) //SK10 HEADER
         return SKY10_PAYLOAD;
 
     //WaninV2 CFW
@@ -149,7 +149,7 @@ void load_payload(int mode)
 
     install_lv2_memcpy();
     /* WARNING!! It supports only payload with a size multiple of 8 */
-    lv2_memcpy(0x800000000000ef40ULL,
+    lv2_memcpy(0x800000000000ef48ULL,
                    (u64) payload_sky_bin, 
                    sizeof(payload_sky_bin));
     remove_lv2_memcpy();
@@ -174,6 +174,17 @@ void load_payload(int mode)
     */
     _poke(0x346690, 0x800000000000F010ULL); // syscall_map_open_desc - sys36
     _poke(0x3465b0, 0x800000000000F2E0ULL); // syscall_8_desc - sys8
+
+#ifdef CONFIG_USE_SYS8PERMH4
+    /*
+        0x0E7F0, b perm_routine    //0x48000A30
+        0x24E44, bl perm0_routine  //0x4BFEA3AD
+        0xC1DD0, bl perm0_routine  //0x4BF4D421
+    */
+    _poke32(0x0e7f0, 0x48000A30);
+    _poke32(0x24e44, 0x4BFEA3AD);
+    _poke32(0xc1dd0, 0x4BF4D421);
+#endif
 
 }
 

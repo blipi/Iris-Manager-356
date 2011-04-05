@@ -1839,7 +1839,7 @@ void draw_screen1(float x, float y)
                     FILE *fp = fopen(temp_buffer, "rb");
 
                     if(!fp) {
-                        sprintf(temp_buffer, "%s.BIN\n\nexternal executable not found", 
+                        sprintf(temp_buffer, " %s.BIN\n external executable not found\n\nUse \"Copy EBOOT.BIN from USB\" to import them.", 
                             directories[currentgamedir].title_id);
                         DrawDialogOK(temp_buffer);
                         goto skip_sys8;
@@ -2492,17 +2492,26 @@ void draw_configs(float x, float y, int index)
 
     x2 = DrawButton1(x + 32, y2, 240, "Fix Permissions", (flash && select_option == 0)) + 16;
     
-    x2 = DrawButton2(x2, y2, 0, " Default ", /*(game_cfg.perm == 0)*/ 1 ) + 8;
-    x2 = DrawButton2(x2, y2, 0, " PS jailbreak ", /*(game_cfg.perm == 1)*/ -1) + 8;
-    x2 = DrawButton2(x2, y2, 0, " v4 Perms (F1) ", /*(game_cfg.perm == 2)*/ -1) + 8;
+    x2 = DrawButton2(x2, y2, 0, " Default ", (game_cfg.perm == 0) ) + 8;
+#ifdef CONFIG_USE_SYS8PERMH4
+    x2 = DrawButton2(x2, y2, 0, " PS jailbreak ", (game_cfg.perm == 1)) + 8;
+    x2 = DrawButton2(x2, y2, 0, " v4 Perms (F1) ", (game_cfg.perm == 2)) + 8;
+#else
+    x2 = DrawButton2(x2, y2, 0, " PS jailbreak ", -1) + 8;
+    x2 = DrawButton2(x2, y2, 0, " v4 Perms (F1) ", -1) + 8;
+#endif
     
     y2+= 48;
 
+#ifdef CONFIG_USE_SYS8CONFIG
     x2 = DrawButton1(x + 32, y2, 240, "Select XMB", (flash && select_option == 1))  + 16;
-        
-    x2 = DrawButton2(x2, y2, 0, "  Debug  ", /*(game_cfg.xmb == 0)*/ 1) + 8;
-    x2 = DrawButton2(x2, y2, 0, "  Retail  ", /*(game_cfg.xmb == 1)*/ -1) + 8;
-
+    x2 = DrawButton2(x2, y2, 0, "  Debug  ", (game_cfg.xmb == 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  Retail  ", (game_cfg.xmb == 1)) + 8;
+#else
+    x2 = DrawButton1(x + 32, y2, 240, "Requires Disc", (flash && select_option == 1))  + 16;
+    x2 = DrawButton2(x2, y2, 0, "  No  ", (game_cfg.xmb == 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  Yes  ", (game_cfg.xmb == 1)) + 8;
+#endif
     y2+= 48;
 
     x2 = DrawButton1(x + 32, y2, 240, "Online Updates", (flash && select_option == 2))  + 16;
@@ -2514,8 +2523,8 @@ void draw_configs(float x, float y, int index)
 
     x2 = DrawButton1(x + 32, y2, 240, "Extern EBOOT.BIN", (flash && select_option == 3))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, "  On  ", /*(game_cfg.ext_ebootbin != 0)*/ -1) + 8;
-    x2 = DrawButton2(x2, y2, 0, "  Off  ", /*(game_cfg.ext_ebootbin == 0)*/ 1) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  On  ", (game_cfg.ext_ebootbin != 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  Off  ", (game_cfg.ext_ebootbin == 0)) + 8;
 
     y2+= 48;
 
@@ -2585,20 +2594,22 @@ void draw_configs(float x, float y, int index)
      
         switch(select_option) {
             //removed sys8 calls not supported yet on 3.55
-            #if 0
+#ifdef CONFIG_USE_SYS8PERMH4
             case 0:
                 ROT_INC(game_cfg.perm, 2, 0);
                 break;
+#endif
             case 1:
                 ROT_INC(game_cfg.xmb, 1, 0);
                 break;
+            #if 0
             case 2:
                 ROT_INC(game_cfg.updates, 1, 0);
                 break;
+            #endif
             case 3:
                 ROT_INC(game_cfg.ext_ebootbin, 1, 0);
                 break;
-            #endif
             case 4:
                 if((!directories[currentgamedir].splitted)&&(payload_mode >= ZERO_PAYLOAD))
                     ROT_INC(game_cfg.bdemu, 1, 0);
@@ -2643,20 +2654,22 @@ void draw_configs(float x, float y, int index)
      
         switch(select_option) {
             //removed sys8 calls not supported yet on 3.55
-            #if 0
+#ifdef CONFIG_USE_SYS8PERMH4
             case 0:
                 ROT_DEC(game_cfg.perm, 0, 2);
                 break;
+#endif
             case 1:
                 ROT_DEC(game_cfg.xmb, 0, 1);
                 break;
+            #if 0
             case 2:
                 ROT_DEC(game_cfg.updates, 0, 1);
                 break;
+            #endif
             case 3:
                 ROT_DEC(game_cfg.ext_ebootbin, 0, 1);
                 break;
-            #endif
             case 4:
                 if((!directories[currentgamedir].splitted)&&(payload_mode >= ZERO_PAYLOAD))
                     ROT_DEC(game_cfg.bdemu, 0, 1);
@@ -2673,20 +2686,22 @@ void draw_configs(float x, float y, int index)
      
         switch(select_option) {
             //removed sys8 calls not supported yet on 3.55
-            #if 0
+#ifdef CONFIG_USE_SYS8PERMH4
             case 0:
                 ROT_INC(game_cfg.perm, 2, 0);
                 break;
+#endif
             case 1:
                 ROT_INC(game_cfg.xmb, 1, 0);
                 break;
+            #if 0
             case 2:
                 ROT_INC(game_cfg.updates, 1, 0);
                 break;
+            #endif
             case 3:
                 ROT_INC(game_cfg.ext_ebootbin, 1, 0);
                 break;
-            #endif
             case 4:
                 if((!directories[currentgamedir].splitted)&&(payload_mode >= ZERO_PAYLOAD))
                     ROT_INC(game_cfg.bdemu, 1, 0);

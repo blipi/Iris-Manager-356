@@ -41,7 +41,8 @@
 #define PATHUSB_LEN    0xB //11
 
 #define DEBUG_HOOK 0
-#define SYS8_PERMH4 0 // testing, we need this on 3.55?
+#define SYS8_CONFIG 0 // we need research some hash and ptr from 3.55...
+#define SYS8_PERMH4 1 // testing, we need this on 3.55?
 
 #define SYS8_VERSION 0x7
 #define PERM_MODE 2  // 0 -> restricted 1-> original 2-> new for some games
@@ -59,6 +60,10 @@
     LOAD_LABEL(BASE, dest, source, address)
 #define LOADI_LABEL2(dest, address) \
     LOAD_LABEL2(dest, dest, address)
+
+/* Patch Table Macros */
+#define PATCH_DATA(offset, data...) .long offset; .long data
+#define PATCH_BRANCH(offset, op, target) .long offset; op (. + (target - offset))
 
 .org 0
 destination_code:
@@ -209,6 +214,140 @@ return_org_open_func: // end
 aDev_bdvd:    .string    "/dev_bdvd"
 aApp_home:    .string    "/app_home"
 
+/*********************************************************************/
+#if SYS8_CONFIG //you need change all ptrs and jumps, but code is ported
+.org 0x200
+patching_mem_hermes:
+    mflr    %r0
+    stdu    %sp, -0x1A0(%sp)
+    std     %r27, 0x78(%sp)
+    std     %r28, 0x80(%sp)
+    std     %r29, 0x88(%sp)
+    std     %r30, 0x90(%sp)
+    std     %r31, 0x98(%sp)
+    std     %r0, 0x1B0(%sp)
+    mr      %r29, %r3
+    mr      %r30, %r4
+    MEM_BASE(%r31)
+    ld      %r28, rtoc_entry_2(%rtoc)
+    ld      %r28, 0x68(%r28)
+    ld      %r28, 0x18(%r28)
+    ld      %r27, rtoc_entry_1(%rtoc)
+    ld      %r9, 0x18(%r29)
+    lwz     %r9, 0x30(%r9)
+    rldicl  %r9, %r9, 48,16
+    cmpwi   %r9, 0x29
+    bne     loc_50E64
+    ld      %r4, 0x10(%r28)
+    rldicr  %r5, %r4, 24,39
+    rldicl  %r5, %r5, 8,56
+    cmpwi   %r5, 0xFF
+    beq     loc_50E38
+    ori     %r4, %r4, 3
+    std     %r4, 0x10(%r28)
+    li      %r3, 6
+    stw     %r3, 0(%r30)
+    b       loc_50E48
+
+ loc_50E38:
+    ori     %r4, %r4, 2
+    std     %r4, 0x10(%r28)
+    li      %r3, 0x2C
+    stw     %r3, 0(%r30)
+
+ loc_50E48:
+    lwz     %r5, 4(%r28)
+    ld      %r4, 8(%r28)
+    ld      %r3, 0(%r27)
+    add     %r9, %r3, %r5
+    std     %r9, 0(%r27)
+    bl      ABS(memcpy)
+    b       loc_50F24
+
+ loc_50E64:
+
+    mr      %r3, %r29
+    mr      %r4, %r30
+    bl      ABS(unk_4E81C)
+    mr      %r29, %r31
+    LOADI_LABEL2(%r29, patch_flag)
+    lwz     %r3, 0(%r29)
+    lwz     %r5, 4(%r28)
+    add     %r3, %r3, %r5
+    stw     %r3, 0(%r29)
+    ld      %r4, 0x10(%r28)
+    rldicr  %r5, %r4, 24,39
+    rldicl  %r5, %r5, 8,56
+    cmpwi   %r5, 0xFF
+    bne     loc_50F24
+    ld      %r3, 0(%r27)
+    li      %r4, 0
+    li      %r6, 0
+
+ loc_50EAC:
+    add     %r7, %r3, %r4
+    lwz     %r5, 0(%r7)
+    xor     %r6, %r6, %r5
+    addi    %r4, %r4, 4
+    cmpldi  %r4, 0x400
+    bne     loc_50EAC
+    lwz     %r3, 0(%r29)
+    rldicr  %r6, %r6, 32,31
+    or      %r6, %r6, %r3
+    li      %r3, 0
+    stw     %r3, 0(%r29)
+    mr      %r7, %r31
+    LOADI_LABEL2(%r7, memory_patch_table) #hermes
+
+ loc_50EE4:
+
+    ld      %r3, 0(%r7)
+    cmpldi  %r3, 0
+    beq     loc_50F24
+    addi    %r7, %r7, 0x10
+    cmpld   %r3, %r6
+    bne     loc_50EE4
+    ld      %r5, -8(%r7)
+    ld      %r7, 0(%r27)
+
+loc_50F04:
+
+    lwz     %r3, 0(%r5)
+    cmplwi  %r3, 0
+    beq     loc_50F24
+    cmplwi  %r3, 1  // skip patch  n bytes (it is a trick used to skip conditional patch)
+    beq        is_type_1
+    cmplwi  %r3, 2  // non skip patch (it is a trick used to skip conditional patch. In this case patch successfull)
+    beq        is_type_2
+
+    lwz     %r4, 4(%r5)
+    add     %r3, %r3, %r7
+    stw     %r4, 0(%r3)
+    addi    %r5, %r5, 8
+    b       loc_50F04
+
+is_type_1:
+    lwz     %r3, 4(%r5)
+    add        %r5, %r5, %r3
+    addi    %r5, %r5, 8 // skip n+8 bytes (non patch)
+    b        loc_50F04
+is_type_2:
+    addi    %r5, %r5, 8 // skip 8 bytes (patch)
+    b        loc_50F04
+
+loc_50F24:
+
+    li      %r3, 0
+    ld      %r27, 0x78(%sp)
+    ld      %r28, 0x80(%sp)
+    ld      %r29, 0x88(%sp)
+    ld      %r30, 0x90(%sp)
+    ld      %r31, 0x98(%sp)
+    ld      %r0, 0x1B0(%sp)
+    addi    %sp, %sp, 0x1A0
+    mtlr    %r0
+    blr
+#endif
 /*********************************************************************/
 #if SYS8_PERMH4
 .org 0x2A8
@@ -371,12 +510,71 @@ sys8_open_table:  // system_call_2(8, 9, ptr)
     std       %r4, 0(%r27)
     blr
 
+#if SYS8_CONFIG
+sys8_config: //not finished yet
+    li      %r4, 1 // set retail xml
+    cmplwi  %r3, 0
+    beq     b_configure
+    li      %r4, 2 // set debug xml
+    cmplwi  %r3, 1
+    beq     b_configure
+ b_configure:
+    LOAD_LABEL2(%r27, %r31,  memory_patch_table_3)
+    stw        %r4, 0(%r27)
+    LOAD_LABEL2(%r27, %r31,  memory_patch_table_4)
+    stw        %r4, 0(%r27)
+    li        %r3, 0
+    blr
+#else
 sys8_config:
     b syscall8_unsupported
+#endif
 
 sys8_lv1call:
     b syscall8_unsupported
 
+#if SYS8_CONFIG
+memory_patch_table:
+    // 0x8c0a948c000d99b1 3.41
+    .quad    0x0
+    .long 0x80000000
+    .long BASE + memory_patch_table_3
+    // 0xa2bc1a5600052adc 3.41
+    .quad    0x0
+    .long 0x80000000
+    .long BASE + memory_patch_table_4
+    .quad    0
+
+// we need revert this changes (already in 3.55 CFW)
+memory_patch_table_3:
+    PATCH_DATA(2, 4*8) // conditional patch: if first 4 bytes == 1 skip patch if == 2 patch successfull
+    //0x0022b888 on 3.41 (we need find them on 3.55)
+    PATCH_DATA(0x0, 0x5f746f6f) # "_tool2.xml#root"
+    PATCH_DATA(0x0 + 4, 0x6c322e78)
+    PATCH_DATA(0x0 + 8, 0x6d6c2372)
+    PATCH_DATA(0x0 + 12, 0x6f6f7400)
+
+ skip_end_table_3: // conditional patch: if first 4 bytes == 1 skip patch if == 2 patch successfull
+    PATCH_DATA(1, 3*8) // skip 3 patchs
+    //0x2367e8 on 3.41 (we need find them on 3.55)
+    PATCH_DATA(0x0, 0x2f646576) // "/dev"    // replace "/home_apps/PS3_GAME" by "/dev_bdvd/PS3_GAME"
+    PATCH_DATA(0x0 + 4, 0x5f626476) // "_bdv"
+    PATCH_DATA(0x0 + 8, 0x642f5053) // "d/PS"
+    .long 0
+
+// we need revert this changes (already in 3.55 CFW)
+memory_patch_table_4:
+    PATCH_DATA(2, 4*8) // conditional patch: if first 4 bytes == 1 skip patch if == 2 patch successfull
+    //0x000d68b8 on 3.41 (we need find them on 3.55)
+    PATCH_DATA(0x0, 0x5f746f6f) # "_tool2.xml#root"
+    PATCH_DATA(0x0 + 4, 0x6c322e78)
+    PATCH_DATA(0x0 + 8, 0x6d6c2372)
+    PATCH_DATA(0x0 + 12, 0x6f6f7400)
+    .long 0
+
+patch_flag: 
+    .long 0
+#endif
 #if SYS8_PERMH4
 perm_mode:
     .long PERM_MODE
