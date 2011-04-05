@@ -1312,93 +1312,88 @@ static int my_game_test(char *path)
 		if(entry->d_name[0]=='.' && entry->d_name[1]=='.' && entry->d_name[2]==0) continue;
 
 		if((entry->d_type & DT_DIR))
-			{
+		{
 			
-				char *d1= (char *) malloc(1024);
+            char *d1= (char *) malloc(1024);
 				
-				num_directories++;
+            num_directories++;
 
-				if(!d1) {closedir (dir);DPrintf("malloc() Error!!!\n\n");abort_copy=2;return -1;}
-				sprintf(d1,"%s/%s", path, entry->d_name);
-				my_game_test(d1);
-				free(d1);
+            if(!d1) {closedir (dir);DPrintf("malloc() Error!!!\n\n");abort_copy=2;return -1;}
+            sprintf(d1,"%s/%s", path, entry->d_name);
+            my_game_test(d1);
+            free(d1);
 
-				if(abort_copy) break;
-			}
+            if(abort_copy) break;
+		}
 		else
-			{
-				char *f= (char *) malloc(1024);
+		{
+            char *f= (char *) malloc(1024);
 
-				struct stat s;
+            struct stat s;
 					
-				s64 size = 0LL;
+            s64 size = 0LL;
 
-                int is_split = 0;
+            int is_split = 0;
 
-				if(!f) {DPrintf("malloc() Error!!!\n\n");abort_copy=2;closedir (dir);return -1;}
-				sprintf(f,"%s/%s", path, entry->d_name);
+            if(!f) {DPrintf("malloc() Error!!!\n\n");abort_copy=2;closedir (dir);return -1;}
+            sprintf(f,"%s/%s", path, entry->d_name);
 
-				if(stat(f, &s)<0) {abort_copy=3;DPrintf("File error!!!\n -> %s\n\n", f);if(f) free(f);break;}
+            if(stat(f, &s)<0) {abort_copy=3;DPrintf("File error!!!\n -> %s\n\n", f);if(f) free(f);break;}
 
-				size= s.st_size;
+            size= s.st_size;
 
-				if(strlen(entry->d_name)>6)
-				{
-					char *p= f;
-					p+= strlen(f)-6; // adjust for .666xx
-					if(p[0]== '.' && p[1]== '6' && p[2]== '6' && p[3]== '6')
-					{
-						DPrintf("Split file %lli MB %s\n\n", size/0x100000LL, f);
-						num_files_split++;
-                        is_split = 1;
-
-                        if(copy_split_to_cache && p[4] == '0' && p[5] == '0') 
-                        {
-
-                            if(nfilecached < MAX_FILECACHED) 
-                            {
-                                
-                                sprintf(buff, "Found %s\n\nWant to install? ", entry->d_name);
-                                if(DrawDialogYesNo(buff) == 1)
-                                {
-                                    sprintf(&filecached[nfilecached][0][0], "%s/%s", path, entry->d_name);
-                                    sprintf(&filecached[nfilecached][1][0], "%s", entry->d_name);
-                                    char * a = strstr((char *) &filecached[nfilecached][0][0], ".66600");
-                                    if(a) a[0] = 0;
-                                    a = strstr((char *) &filecached[nfilecached][1][0], ".66600");
-                                    if(a) a[0] = 0;
-                            
-                                    filecached_bytes[nfilecached]=count_cache_bytes(&filecached[nfilecached][0][0]);
-
-                                    //prepare next
-                                    nfilecached++;
-                                }
-                            
-                            }
-                            
-                        }
-
-					}
-							
-			    }
-			
-				if(size>=0x100000000LL)	{DPrintf("Big file %lli MB %s\n\n", size/0x100000LL, f);num_files_big++;}
-
-				if(f) free(f);
-
-                if(!copy_split_to_cache || is_split)
+            if(strlen(entry->d_name)>6)
+            {
+                char *p= f;
+                p+= strlen(f)-6; // adjust for .666xx
+                if(p[0]== '.' && p[1]== '6' && p[2]== '6' && p[3]== '6')
                 {
+                    DPrintf("Split file %lli MB %s\n\n", size/0x100000LL, f);
+                    num_files_split++;
+                    is_split = 1;
 
-				int seconds= (int) (time(NULL)-time_start);
-				
-			    file_counter++;
-				
-				global_device_bytes+=size;
+                    if(copy_split_to_cache && p[4] == '0' && p[5] == '0') 
+                    {
+                        if(nfilecached < MAX_FILECACHED) 
+                        {
+                            sprintf(buff, "Found %s\n\nWant to install? ", entry->d_name);
+                            if(DrawDialogYesNo(buff) == 1)
+                            {
+                                sprintf(&filecached[nfilecached][0][0], "%s/%s", path, entry->d_name);
+                                sprintf(&filecached[nfilecached][1][0], "%s", entry->d_name);
 
-				sprintf(string1,"Test File: %i Time: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", file_counter, seconds/3600, 
-					(seconds/60) % 60, seconds % 60, ((double) global_device_bytes)/(1024.0*1024.0*1024.0));
+                                char * a = strstr((char *) &filecached[nfilecached][0][0], ".66600");
+                                if(a) a[0] = 0;
+                                a = strstr((char *) &filecached[nfilecached][1][0], ".66600");
+                                if(a) a[0] = 0;
+                            
+                                filecached_bytes[nfilecached]=count_cache_bytes(&filecached[nfilecached][0][0]);
+
+                                //prepare next
+                                nfilecached++;
+                            }
+                        }
+                    }
+                }
+            }
 			
-				cls2();
+            if(size>=0x100000000LL)	{DPrintf("Big file %lli MB %s\n\n", size/0x100000LL, f);num_files_big++;}
+
+            if(f) free(f);
+
+            if(!copy_split_to_cache || is_split)
+            {
+
+                int seconds= (int) (time(NULL)-time_start);
+
+                file_counter++;
+
+                global_device_bytes+=size;
+
+                sprintf(string1,"Test File: %i Time: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", file_counter, seconds/3600, 
+                    (seconds/60) % 60, seconds % 60, ((double) global_device_bytes)/(1024.0*1024.0*1024.0));
+			
+                cls2();
 
                 strcpy(dbg_str1, string1);
                 strcpy(dbg_str2, "Hold /\\ to Abort");
@@ -1408,23 +1403,23 @@ static int my_game_test(char *path)
 
                 ps3pad_read();
 
-				if(abort_copy) break;
+                if(abort_copy) break;
 
                 if(!copy_split_to_cache && (new_pad & BUTTON_TRIANGLE))
-					{
-					abort_copy=1;
-					}
+                {
+                    abort_copy=1;
                 }
-			
-			if(abort_copy) break;
+            }
 
-			}
+            if(abort_copy) break;
 
-		}
+        }
 
-	closedir (dir);
+    }
 
-return 0;
+    closedir (dir);
+
+    return 0;
 }
 
 static int my_game_countsize(char *path)
