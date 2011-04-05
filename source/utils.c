@@ -669,9 +669,11 @@ static int fast_copy_async(char *pathr, char *pathw, int enable)
 
 static int fast_copy_process();
 
-static int nfilecached = 0;
+#define MAX_FILECACHED 4
 
-static char filecached[4][2][1024];
+static int nfilecached = 0;
+static s64 filecached_bytes[MAX_FILECACHED];
+static char filecached[MAX_FILECACHED][2][1024];
 
 static char * path_cache = NULL;
 
@@ -1272,6 +1274,27 @@ int fast_copy_process()
 	return error;
 }
 
+static s64 count_cache_bytes(char *path)
+{
+    int n = 0;
+    s64 bytes = 0;
+    
+    while(n < 100)
+    {
+        struct stat s;
+        sprintf(buff, "%s.666%2.2i", path, n);
+
+        if(stat(buff, &s)<0)
+            break; //end loop
+
+        bytes += s.st_size;
+        n++;
+    }
+
+    return bytes; //return total bytes counted
+
+}
+
 static int num_directories=0, num_files_big=0, num_files_split=0;
 
 static int my_game_test(char *path)
@@ -1279,8 +1302,6 @@ static int my_game_test(char *path)
 	DIR  *dir;
    dir=opendir (path);
    if(!dir) return -1;
-
-   
 
    while(1)
 		{
@@ -1334,35 +1355,25 @@ static int my_game_test(char *path)
                         if(copy_split_to_cache && p[4] == '0' && p[5] == '0') 
                         {
 
-                            if(nfilecached < 4) 
+                            if(nfilecached < MAX_FILECACHED) 
                             {
-
-                                if(nfilecached == 1 && copy_split_to_cache == 1) 
+                                
+                                sprintf(buff, "Found %s\n\nWant to install? ", entry->d_name);
+                                if(DrawDialogYesNo(buff) == 1)
                                 {
-                                    copy_split_to_cache = 2;
-                                    sprintf(buff, "Found %s\n\nWant to install?", &filecached[0][0][0]);
-                                    if(DrawDialogYesNo(buff) != 1) {
-                                        nfilecached--;
-                                    }
+                                    sprintf(&filecached[nfilecached][0][0], "%s/%s", path, entry->d_name);
+                                    sprintf(&filecached[nfilecached][1][0], "%s", entry->d_name);
+                                    char * a = strstr((char *) &filecached[nfilecached][0][0], ".66600");
+                                    if(a) a[0] = 0;
+                                    a = strstr((char *) &filecached[nfilecached][1][0], ".66600");
+                                    if(a) a[0] = 0;
+                            
+                                    filecached_bytes[nfilecached]=count_cache_bytes(&filecached[nfilecached][0][0]);
+
+                                    //prepare next
+                                    nfilecached++;
                                 }
-
-                                sprintf(&filecached[nfilecached][0][0], "%s/%s", path, entry->d_name);
-                                sprintf(&filecached[nfilecached][1][0], "%s", entry->d_name);
-
-                                char * a = strstr((char *) &filecached[nfilecached][0][0], ".66600");
-                                if(a) a[0] = 0;
-                                a = strstr((char *) &filecached[nfilecached][1][0], ".66600");
-                                if(a) a[0] = 0;
-
-                                if(nfilecached == 0 && copy_split_to_cache == 1) nfilecached++;
-                                else 
-                                {
-                                    sprintf(buff, "Found %s\n\nWant to install?", &filecached[nfilecached][0][0]);
-                                    if(DrawDialogYesNo(buff) == 1)
-                                    {
-                                        nfilecached++; 
-                                    }
-                                }
+                            
                             }
                             
                         }
@@ -1375,7 +1386,8 @@ static int my_game_test(char *path)
 
 				if(f) free(f);
 
-                if(!copy_split_to_cache || is_split) {
+                if(!copy_split_to_cache || is_split)
+                {
 
 				int seconds= (int) (time(NULL)-time_start);
 				
@@ -1383,10 +1395,8 @@ static int my_game_test(char *path)
 				
 				global_device_bytes+=size;
 
-                
-				
 				sprintf(string1,"Test File: %i Time: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", file_counter, seconds/3600, 
-					(seconds/60) % 60, seconds % 60, ((double) global_device_bytes)/(1024.0*1024.*1024.0));
+					(seconds/60) % 60, seconds % 60, ((double) global_device_bytes)/(1024.0*1024.0*1024.0));
 			
 				cls2();
 
@@ -2221,7 +2231,7 @@ void copy_to_cache(int game_sel, char * hmanager_path)
         //////////////
         
         global_device_bytes = 0;
-
+        cache_need_free = 0;
         num_directories = file_counter = num_files_big = num_files_split = 0;
         
         
@@ -2256,7 +2266,11 @@ void copy_to_cache(int game_sel, char * hmanager_path)
         freeSpace = ( ((u64)blockSize * freeSize));
         freeSpace = freeSpace / 1073741824.0;
 
-        cache_need_free = ((float) global_device_bytes / 1073741824.0) + 2.0f;
+        for(n = 0; n < nfilecached; n++)
+            cache_need_free += filecached_bytes[n];
+
+        global_device_bytes = cache_need_free; // update with correct value
+        cache_need_free = (cache_need_free / 1073741824.0) + 2.0f; // +2 for system
 
         if(freeSpace < cache_need_free) {
             sprintf(string1, "You have %.2fGB free and you needs %.2fGB\n\nPlease, delete Cache Entries", freeSpace, cache_need_free);
@@ -2312,7 +2326,7 @@ void copy_to_cache(int game_sel, char * hmanager_path)
         copy_is_split=0;
 
         copy_split_to_cache = 1;
-        my_game_copy((char *) name2/*directories[game_sel].path_name*/, (char *) name);
+        my_game_copy((char *) name2, (char *) name);
         copy_split_to_cache = 0;
 
         int seconds = (int) (time(NULL) - time_start);
@@ -2358,7 +2372,7 @@ void copy_to_cache(int game_sel, char * hmanager_path)
         if(abort_copy || nfilecached ==0) {
 
            
-            sprintf(filename, "%s\n\n%s USB00%c?", directories[game_sel].title, "Delete failed dump in", 47 + dest);
+            sprintf(filename, "%s\n\n%s USB00%c?", directories[game_sel].title, "Delete Cache failed dump from ", 47 + dest);
 
             dialog_action = 0;
             

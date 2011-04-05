@@ -42,7 +42,7 @@
 
 #define DEBUG_HOOK 0
 #define SYS8_CONFIG 0 // we need research some hash and ptr from 3.55...
-#define SYS8_PERMH4 1 // testing, we need this on 3.55?
+#define SYS8_PERMH4 0 // testing, we need this on 3.55?
 
 #define SYS8_VERSION 0x7
 #define PERM_MODE 2  // 0 -> restricted 1-> original 2-> new for some games

@@ -1460,7 +1460,7 @@ void draw_screen1(float x, float y)
             
             int f = select_px == m && select_py == n;
 
-            DrawBox(x + 200 * m, y + n * 150, 0, 192, 142, 0x00000028 );
+            DrawBox(x + 200 * m - 4 * f, y + n * 150 - 4 * f, 0, 192 + 8 * f, 142 + 8 * f, 0x00000028 );
            
 
             //draw Splited box

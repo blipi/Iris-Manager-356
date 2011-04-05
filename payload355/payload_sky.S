@@ -41,7 +41,7 @@
 #define PATHUSB_LEN    0xB //11
 
 #define DEBUG_HOOK 0
-#define SYS8_PERMH4 0 // testing, we need this on 3.55?
+#define SYS8_PERMH4 0 // testing if you want, we need this on 3.55?
 
 #define SYS8_VERSION 0x7
 #define PERM_MODE 2  // 0 -> restricted 1-> original 2-> new for some games
