@@ -2490,62 +2490,60 @@ void draw_configs(float x, float y, int index)
     y2 = y + 32;
 
 
+#ifdef CONFIG_USE_SYS8PERMH4
     x2 = DrawButton1(x + 32, y2, 240, "Fix Permissions", (flash && select_option == 0)) + 16;
     
     x2 = DrawButton2(x2, y2, 0, " Default ", (game_cfg.perm == 0) ) + 8;
-#ifdef CONFIG_USE_SYS8PERMH4
     x2 = DrawButton2(x2, y2, 0, " PS jailbreak ", (game_cfg.perm == 1)) + 8;
     x2 = DrawButton2(x2, y2, 0, " v4 Perms (F1) ", (game_cfg.perm == 2)) + 8;
-#else
-    x2 = DrawButton2(x2, y2, 0, " PS jailbreak ", -1) + 8;
-    x2 = DrawButton2(x2, y2, 0, " v4 Perms (F1) ", -1) + 8;
+
+    y2+= 48;
 #endif
     
-    y2+= 48;
 
 #ifdef CONFIG_USE_SYS8CONFIG
-    x2 = DrawButton1(x + 32, y2, 240, "Select XMB", (flash && select_option == 1))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, "Select XMB", (flash && select_option == 0))  + 16;
     x2 = DrawButton2(x2, y2, 0, "  Debug  ", (game_cfg.xmb == 0)) + 8;
     x2 = DrawButton2(x2, y2, 0, "  Retail  ", (game_cfg.xmb == 1)) + 8;
 #else
-    x2 = DrawButton1(x + 32, y2, 240, "Requires Disc", (flash && select_option == 1))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, "Requires Disc", (flash && select_option == 0))  + 16;
     x2 = DrawButton2(x2, y2, 0, "  No  ", (game_cfg.xmb == 0)) + 8;
     x2 = DrawButton2(x2, y2, 0, "  Yes  ", (game_cfg.xmb == 1)) + 8;
 #endif
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "Online Updates", (flash && select_option == 2))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, "Online Updates", (flash && select_option == 1))  + 16;
         
     x2 = DrawButton2(x2, y2, 0, "  On  ", /*(game_cfg.updates == 0)*/ -1) + 8;
     x2 = DrawButton2(x2, y2, 0, "  Off  ", /*(game_cfg.updates != 0)*/ 1) + 8;
 
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "Extern EBOOT.BIN", (flash && select_option == 3))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, "Extern EBOOT.BIN", (flash && select_option == 2))  + 16;
         
     x2 = DrawButton2(x2, y2, 0, "  On  ", (game_cfg.ext_ebootbin != 0)) + 8;
     x2 = DrawButton2(x2, y2, 0, "  Off  ", (game_cfg.ext_ebootbin == 0)) + 8;
 
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "BD Emu (for USB)", (flash && select_option == 4))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, "BD Emu (for USB)", (flash && select_option == 3))  + 16;
         
     x2 = DrawButton2(x2, y2, 0, "  On  ", (directories[currentgamedir].splitted) ? -1: (game_cfg.bdemu != 0)) + 8;
     x2 = DrawButton2(x2, y2, 0, "  Off  ", (game_cfg.bdemu == 0)) + 8;
 
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "Ext /dev_hdd0/game", (flash && select_option == 5))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, "Ext /dev_hdd0/game", (flash && select_option == 4))  + 16;
         
     x2 = DrawButton2(x2, y2, 0, "  On  ", (game_cfg.exthdd0emu != 0)) + 8;
     x2 = DrawButton2(x2, y2, 0, "  Off  ", (game_cfg.exthdd0emu == 0)) + 8;
 
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "Save Config", (flash && select_option == 6))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, "Save Config", (flash && select_option == 5))  + 16;
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "Return", (flash && select_option == 7))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, "Return", (flash && select_option == 6))  + 16;
     y2+= 48;
 
 
@@ -2599,25 +2597,25 @@ void draw_configs(float x, float y, int index)
                 ROT_INC(game_cfg.perm, 2, 0);
                 break;
 #endif
-            case 1:
+            case 0:
                 ROT_INC(game_cfg.xmb, 1, 0);
                 break;
             #if 0
-            case 2:
+            case 1:
                 ROT_INC(game_cfg.updates, 1, 0);
                 break;
             #endif
-            case 3:
+            case 2:
                 ROT_INC(game_cfg.ext_ebootbin, 1, 0);
                 break;
-            case 4:
+            case 3:
                 if((!directories[currentgamedir].splitted)&&(payload_mode >= ZERO_PAYLOAD))
                     ROT_INC(game_cfg.bdemu, 1, 0);
                 break;
-            case 5:
+            case 4:
                 ROT_INC(game_cfg.exthdd0emu, 1, 0);
                 break;
-            case 6:
+            case 5:
                 // save game config
                 sprintf(temp_buffer, "%s/config/%s.cfg", self_path, directories[currentgamedir].title_id);
               
@@ -2638,7 +2636,7 @@ void draw_configs(float x, float y, int index)
 
         frame_count = 32;
 
-        ROT_DEC(select_option, 0, 7)
+        ROT_DEC(select_option, 0, 6)
         
     }
 
@@ -2646,7 +2644,7 @@ void draw_configs(float x, float y, int index)
         
         frame_count = 32;
 
-        ROT_INC(select_option, 7, 0); 
+        ROT_INC(select_option, 6, 0); 
         
     }
 
@@ -2659,22 +2657,22 @@ void draw_configs(float x, float y, int index)
                 ROT_DEC(game_cfg.perm, 0, 2);
                 break;
 #endif
-            case 1:
+            case 0:
                 ROT_DEC(game_cfg.xmb, 0, 1);
                 break;
             #if 0
-            case 2:
+            case 1:
                 ROT_DEC(game_cfg.updates, 0, 1);
                 break;
             #endif
-            case 3:
+            case 2:
                 ROT_DEC(game_cfg.ext_ebootbin, 0, 1);
                 break;
-            case 4:
+            case 3:
                 if((!directories[currentgamedir].splitted)&&(payload_mode >= ZERO_PAYLOAD))
                     ROT_DEC(game_cfg.bdemu, 0, 1);
                 break;
-             case 5:
+             case 4:
                 ROT_DEC(game_cfg.exthdd0emu, 0, 1);
                 break;
             default:
@@ -2691,22 +2689,22 @@ void draw_configs(float x, float y, int index)
                 ROT_INC(game_cfg.perm, 2, 0);
                 break;
 #endif
-            case 1:
+            case 0:
                 ROT_INC(game_cfg.xmb, 1, 0);
                 break;
             #if 0
-            case 2:
+            case 1:
                 ROT_INC(game_cfg.updates, 1, 0);
                 break;
             #endif
-            case 3:
+            case 2:
                 ROT_INC(game_cfg.ext_ebootbin, 1, 0);
                 break;
-            case 4:
+            case 3:
                 if((!directories[currentgamedir].splitted)&&(payload_mode >= ZERO_PAYLOAD))
                     ROT_INC(game_cfg.bdemu, 1, 0);
                 break;
-            case 5:
+            case 4:
                 ROT_INC(game_cfg.exthdd0emu, 1, 0);
                 break;
             default:
