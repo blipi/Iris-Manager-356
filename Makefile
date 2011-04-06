@@ -3,7 +3,7 @@ ifeq ($(strip $(PSL1GHT)),)
 $(error "PSL1GHT must be set in the environment.")
 endif
 
-include $(PSL1GHT)/Makefile.base
+include $(PSL1GHT)/host/ppu.mk
 
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
@@ -23,6 +23,7 @@ TITLE		:=	LEMMINGS™ Trial Version
 APPID		:=	NPUA80034
 endif
 CONTENTID	:=	UP0001-$(APPID)_00-0000000000000000
+PKGFILES	:=	release
 
 CFLAGS		+= -g -O2 -Wall --std=gnu99 `$(PS3DEV)/host/ppu/bin/freetype-config --cflags`
 
@@ -65,24 +66,17 @@ export VCGFILES	:=	$(VCGFILES:.vcg=.vcg.h)
 export INCLUDES	:=	$(foreach dir,$(INCLUDE),-I$(CURDIR)/$(dir)) \
 					-I$(CURDIR)/$(BUILD) -I$(PSL1GHT)/modules
 
-.PHONY: $(BUILD) clean
+.PHONY: $(BUILD) clean pkg run
 
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 clean:
-	@echo Clean...
-	@rm -rf $(BUILD) $(OUTPUT).elf $(OUTPUT).self $(OUTPUT).a $(OUTPUT).pkg
+	@echo "[RM]  $(notdir $(OUTPUT))"
+	@rm -rf $(BUILD) $(OUTPUT).elf $(OUTPUT).self $(OUTPUT).a $(OUTPUT).pkg $(OUTPUT).geohot.pkg
 
-pkg: $(BUILD)
-	@echo Creating PKG...
-	@mkdir -p $(BUILD)/pkg
-	@mkdir -p $(BUILD)/pkg/USRDIR
-	@cp $(ICON0) $(BUILD)/pkg/
-	@make_self_npdrm $(BUILD)/$(TARGET).elf $(BUILD)/pkg/USRDIR/EBOOT.BIN $(CONTENTID)
-	@$(SFO) --title "$(TITLE)" --appid "$(APPID)" -f $(SFOXML) $(BUILD)/pkg/PARAM.SFO
-	@$(PKG) --contentid $(CONTENTID) $(BUILD)/pkg/ $(OUTPUT).pkg
+pkg: $(BUILD) $(OUTPUT).pkg
 
 run: $(BUILD)
 	@$(PS3LOADAPP) $(OUTPUT).self
