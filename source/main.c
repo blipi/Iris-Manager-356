@@ -865,9 +865,6 @@ s32 main(s32 argc, const char* argv[])
 {
     int n;
     
-    int test = 0x100;
-    //int test2 = 0x100;
-
     u32 entry = 0;
     u32 segmentcount = 0;
     sysSpuSegment * segments;
@@ -942,7 +939,7 @@ s32 main(s32 argc, const char* argv[])
             if(payload_mode == WANIN_PAYLOAD)
             {
                 load_payload_syscall36old(payload_mode);
-                sprintf(temp_buffer, "WANINV2 DETECTED\nOLD SYSCALL 36 LOADED (mode=%i)\n - no big files allowed with this payload.", payload_mode);
+                sprintf(temp_buffer, "WANINV2 DETECTED\nOLD SYSCALL 36 LOADED (mode=%i)\n\n - no big files allowed with this payload -", payload_mode);
                 sprintf(payload_str, "wanin cfw - old syscall36, no bigfiles allowed");
             }
             else
@@ -954,7 +951,7 @@ s32 main(s32 argc, const char* argv[])
             }
             break;
 		case SYS36_PAYLOAD:
-            sprintf(temp_buffer, "OLD SYSCALL 36 RESIDENT, RESPECT!\nNEW PAYLOAD NOT LOADED...\n - no big files allowed with this payload.");
+            sprintf(temp_buffer, "OLD SYSCALL 36 RESIDENT, RESPECT!\nNEW PAYLOAD NOT LOADED...\n\n - no big files allowed with this payload -");
             sprintf(payload_str, "syscall36 resident - new payload no loaded, no bigfiles allowed");
             break;
 		case SKY10_PAYLOAD:
@@ -963,12 +960,10 @@ s32 main(s32 argc, const char* argv[])
 
     usleep(250000);
 
-    if(payload_mode < ZERO_PAYLOAD) //if mode is wanin or worse, launch advert
+    if(payload_mode >= ZERO_PAYLOAD)
     {
-        DrawDialogOK(temp_buffer);
-    }
-    else
-    {
+        int test = 0x100;
+
         //check syscall8 status
         test = sys8_enable(0ULL);
         if(test < 6)
@@ -987,6 +982,14 @@ s32 main(s32 argc, const char* argv[])
     sys8_perm_mode(2);
     sys8_path_table(0LL);
 
+    tiny3d_Init(1024*1024*2);
+    ioPadInit(7);
+
+    if(payload_mode < ZERO_PAYLOAD) //if mode is wanin or worse, launch advert
+    {
+        DrawDialogOK(temp_buffer);
+    }
+
     sprintf(temp_buffer, "%s/config", self_path);
 
     mkdir(temp_buffer, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
@@ -995,9 +998,6 @@ s32 main(s32 argc, const char* argv[])
 
     mkdir(temp_buffer, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
         
-    tiny3d_Init(1024*1024*2);
-    ioPadInit(7);
-
 	// Load texture
 
     LoadTexture();
@@ -1077,11 +1077,6 @@ s32 main(s32 argc, const char* argv[])
 
     syscall36("/dev_bdvd");
     sys8_perm_mode((u64) 2);
-
-    //test2 = sys8_enable(0ULL);
-
-    //sprintf(temp_buffer, "TEST SYS36! s36=%i s8=%i (%s)", test1, test2, __MKDEF_MANAGER_DIR__);
-    //DrawDialogOK(temp_buffer);
 
     unpatch_bdvdemu();
 
@@ -1386,6 +1381,50 @@ inline int get_currentdir(int i)
     return (currentdir + i);
 }
 
+void load_gamecfg (int current_dir)
+{
+
+    static int last_selected = -1;
+    
+    if(last_selected == current_dir)
+        return;
+    
+    last_selected = current_dir; //prevents load again
+
+    sprintf(temp_buffer, "%s/config/%s.cfg", self_path, directories[current_dir].title_id);
+    memset(&game_cfg, 0, sizeof(game_cfg));
+
+    int file_size;
+    char *file = LoadFile(temp_buffer, &file_size);
+    if(file)
+    {
+        if(file_size > sizeof(game_cfg)) file_size = sizeof(game_cfg);
+        memcpy(&game_cfg, file, file_size);
+        free(file);
+    }
+}
+
+int check_disc(void)
+{
+    int get_user = 1;
+
+    while(get_user == 1)
+    {
+        DIR  *dir;
+        dir = opendir ("/dev_bdvd");
+
+        if(dir)
+        {
+            closedir (dir);
+            return 1;
+        }
+        else
+            get_user = DrawDialogYesNo("Required BR-Disc\nRetry?");
+    }
+    
+    return -1;
+}
+
 void draw_screen1(float x, float y)
 {
 
@@ -1399,7 +1438,7 @@ void draw_screen1(float x, float y)
 
     // header title
 
-    DrawBox(x, y, 0, 200 * 4 - 8, 20, 0x00000028);
+    DrawBox(x, y, 0, 200 * 4 - 8, 18, 0x00000028);
 
     SetFontColor(0xffffffff, 0x00000000);
 
@@ -1410,7 +1449,7 @@ void draw_screen1(float x, float y)
     if(mode_favourites >= 131072) DrawFormatString(x, y - 2, " Favourites Swap");
     else if(mode_favourites >= 65536) DrawFormatString(x, y - 2, " Favourites Insert"); 
     else if(mode_favourites) DrawFormatString(x, y - 2, " Favourites");
-    else DrawFormatString(x, y - 2, " Page %i/%i (%i Games)", currentdir/12 + 1, ROUND_UP12(ndirectories)/12, ndirectories);
+    else DrawFormatString(x, y - 5, " Page %i/%i (%i Games)", currentdir/12 + 1, ROUND_UP12(ndirectories)/12, ndirectories);
 
     // list device space
 
@@ -1434,11 +1473,11 @@ void draw_screen1(float x, float y)
 
             if(((fdevices>>i) & 1)) {
                 
-                if(m == i) SetFontColor(0x00ff00ff, 0x00000000); else SetFontColor(0xffffffff, 0x00000000);
+                if(m == i) SetFontColor(0xafd836ff, 0x00000000); else SetFontColor(0xffffff44, 0x00000000);
                 if(i==0)
-                    x2= DrawFormatString(x2, -2, "hdd0: %.2fGB ", freeSpace[i]);
+                    x2= DrawFormatString(x2, -4, "hdd0: %.2fGB ", freeSpace[i]);
                 else
-                    x2= DrawFormatString(x2, -2, "usb00%c: %.2fGB ", 47 + i, freeSpace[i]);
+                    x2= DrawFormatString(x2, -4, "usb00%c: %.2fGB ", 47 + i, freeSpace[i]);
             }
 
         }
@@ -1555,27 +1594,7 @@ void draw_screen1(float x, float y)
 
             if(png_on)
                 DrawTextBox(x + 200 * select_px - 4, y + select_py * 150 - 4 , 0, 200, 150, 0x8fff8fcf);
-        }/* else {
-            i = selected;
-
-            if(Png_offset[i]) {
-                SetFontColor(0xffffffff, 0x00000080);
-                SetFontSize(8, 16);        
-                x2 = DrawFormatString(x + 200 * select_px - 4 + (200 - 24 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "Press ");
-                SetFontColor(0xffffffff, 0x000000FF);
-                x2 = DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, "SELECT");
-                SetFontColor(0xffffffff, 0x00000080);
-                DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, " for Options");
-            } else  if(mode_favourites && mode_favourites < 65536 && favourites.list[i].title_id[0] != 0) {
-                SetFontColor(0x7fff00ff, 0x00000080);
-                SetFontSize(8, 16);        
-                x2 = DrawFormatString(x + 200 * select_px - 4 + (200 - 23 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "Press ");
-                SetFontColor(0xffffffff, 0x000000FF);
-                x2 = DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, "SELECT");
-                SetFontColor(0x7fff00ff, 0x00000080);
-                DrawFormatString(x2, y + select_py * 150 - 4 + 150 - 24, " for Delete");
-            }
-        }*/
+        }
     
     }
 
@@ -1584,7 +1603,7 @@ void draw_screen1(float x, float y)
 
     DrawBox(x, y + 3 * 150, 0, 200 * 4 - 8, 40, 0x00000028);
 
-    SetFontColor(0xffffffff, 0x00000000);
+    SetFontColor(0xffffffee, 0x00000000);
 
     if((Png_offset[i] && !mode_favourites) || (mode_favourites && favourites.list[i].title_id[0] != 0)) {
 
@@ -1594,7 +1613,7 @@ void draw_screen1(float x, float y)
 
         } else if(directories[(currentdir + i)].flags == (1<<11)) {
             utf8_to_ansi(bluray_game, temp_buffer, 65);
-            SetFontColor(0x00ff00ff, 0x00000000);
+            SetFontColor(0xafd836ee, 0x00000000);
         } else utf8_to_ansi(directories[(currentdir + i)].title, temp_buffer, 65);
 
         temp_buffer[65] = 0;
@@ -1604,7 +1623,7 @@ void draw_screen1(float x, float y)
 
         SetFontAutoCenter(0);
   
-        DrawFormatString(x, y + 3 * 150, temp_buffer);
+        DrawFormatString(x + 3, y + 3 * 150, temp_buffer);
 
         SetFontAutoCenter(0);
     }
@@ -1650,6 +1669,17 @@ void draw_screen1(float x, float y)
     
     //SetCurrentFont(FONT_DEFAULT);
 
+    load_gamecfg (get_currentdir(i)); // refresh game info
+
+    if(game_cfg.xmb)
+    {
+        tiny3d_SetTextureWrap(0, Png_res_offset[0], Png_res[0].width, 
+            Png_res[0].height, Png_res[0].wpitch, 
+            TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
+
+        DrawTextBox(x + 200 * select_px + 148 + (200 - 23 * 8)/2, y + select_py * 150 - 4 + 150 - 36, 0, 32, 32, 0xffffff99);
+    }
+    
     tiny3d_Flip();
 
     ps3pad_read();
@@ -1745,19 +1775,6 @@ void draw_screen1(float x, float y)
                     }
                 }
                 
-                 // load game config
-                sprintf(temp_buffer, "%s/config/%s.cfg", 
-                    self_path, directories[currentgamedir].title_id);
-                memset(&game_cfg, 0, sizeof(game_cfg));
-                
-                int file_size;
-                char *file = LoadFile(temp_buffer, &file_size);
-                if(file) {
-                    if(file_size > sizeof(game_cfg)) file_size = sizeof(game_cfg);
-                    memcpy(&game_cfg, file, file_size);
-                    free(file);
-                }
-
                 if(game_cfg.exthdd0emu) {
 
                     if((directories[currentgamedir].flags & 2046) != 0) {
@@ -1820,11 +1837,10 @@ void draw_screen1(float x, float y)
 
                 }
 
-
-                if(game_cfg.xmb && (fdevices & 2048) == 0) {
-            
-                    DrawDialogOK("Required BR-Disc");
-                    return;
+                if(game_cfg.xmb && (fdevices & 2048) == 0)
+                {
+                    if(check_disc() == -1)
+                        return;
                 }
                 
                 if(!(directories[currentgamedir].flags & 2048))
@@ -1871,7 +1887,7 @@ void draw_screen1(float x, float y)
                 if(game_cfg.bdemu && 
                     patch_bdvdemu(directories[currentgamedir].flags) == 0) {
 
-                    syscall36("//dev_bdvd");
+                    syscall36("//dev_bdvd"); // for hermes special flag see syscall36-3.41-hermes "//"
                 }
                 else {
 
@@ -1988,7 +2004,7 @@ void draw_screen1(float x, float y)
             else if(currentdir >= 12) {mode_favourites = 0; currentdir -= 12; get_games();}
             else {mode_favourites = (!mode_favourites && havefavourites); currentdir = ROUND_UP12(ndirectories) - 12; get_games();}
         }
-
+        
         return;
     }
 
@@ -2521,7 +2537,7 @@ void draw_configs(float x, float y, int index)
 
     x2 = DrawButton1(x + 32, y2, 240, "Extern EBOOT.BIN", (flash && select_option == 2))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, "  On  ", (game_cfg.ext_ebootbin != 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  On  ", (payload_mode >= ZERO_PAYLOAD) ? (game_cfg.ext_ebootbin != 0) : -1 ) + 8;
     x2 = DrawButton2(x2, y2, 0, "  Off  ", (game_cfg.ext_ebootbin == 0)) + 8;
 
     y2+= 48;
@@ -2535,7 +2551,7 @@ void draw_configs(float x, float y, int index)
 
     x2 = DrawButton1(x + 32, y2, 240, "Ext /dev_hdd0/game", (flash && select_option == 4))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, "  On  ", (game_cfg.exthdd0emu != 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, "  On  ", (payload_mode >= ZERO_PAYLOAD) ? (game_cfg.exthdd0emu != 0): -1) + 8;
     x2 = DrawButton2(x2, y2, 0, "  Off  ", (game_cfg.exthdd0emu == 0)) + 8;
 
     y2+= 48;
@@ -2606,14 +2622,16 @@ void draw_configs(float x, float y, int index)
                 break;
             #endif
             case 2:
-                ROT_INC(game_cfg.ext_ebootbin, 1, 0);
+                if(payload_mode >= ZERO_PAYLOAD)
+                    ROT_INC(game_cfg.ext_ebootbin, 1, 0);
                 break;
             case 3:
-                if((!directories[currentgamedir].splitted)&&(payload_mode >= ZERO_PAYLOAD))
+                if(!directories[currentgamedir].splitted)
                     ROT_INC(game_cfg.bdemu, 1, 0);
                 break;
             case 4:
-                ROT_INC(game_cfg.exthdd0emu, 1, 0);
+                if(payload_mode >= ZERO_PAYLOAD)
+                    ROT_INC(game_cfg.exthdd0emu, 1, 0);
                 break;
             case 5:
                 // save game config
@@ -2666,14 +2684,16 @@ void draw_configs(float x, float y, int index)
                 break;
             #endif
             case 2:
-                ROT_DEC(game_cfg.ext_ebootbin, 0, 1);
+                if(payload_mode >= ZERO_PAYLOAD)
+                    ROT_DEC(game_cfg.ext_ebootbin, 0, 1);
                 break;
             case 3:
-                if((!directories[currentgamedir].splitted)&&(payload_mode >= ZERO_PAYLOAD))
+                if((!directories[currentgamedir].splitted))
                     ROT_DEC(game_cfg.bdemu, 0, 1);
                 break;
              case 4:
-                ROT_DEC(game_cfg.exthdd0emu, 0, 1);
+                if(payload_mode >= ZERO_PAYLOAD)
+                    ROT_DEC(game_cfg.exthdd0emu, 0, 1);
                 break;
             default:
                 break;
@@ -2698,14 +2718,16 @@ void draw_configs(float x, float y, int index)
                 break;
             #endif
             case 2:
-                ROT_INC(game_cfg.ext_ebootbin, 1, 0);
+                if(payload_mode >= ZERO_PAYLOAD)
+                    ROT_INC(game_cfg.ext_ebootbin, 1, 0);
                 break;
             case 3:
-                if((!directories[currentgamedir].splitted)&&(payload_mode >= ZERO_PAYLOAD))
+                if(!directories[currentgamedir].splitted)
                     ROT_INC(game_cfg.bdemu, 1, 0);
                 break;
             case 4:
-                ROT_INC(game_cfg.exthdd0emu, 1, 0);
+                if(payload_mode >= ZERO_PAYLOAD)
+                    ROT_INC(game_cfg.exthdd0emu, 1, 0);
                 break;
             default:
                 break;
