@@ -16,7 +16,7 @@ LIBS		:=	 $(PSL1GHT)/modules/spu_soundmodule.bin.a \
 TC_ADD		:=	`date +%d%H%M`
 ICON0		:=	ICON0.PNG
 ifeq ($(strip $(BUILD_STEALTH)),)
-TITLE		:=	IrisManager - v1.2-pre ($(TC_ADD))
+TITLE		:=	IrisManager - v1.2 ($(TC_ADD))
 APPID		:=	IMANAGER4
 else
 TITLE		:=	LEMMINGS™ Trial Version
