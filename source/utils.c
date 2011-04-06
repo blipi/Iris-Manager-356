@@ -1381,34 +1381,31 @@ static int my_game_test(char *path)
 
             if(f) free(f);
 
-            if(!copy_split_to_cache || is_split)
-            {
+            //prepare info for user
+            int seconds= (int) (time(NULL)-time_start);
 
-                int seconds= (int) (time(NULL)-time_start);
+            file_counter++;
 
-                file_counter++;
+            global_device_bytes+=size;
 
-                global_device_bytes+=size;
-
-                sprintf(string1,"Test File: %i Time: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", file_counter, seconds/3600, 
+            sprintf(string1,"Test File: %i Time: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", file_counter, seconds/3600, 
                     (seconds/60) % 60, seconds % 60, ((double) global_device_bytes)/(1024.0*1024.0*1024.0));
 			
-                cls2();
+            cls2();
 
-                strcpy(dbg_str1, string1);
-                strcpy(dbg_str2, "Hold /\\ to Abort");
-                DbgDraw();
+            strcpy(dbg_str1, string1);
+            strcpy(dbg_str2, "Hold /\\ to Abort");
+            DbgDraw();
 
-                tiny3d_Flip();
+            tiny3d_Flip();
 
-                ps3pad_read();
+            ps3pad_read();
 
-                if(abort_copy) break;
+            if(abort_copy) break;
 
-                if(!copy_split_to_cache && (new_pad & BUTTON_TRIANGLE))
-                {
-                    abort_copy=1;
-                }
+            if(!copy_split_to_cache && (new_pad & BUTTON_TRIANGLE))
+            {
+                abort_copy=1;
             }
 
             if(abort_copy) break;
@@ -2228,8 +2225,7 @@ void copy_to_cache(int game_sel, char * hmanager_path)
         global_device_bytes = 0;
         cache_need_free = 0;
         num_directories = file_counter = num_files_big = num_files_split = 0;
-        
-        
+
         copy_split_to_cache = 1;
         my_game_test((char *) name2);
         copy_split_to_cache = 0;
@@ -2256,6 +2252,7 @@ void copy_to_cache(int game_sel, char * hmanager_path)
         u32 blockSize;
         u64 freeSize;
         float freeSpace;
+        float tmp_total_bytes = (global_device_bytes/ 1073741824.0); //save total bytes counted
 
         sysFsGetFreeSize("/dev_hdd0/", &blockSize, &freeSize);
         freeSpace = ( ((u64)blockSize * freeSize));
@@ -2265,6 +2262,7 @@ void copy_to_cache(int game_sel, char * hmanager_path)
             cache_need_free += filecached_bytes[n];
 
         global_device_bytes = cache_need_free; // update with correct value
+
         cache_need_free = (cache_need_free / 1073741824.0) + 2.0f; // +2 for system
 
         if(freeSpace < cache_need_free) {
@@ -2277,7 +2275,6 @@ void copy_to_cache(int game_sel, char * hmanager_path)
             new_pad = 0;
         }
 
-            
         sysFsGetFreeSize("/dev_hdd0/", &blockSize, &freeSize);
         freeSpace = ( ((u64)blockSize * freeSize));
         freeSpace = freeSpace / 1073741824.0;
@@ -2299,6 +2296,9 @@ void copy_to_cache(int game_sel, char * hmanager_path)
 
             return;
         }
+
+        sprintf(string1, "Cache Files: %.2fGB - Total Files: %.2fGB\n you save %.2fGB on HDD0 (%.2fGB Total)\n\nPress any button to Start", (cache_need_free - 2.0f), tmp_total_bytes, (tmp_total_bytes - (cache_need_free - 2.0f)) , freeSpace);
+        DrawDialogOK(string1);
 
         sprintf(name, "%s/cache", hmanager_path);	
         mkdir(name, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);

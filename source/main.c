@@ -1225,6 +1225,7 @@ s32 main(s32 argc, const char* argv[])
 
           if(mode_favourites && !havefavourites) mode_favourites = 0;
           get_games();
+          load_gamecfg(-1); // force refresh game info
 
           mode_favourites = mode_favourites != 0; // avoid insert favourites
 
@@ -1386,11 +1387,18 @@ void load_gamecfg (int current_dir)
 
     static int last_selected = -1;
     
+    if(current_dir < 0) //check reset info
+    {
+        last_selected = current_dir;
+        memset(&game_cfg, 0, sizeof(game_cfg));
+        return;
+    }
+    
     if(last_selected == current_dir)
         return;
     
     last_selected = current_dir; //prevents load again
-
+    
     sprintf(temp_buffer, "%s/config/%s.cfg", self_path, directories[current_dir].title_id);
     memset(&game_cfg, 0, sizeof(game_cfg));
 
@@ -1598,36 +1606,6 @@ void draw_screen1(float x, float y)
     
     }
 
-    // draw game name
-    i = selected;
-
-    DrawBox(x, y + 3 * 150, 0, 200 * 4 - 8, 40, 0x00000028);
-
-    SetFontColor(0xffffffee, 0x00000000);
-
-    if((Png_offset[i] && !mode_favourites) || (mode_favourites && favourites.list[i].title_id[0] != 0)) {
-
-        if(mode_favourites) {
-
-            utf8_to_ansi(favourites.list[i].title, temp_buffer, 65);
-
-        } else if(directories[(currentdir + i)].flags == (1<<11)) {
-            utf8_to_ansi(bluray_game, temp_buffer, 65);
-            SetFontColor(0xafd836ee, 0x00000000);
-        } else utf8_to_ansi(directories[(currentdir + i)].title, temp_buffer, 65);
-
-        temp_buffer[65] = 0;
-
-        if(strlen(temp_buffer) < 50) SetFontSize(28, 28); 
-        else SetFontSize(20, 20);
-
-        SetFontAutoCenter(0);
-  
-        DrawFormatString(x + 3, y + 3 * 150, temp_buffer);
-
-        SetFontAutoCenter(0);
-    }
-
     SetFontColor(0xffffffff, 0x00000000);
 
     if(Png_offset[i])
@@ -1666,20 +1644,51 @@ void draw_screen1(float x, float y)
     x2= DrawFormatString(1024, 0, " START: Global Options ");
 
     DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 + 18, " START: Global Options ");
-    
+
+    // draw game name
+    i = selected;
+
+    DrawBox(x, y + 3 * 150, 0, 200 * 4 - 8, 40, 0x00000028);
+
+    SetFontColor(0xffffffee, 0x00000000);
+
+    if((Png_offset[i] && !mode_favourites) || (mode_favourites && favourites.list[i].title_id[0] != 0)) {
+
+        if(mode_favourites) {
+
+            utf8_to_ansi(favourites.list[i].title, temp_buffer, 65);
+
+        } else if(directories[(currentdir + i)].flags == (1<<11)) {
+            utf8_to_ansi(bluray_game, temp_buffer, 65);
+            SetFontColor(0xafd836ee, 0x00000000);
+        } else utf8_to_ansi(directories[(currentdir + i)].title, temp_buffer, 65);
+
+        temp_buffer[65] = 0;
+
+        if(strlen(temp_buffer) < 50) SetFontSize(28, 28); 
+        else SetFontSize(20, 20);
+
+        SetFontAutoCenter(0);
+  
+        DrawFormatString(x + 3, y + 3 * 150, temp_buffer);
+
+        SetFontAutoCenter(0);
+
+        load_gamecfg (get_currentdir(i)); // refresh game info
+
+        if(game_cfg.xmb)
+        {
+            tiny3d_SetTextureWrap(0, Png_res_offset[0], Png_res[0].width, 
+                Png_res[0].height, Png_res[0].wpitch, 
+                TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
+
+            DrawTextBox(x + 200 * select_px + 148 + (200 - 23 * 8)/2, y + select_py * 150 - 4 + 150 - 36, 0, 32, 32, 0xffffff99);
+        }
+
+    }
+
     //SetCurrentFont(FONT_DEFAULT);
 
-    load_gamecfg (get_currentdir(i)); // refresh game info
-
-    if(game_cfg.xmb)
-    {
-        tiny3d_SetTextureWrap(0, Png_res_offset[0], Png_res[0].width, 
-            Png_res[0].height, Png_res[0].wpitch, 
-            TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
-
-        DrawTextBox(x + 200 * select_px + 148 + (200 - 23 * 8)/2, y + select_py * 150 - 4 + 150 - 36, 0, 32, 32, 0xffffff99);
-    }
-    
     tiny3d_Flip();
 
     ps3pad_read();

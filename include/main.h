@@ -12,5 +12,7 @@
                                  } else v = 0;
 
 
+void load_gamecfg (int current_dir);
+
 #endif
 
