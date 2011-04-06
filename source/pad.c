@@ -34,6 +34,16 @@ unsigned ps3pad_read()
             ioPadGetData(n, &paddata);
             pad_alive = 1;
             butt = (paddata.button[2] << 8) | (paddata.button[3] & 0xff);
+
+            /* Analog stick management */
+            if (paddata.button[6] < 0x10)
+                butt |= BUTTON_LEFT;
+            else if (paddata.button[6] > 0xe0)
+                butt |= BUTTON_RIGHT;
+            if (paddata.button[7] < 0x10)
+                butt |= BUTTON_UP;
+            else if (paddata.button[7] > 0xe0)
+                butt |= BUTTON_DOWN;
             break;
         
         }
