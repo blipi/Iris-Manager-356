@@ -76,7 +76,8 @@ clean:
 	@echo "[RM]  $(notdir $(OUTPUT))"
 	@rm -rf $(BUILD) $(OUTPUT).elf $(OUTPUT).self $(OUTPUT).a $(OUTPUT).pkg $(OUTPUT).geohot.pkg
 
-pkg: $(BUILD) $(OUTPUT).pkg
+pkg: $(BUILD)
+	@$(MAKE) --no-print-directory $(OUTPUT).pkg
 
 run: $(BUILD)
 	@$(PS3LOADAPP) $(OUTPUT).self
