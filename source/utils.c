@@ -2617,8 +2617,90 @@ void FixDirectory(const char* path)
 	}
 	lv2FsCloseDir(dfd);
 }
+
 /*******************************************************************************************************************************************************/
-/* Favourites                                                                                                                                           */
+/* Configfiles                                                                                                                                         */
+/*                                                                                                                                                     */
+/* Caprice32 - Amstrad CPC Emulator                                                                                                                    */
+/*   (c) Copyright 1997-2004 Ulrich Doewich                                                                                                            */
+/*   (c) Copyright 2011 D_Skywalk - ported and adapted for Irismanager                                                                                 */
+/*******************************************************************************************************************************************************/
+
+/*
+   Ex:
+   snd_pp_device = getConfigValueInt("/home/user/config.ini", "sound", "pp_device", 0);
+   max_tracksize = getConfigValueInt(chFileName, "file", "max_track_size", 6144-154);
+*/
+
+int getConfigValueInt (char* pchFileName, char* pchSection, char* pchKey, int iDefaultValue)
+{
+   FILE* pfoConfigFile;
+   char chLine[MAX_CFGLINE_LEN + 1];
+   char* pchToken;
+
+   if ((pfoConfigFile = fopen(pchFileName, "r")) != NULL) { // open the config file
+      while(fgets(chLine, MAX_CFGLINE_LEN, pfoConfigFile) != NULL) { // grab one line
+         pchToken = strtok(chLine, "[]"); // check if there's a section key
+         if((pchToken != NULL) && (pchToken[0] != '#') && (strcmp(pchToken, pchSection) == 0)) {
+            while(fgets(chLine, MAX_CFGLINE_LEN, pfoConfigFile) != NULL) { // get the next line
+               pchToken = strtok(chLine, "\t =\n\r"); // check if it has a key=value pair
+               if((pchToken != NULL) && (pchToken[0] != '#') && (strcmp(pchToken, pchKey) == 0)) {
+                  char* pchPtr = strtok(NULL, "\t =#\n\r"); // get the value if it matches our key
+                  if (pchPtr != NULL) {
+                     return (strtol(pchPtr, NULL, 0)); // return as integer
+                  } else {
+                     return iDefaultValue; // no value found
+                  }
+               }
+            }
+         }
+      }
+      fclose(pfoConfigFile);
+   }
+   return iDefaultValue; // no value found
+}
+
+/*
+   Ex:
+   getConfigValueString(chFileName, "file", "snap_path", snap_path, sizeof(snap_path)-1, defaultPath);
+   getConfigValueString(chFileName, "file", "push_file", snap_file, sizeof(push_file)-1, "push0.sna");
+
+*/
+
+void getConfigValueString (char* pchFileName, char* pchSection, char* pchKey, char* pchValue, int iSize, char* pchDefaultValue)
+{
+   FILE* pfoConfigFile;
+   char chLine[MAX_CFGLINE_LEN + 1];
+   char* pchToken;
+
+   if ((pfoConfigFile = fopen(pchFileName, "r")) != NULL) { // open the config file
+      while(fgets(chLine, MAX_CFGLINE_LEN, pfoConfigFile) != NULL) { // grab one line
+         pchToken = strtok(chLine, "[]"); // check if there's a section key
+         if((pchToken != NULL) && (pchToken[0] != '#') && (strcmp(pchToken, pchSection) == 0)) {
+            while(fgets(chLine, MAX_CFGLINE_LEN, pfoConfigFile) != NULL) { // get the next line
+               pchToken = strtok(chLine, "\t =\n\r"); // check if it has a key=value pair
+               if((pchToken != NULL) && (pchToken[0] != '#') && (strcmp(pchToken, pchKey) == 0)) {
+                  char* pchPtr = strtok(NULL, "\t "); // remove pre tabs and spaces
+                  pchPtr = strtok(NULL, "\t=#\n\r"); // get the value if it matches our key
+                  if ((pchPtr != NULL)&&( *pchPtr != '\0')) {
+                     strncpy(pchValue, pchPtr, iSize); // copy to destination
+                     return;
+                  } else {
+                     strncpy(pchValue, pchDefaultValue, iSize); // no value found, return the default
+                     return;
+                  }
+               }
+            }
+         }
+      }
+      fclose(pfoConfigFile);
+   }
+   strncpy(pchValue, pchDefaultValue, iSize); // no value found, return the default
+}
+
+
+/*******************************************************************************************************************************************************/
+/* Favourites                                                                                                                                          */
 /*******************************************************************************************************************************************************/
 
 int havefavourites = 0;

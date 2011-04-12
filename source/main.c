@@ -39,7 +39,7 @@
 
 #include <tiny3d.h>
 #include <libfont.h>
-
+#include "language.h"
 #include "syscall8.h"
 #include "payload355/payload.h"
 
@@ -126,6 +126,7 @@ int Png_iscover[16];
 PngDatas Png_res[16];
 u32 Png_res_offset[16];
 
+extern char * language[];
 char self_path[MAXPATHLEN]= __MKDEF_MANAGER_FULLDIR__;
 
 void Load_PNG_resources()
@@ -550,6 +551,7 @@ int inited = 0;
 
 void fun_exit()
 {
+    close_language();
     ftp_deinit();
 
     if(inited & INITED_SOUNDLIB) {
@@ -633,6 +635,22 @@ void LoadManagerCfg()
             videoscale_y = manager_cfg.videoscale_y[3];
             break;
     }
+
+    char lang_chosen[256] = "language_en.ini";
+
+    sprintf(temp_buffer, "%s/config/%s", self_path, lang_chosen);
+    int errn = open_language(temp_buffer);
+    if( errn < 0)
+    {
+        char errstr[256];
+        sprintf(errstr, "Invalid language.ini file or not found (%i), need a reinstall?", errn); 
+
+        tiny3d_Init(1024*1024*2);
+        ioPadInit(7);
+
+        DrawDialogOK(errstr);
+        exit(0);
+    }
 }
 
 int SaveManagerCfg()
@@ -667,12 +685,12 @@ void video_adjust()
         SetFontColor(0xffffffff, 0x0);
 
         SetFontAutoCenter(1);
-        DrawFormatString(0, (512 - 24)/2 - 64, "Use LEFT (-X) / RIGHT (+X) / UP (-Y) / DOWN (+Y) to adjust the screen");
+        DrawFormatString(0, (512 - 24)/2 - 64, language[VIDEOADJUST_POSITION]);
 
-        DrawFormatString(0, (512 - 24)/2, "Video Scale X: %i Y: %i", videoscale_x, videoscale_y);
+        DrawFormatString(0, (512 - 24)/2, language[VIDEOADJUST_SCALEINFO], videoscale_x, videoscale_y);
 
-        DrawFormatString(0, (512 - 24)/2 + 64, "Press 'X' to exit");
-        DrawFormatString(0, (512 - 24)/2 + 96, "Press 'O' to default values");
+        DrawFormatString(0, (512 - 24)/2 + 64, language[VIDEOADJUST_EXITINFO]);
+        DrawFormatString(0, (512 - 24)/2 + 96, language[VIDEOADJUST_DEFAULTS]);
         SetFontAutoCenter(0);
 
         tiny3d_Flip();
@@ -710,8 +728,8 @@ void video_adjust()
             
       
             if(SaveManagerCfg() == 0) {
-             
-                DrawDialogOK("manager_setup.bin\n\nFile Saved");
+                sprintf(temp_buffer, "manager_setup.bin\n\n%s", language[VIDEOADJUST_SAVED]);
+                DrawDialogOK(temp_buffer);
             }
 
             break;
@@ -733,7 +751,7 @@ void Select_games_folder()
     dir = opendir ("/dev_hdd0/GAMES");
     if(dir) {
         closedir (dir);
-        sprintf(temp_buffer, "%s %s %s", "Want to use", "/dev_hdd0/GAMES", "to install the game?"); 
+        sprintf(temp_buffer, "%s %s %s", language[GAMEFOLDER_WANTUSE], "/dev_hdd0/GAMES", language[GAMEFOLDER_TOINSTALLNTR]); 
 
         if(DrawDialogYesNo(temp_buffer) == 1) {
             strncpy(hdd_folder, "dev_hdd0_2", 64);
@@ -745,7 +763,7 @@ void Select_games_folder()
     dir = opendir ("/dev_hdd0/" __MKDEF_GAMES_DIR);
     if(dir) {
         closedir (dir);
-        sprintf(temp_buffer, "%s %s %s", "Want to use", "/dev_hdd0/" __MKDEF_GAMES_DIR, "to install the game?"); 
+        sprintf(temp_buffer, "%s %s %s", language[GAMEFOLDER_WANTUSE], "/dev_hdd0/" __MKDEF_GAMES_DIR, language[GAMEFOLDER_TOINSTALLNTR]); 
 
         if(DrawDialogYesNo(temp_buffer) == 1) {
             strncpy(hdd_folder, "dev_hdd0", 64);
@@ -776,7 +794,7 @@ void Select_games_folder()
                 
                 closedir (dir2);
       
-                sprintf(temp_buffer, "%s /%s %s", "Want to use", entry->d_name, "to install the game?");
+                sprintf(temp_buffer, "%s /%s %s", language[GAMEFOLDER_WANTUSE], entry->d_name, language[GAMEFOLDER_TOINSTALLNTR]);
 
                 if(DrawDialogYesNo(temp_buffer) == 1) {
                     strncpy(hdd_folder, entry->d_name, 64);
@@ -792,7 +810,7 @@ void Select_games_folder()
 
     if(!selected) {
         
-        sprintf(temp_buffer, "%s %s %s", "Want to use", "/dev_hdd0/" __MKDEF_GAMES_DIR, "to install the game?");
+        sprintf(temp_buffer, "%s %s %s", language[GAMEFOLDER_WANTUSE], "/dev_hdd0/" __MKDEF_GAMES_DIR, language[GAMEFOLDER_TOINSTALLNTR]);
 
         if(DrawDialogYesNo(temp_buffer) == 1) {
             strncpy(hdd_folder, "dev_hdd0", 64);
@@ -804,7 +822,7 @@ void Select_games_folder()
             sprintf(tmp, "%s/" __MKDEF_GAMES_DIR, __MKDEF_MANAGER_FULLDIR__);
             mkdir(tmp, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
 
-            sprintf(temp_buffer, "%s %s %s", "Using", tmp, "to install the game");
+            sprintf(temp_buffer, "%s %s %s", language[GAMEFOLDER_USING], tmp, language[GAMEFOLDER_TOINSTALL]);
             DrawDialogOK(temp_buffer);
         }
     }
@@ -1013,6 +1031,7 @@ s32 main(s32 argc, const char* argv[])
 
     manager_cfg.background_sel = 0;
 
+    //load cfg and language strings
     LoadManagerCfg();
 
     if(0)
@@ -1427,7 +1446,7 @@ int check_disc(void)
             return 1;
         }
         else
-            get_user = DrawDialogYesNo("Required BR-Disc\nRetry?");
+            get_user = DrawDialogYesNo(language[DRAWSCREEN_REQBR]);
     }
     
     return -1;
@@ -1454,10 +1473,10 @@ void draw_screen1(float x, float y)
 
     SetFontAutoCenter(0);
 
-    if(mode_favourites >= 131072) DrawFormatString(x, y - 2, " Favourites Swap");
-    else if(mode_favourites >= 65536) DrawFormatString(x, y - 2, " Favourites Insert"); 
-    else if(mode_favourites) DrawFormatString(x, y - 2, " Favourites");
-    else DrawFormatString(x, y - 5, " Page %i/%i (%i Games)", currentdir/12 + 1, ROUND_UP12(ndirectories)/12, ndirectories);
+    if(mode_favourites >= 131072) DrawFormatString(x, y - 2, " %s", language[DRAWSCREEN_FAVSWAP]);
+    else if(mode_favourites >= 65536) DrawFormatString(x, y - 2, " %s", language[DRAWSCREEN_FAVINSERT]);
+    else if(mode_favourites) DrawFormatString(x, y - 2, " %s", language[DRAWSCREEN_FAVORITES]);
+    else DrawFormatString(x, y - 5, " %s %i/%i (%i %s)", language[DRAWSCREEN_PAGE], currentdir/12 + 1, ROUND_UP12(ndirectories)/12, ndirectories, language[DRAWSCREEN_GAMES]);
 
     // list device space
 
@@ -1614,12 +1633,12 @@ void draw_screen1(float x, float y)
         DrawBox(x + 200 * select_px - 8 + (200 - 24 * 8)/2, y + select_py * 150 - 4 + 150 - 40, 0, 200, 40, 0x404040ac);
         SetCurrentFont(FONT_NEWBUTTON);
         SetFontSize(24, 24);
-        x2 = DrawFormatString(x + 200 * select_px - 4 + (200 - 24 * 8)/2, y + select_py * 150 - 4 + 150 - 40, "  Play ");
+        x2 = DrawFormatString(x + 200 * select_px - 4 + (200 - 24 * 8)/2, y + select_py * 150 - 4 + 150 - 40, "  %s ", language[DRAWSCREEN_PLAY]);
 
         SetCurrentFont(FONT_DEFAULT);
         SetFontSize(20, 20);
-        x2= DrawFormatString(1024, 0, " SELECT: Game Options ");
-        DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 - 4, " SELECT: Game Options ");
+        x2= DrawFormatString(1024, 0, " %s ", language[DRAWSCREEN_SOPTIONS]);
+        DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 - 4, " %s ", language[DRAWSCREEN_SOPTIONS]);
    
     }
     else if(mode_favourites && mode_favourites < 65536 && favourites.list[i].title_id[0] != 0) 
@@ -1627,12 +1646,12 @@ void draw_screen1(float x, float y)
         DrawBox(x + 200 * select_px - 8 + (200 - 24 * 8)/2, y + select_py * 150 - 4 + 150 - 40, 0, 200, 40, 0x404040ac);
         SetCurrentFont(FONT_NEWBUTTON);
         SetFontSize(24, 24);
-        x2= DrawFormatString(x + 200 * select_px - 4 + (200 - 23 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "  Play ");
+        x2= DrawFormatString(x + 200 * select_px - 4 + (200 - 23 * 8)/2, y + select_py * 150 - 4 + 150 - 24, "  %s ", language[DRAWSCREEN_PLAY]);
 
         SetCurrentFont(FONT_DEFAULT);
         SetFontSize(20, 20);
-        x2= DrawFormatString(1024, 0, " SELECT: Delete Favourite ");
-        DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 - 4, " SELECT: Delete Favourite ");
+        x2= DrawFormatString(1024, 0, " %s ", language[DRAWSCREEN_SDELETE]);
+        DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 - 4, " %s ", language[DRAWSCREEN_SDELETE]);
     }
     else
     {
@@ -1641,9 +1660,9 @@ void draw_screen1(float x, float y)
         SetFontSize(20, 20);
     }
     
-    x2= DrawFormatString(1024, 0, " START: Global Options ");
+    x2= DrawFormatString(1024, 0, " %s ", language[DRAWSCREEN_STGLOPT]);
 
-    DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 + 18, " START: Global Options ");
+    DrawFormatString(x + 4 * 200 - (x2 - 1024) - 12 , y + 3 * 150 + 18, " %s ", language[DRAWSCREEN_STGLOPT]);
 
     // draw game name
     i = selected;
@@ -1703,7 +1722,7 @@ void draw_screen1(float x, float y)
             mode_favourites = 1;
 
         } else {
-            if(DrawDialogYesNo("Exit to XMB?")==1) {exit_program = 1; return;}
+            if(DrawDialogYesNo(language[DRAWSCREEN_EXITXMB])==1) {exit_program = 1; return;}
         }
     }
 
@@ -1741,7 +1760,7 @@ void draw_screen1(float x, float y)
 
         if(Png_offset[i]) {
             if(mode_favourites != 0 && favourites.list[i].index < 0) {
-                DrawDialogOK("Cannot run this favourite");return;
+                DrawDialogOK(language[DRAWSCREEN_CANRUNFAV]);return;
             } else {
 
                 currentgamedir = (mode_favourites !=0) ? favourites.list[i].index : (currentdir + i);
@@ -1761,8 +1780,8 @@ void draw_screen1(float x, float y)
                         struct stat s;
                     
                         if(stat(temp_buffer, &s)<0) {
-                            sprintf(temp_buffer + 1024, "%s\n\nMarked as non executable. Trying to install in HDD0 cache", 
-                            directories[currentgamedir].title);
+                            sprintf(temp_buffer + 1024, "%s\n\n%s", 
+                            directories[currentgamedir].title, language[DRAWSCREEN_MARKNOTEXEC]);
                             DrawDialogOK(temp_buffer + 1024);
                             
                             copy_to_cache(currentgamedir, self_path);
@@ -1778,8 +1797,8 @@ void draw_screen1(float x, float y)
                     else
                     {
                         sprintf(temp_buffer, 
-                            "%s\n\nMarked as not executable - Contains splited files >= 4GB", 
-                            directories[get_currentdir(i)].title);
+                            "%s\n\n%s", 
+                            directories[get_currentdir(i)].title, language[DRAWSCREEN_MARKNOTEX4G]);
                         DrawDialogOK(temp_buffer);return;
                     }
                 }
@@ -1820,8 +1839,8 @@ void draw_screen1(float x, float y)
                         
                              for(n = 1; n < 11 ; n++) {
                                 if(fdevices & (1 << n)) {
-                                    sprintf(temp_buffer, "I cannot find one folder to mount /dev_hdd0/game from USB\n\n"
-                                                        "Want to create in /dev_usb00%c?", 47 + n);
+                                    sprintf(temp_buffer, "%s\n\n%s%c?"
+                                            , language[DRAWSCREEN_GAMEINOFMNT], language[DRAWSCREEN_GAMEIASKDIR], 47 + n);
                                     if(DrawDialogYesNo(temp_buffer) == 1) {
                                         sprintf(temp_buffer, "/dev_usb00%c/GAMEI", 47 + n);
                                         mkdir(temp_buffer, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
@@ -1833,15 +1852,15 @@ void draw_screen1(float x, float y)
                              }
                              
                              if(n == 11) {
-                                 if(DrawDialogYesNo("I cannot find an USB device to mount /dev_hdd0/game from USB\n\n"
-                                        "Want to launch the Game?") != 1) return;
+                                 sprintf(temp_buffer, "%s\n\n%s", language[DRAWSCREEN_GAMEICANTFD], language[DRAWSCREEN_GAMEIWLAUNCH]);
+                                 if(DrawDialogYesNo(temp_buffer) != 1) return;
                              }
                         }
                     }
 
                     if((fdevices & 2046) == 0) {
-                        if(DrawDialogYesNo("I cannot find an USB device to mount /dev_hdd0/game from USB\n\n"
-                                "Want to launch the Game?") != 1) return;
+                        sprintf(temp_buffer, "%s\n\n%s", language[DRAWSCREEN_GAMEICANTFD], language[DRAWSCREEN_GAMEIWLAUNCH]);
+                        if(DrawDialogYesNo(temp_buffer) != 1) return;
                     }
 
                 }
@@ -1864,8 +1883,8 @@ void draw_screen1(float x, float y)
                     FILE *fp = fopen(temp_buffer, "rb");
 
                     if(!fp) {
-                        sprintf(temp_buffer, " %s.BIN\n external executable not found\n\nUse \"Copy EBOOT.BIN from USB\" to import them.", 
-                            directories[currentgamedir].title_id);
+                        sprintf(temp_buffer, " %s.BIN\n %s\n\n%s", 
+                            directories[currentgamedir].title_id, language[DRAWSCREEN_EXTEXENOTFND], language[DRAWSCREEN_EXTEXENOTCPY]);
                         DrawDialogOK(temp_buffer);
                         goto skip_sys8;
                     } else {
@@ -1883,9 +1902,14 @@ void draw_screen1(float x, float y)
                 
                 if(game_cfg.bdemu) {
                     n = move_origin_to_bdemubackup(directories[currentgamedir].path_name);
-                    if(n < 0) {
+                    if(n < 0)
+                    {
                         syscall36("/dev_bdvd"); // in error exits
                         sys8_perm_mode((u64) 1);
+
+                        if(game_cfg.ext_ebootbin)
+                            build_sys8_path_table(); //prepare extern eboot
+
                         exit_program = 1; 
                         return;
                     }

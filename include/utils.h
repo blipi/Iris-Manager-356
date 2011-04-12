@@ -56,6 +56,7 @@ typedef struct {
 } tfavourites;
 
 #define MAX_DIRECTORIES 512
+#define MAX_CFGLINE_LEN 1024
 
 extern int ndirectories;
 extern t_directories directories[MAX_DIRECTORIES];
@@ -101,6 +102,9 @@ void FixDirectory(const char* path);
 
 extern tfavourites favourites;
 extern int havefavourites;
+
+int getConfigValueInt (char* pchFileName, char* pchSection, char* pchKey, int iDefaultValue);
+void getConfigValueString (char* pchFileName, char* pchSection, char* pchKey, char* pchValue, int iSize, char* pchDefaultValue);
 
 void LoadFavourites(char * path);
 void SaveFavourites(char * path);
