@@ -954,6 +954,7 @@ s32 main(s32 argc, const char* argv[])
             __asm__("sync");
             sleep(1); /* dont touch! nein! */
 
+            //please, do not translate this strings - i preffer this errors in english for better support...
             if(payload_mode == WANIN_PAYLOAD)
             {
                 load_payload_syscall36old(payload_mode);
@@ -2157,7 +2158,7 @@ void draw_options(float x, float y, int index)
 
     SetFontAutoCenter(0);
   
-    DrawFormatString(x, y - 2, " Options");
+    DrawFormatString(x, y - 2, " %s", language[DRAWGMOPT_OPTS]);
 
 
     if(directories[currentgamedir].flags & 1) {
@@ -2211,38 +2212,38 @@ void draw_options(float x, float y, int index)
     x2 = x;
     y2 = y + 32;
     
-    DrawButton1(x + 32, y2, 320, "Config. Game", (directories[currentgamedir].title_id[0] == 0) ? -1 : (flash && select_option == 0));
+    DrawButton1(x + 32, y2, 320, language[DRAWGMOPT_CFGGAME], (directories[currentgamedir].title_id[0] == 0) ? -1 : (flash && select_option == 0));
     
     y2+= 48;
 
-    DrawButton1(x + 32, y2, 320, "Copy Game", copy_flag ? (flash && select_option == 1) : -1);
+    DrawButton1(x + 32, y2, 320, language[DRAWGMOPT_CPYGAME], copy_flag ? (flash && select_option == 1) : -1);
     
     y2+= 48;
 
-    DrawButton1(x + 32, y2, 320, "Delete Game", (directories[currentgamedir].flags & 2048) ? -1  : ((flash && select_option == 2) ? 1 : 0));
+    DrawButton1(x + 32, y2, 320, language[DRAWGMOPT_DELGAME], (directories[currentgamedir].flags & 2048) ? -1  : ((flash && select_option == 2) ? 1 : 0));
     
     y2+= 48;
 
-    DrawButton1(x + 32, y2, 320, "Fix File Permissions", (flash && select_option == 3));
+    DrawButton1(x + 32, y2, 320, language[DRAWGMOPT_FIXGAME], (flash && select_option == 3));
     
     y2+= 48;
 
-    DrawButton1(x + 32, y2, 320, "Test Game", (flash && select_option == 4));
+    DrawButton1(x + 32, y2, 320, language[DRAWGMOPT_TSTGAME], (flash && select_option == 4));
     
     y2+= 48;
 
-    DrawButton1(x + 32, y2, 320, "Copy EBOOT.BIN from USB", (directories[currentgamedir].title_id[0] == 0) ? -1 : (flash && select_option == 5));
+    DrawButton1(x + 32, y2, 320, language[DRAWGMOPT_CPYEBOOTGAME], (directories[currentgamedir].title_id[0] == 0) ? -1 : (flash && select_option == 5));
     
     y2+= 48;
     
     if(!TestFavouritesExits(directories[currentgamedir].title_id))
-        DrawButton1(x + 32, y2, 320, "Copy to Favourites", (flash && select_option == 6));
+        DrawButton1(x + 32, y2, 320, language[DRAWGMOPT_CPYTOFAV], (flash && select_option == 6));
     else
-        DrawButton1(x + 32, y2, 320, "Delete from Favourites", (flash && select_option == 6));
+        DrawButton1(x + 32, y2, 320, language[DRAWGMOPT_DELFMFAV], (flash && select_option == 6));
     
     y2+= 48;
 
-    DrawButton1(x + 32, y2, 320, "Return", (flash && select_option == 7));
+    DrawButton1(x + 32, y2, 320, language[DRAWGMOPT_RETURN], (flash && select_option == 7));
     
     y2+= 48;
     /*
@@ -2354,7 +2355,7 @@ void draw_options(float x, float y, int index)
 
                     pause_music(0);
 
-                    DrawDialogOK("Fix Permissions Done!");
+                    DrawDialogOK(language[DRAWGMOPT_FIXCOMPLETE]);
              
                  }
                  break;
@@ -2381,15 +2382,15 @@ void draw_options(float x, float y, int index)
                 if(file) {
                     sprintf(temp_buffer, "%s/self/%s.BIN", self_path, directories[currentgamedir].title_id);
                     if(SaveFile(temp_buffer, file, file_size)==0) {
-                        sprintf(temp_buffer, "%s/self/%s.BIN\n\nEBOOT.BIN copied successfully", self_path, directories[currentgamedir].title_id);
+                        sprintf(temp_buffer, "%s/self/%s.BIN\n\nEBOOT.BIN %s", self_path, directories[currentgamedir].title_id, language[DRAWGMOPT_CPYOK]);
                         DrawDialogOK(temp_buffer);
                     } else {
-                        sprintf(temp_buffer, "%s/self/%s.BIN\n\nError copying EBOOT.BIN", self_path, directories[currentgamedir].title_id);
+                        sprintf(temp_buffer, "%s/self/%s.BIN\n\n%s EBOOT.BIN", self_path, directories[currentgamedir].title_id, language[DRAWGMOPT_CPYERR]);
                         DrawDialogOK(temp_buffer);
                     }
                     free(file);
                 } else {
-                    sprintf(temp_buffer, "/dev_usb/ps3game/%s.BIN\n\nEBOOT.BIN not found", directories[currentgamedir].title_id);
+                    sprintf(temp_buffer, "/dev_usb/ps3game/%s.BIN\n\nEBOOT.BIN %s", directories[currentgamedir].title_id, language[DRAWGMOPT_CPYNOTFND]);
                     DrawDialogOK(temp_buffer);
                 }
 
