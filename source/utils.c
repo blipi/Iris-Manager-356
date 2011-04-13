@@ -1,5 +1,8 @@
 
 #include "utils.h"
+#include "language.h"
+
+extern char * language[];
 
 msgType mdialogyesno = MSGDIALOG_NORMAL | MSGDIALOG_BUTTON_TYPE_YESNO | MSGDIALOG_DISABLE_CANCEL_ON | MSGDIALOG_DEFAULT_CURSOR_NO;
 msgType mdialogok = MSGDIALOG_NORMAL | MSGDIALOG_BUTTON_TYPE_OK;
@@ -692,13 +695,13 @@ static int fast_copy_add(char *pathr, char *pathw, char *file)
 	int ret = fast_copy_process();
 
 		if(ret < 0 || abort_copy) {
-            DPrintf("Failed in fast_copy_process() ret %i\n", ret);
+            DPrintf("%s%i\n", language[FASTCPADD_FAILED], ret);
             return ret;
         }
 
 	}
 
-	if(fast_num_files >= MAX_FAST_FILES) {DPrintf("Too much files\n"); return -1;}
+	if(fast_num_files >= MAX_FAST_FILES) {DPrintf("%s\n", language[FASTCPADD_ERRTMFILES]); return -1;}
 	
 	fast_files[fast_num_files].bigfile_mode = 0;
 
@@ -720,7 +723,7 @@ static int fast_copy_add(char *pathr, char *pathw, char *file)
     sprintf(fast_files[fast_num_files].pathr, "%s/%s", pathr, file);
 
 	if(sysFsStat(fast_files[fast_num_files].pathr, &s) < 0) 
-        {DPrintf("Failed in stat()\n"); abort_copy = 1; return -1;}
+        {DPrintf("%s\n", language[FASTCPADD_FAILEDSTAT]); abort_copy = 1; return -1;}
     
     if(copy_split_to_cache)
     {
@@ -748,7 +751,7 @@ static int fast_copy_add(char *pathr, char *pathw, char *file)
 		int fdw;
 
 		if(sysFsOpen(fast_files[fast_num_files].pathw, LV2_O_CREAT | LV2_O_TRUNC | LV2_O_WRONLY, &fdw, 0,0) != 0) {
-			DPrintf("Error Opening0 (write):\n%s\n\n", fast_files[current_fast_file_r].pathw);
+			DPrintf("%s:\n%s\n\n", language[FASTCPADD_ERROPEN], fast_files[current_fast_file_r].pathw);
 			abort_copy = 1;
 			return -1;
 	    }
@@ -757,7 +760,7 @@ static int fast_copy_add(char *pathr, char *pathw, char *file)
 
 		sysFsChmod(fast_files[fast_num_files].pathw, FS_S_IFMT | 0777);
 		
-        DPrintf("Copying %s\nwWrote 0 B\n", fast_files[current_fast_file_r].pathr);
+        DPrintf("%s %s\nw%s 0 B\n", language[FASTCPADD_COPYING], fast_files[current_fast_file_r].pathr, language[GLUTIL_WROTE]);
 		
         file_counter++;
 		
@@ -804,7 +807,7 @@ static int fast_copy_add(char *pathr, char *pathw, char *file)
 	fast_files[fast_num_files].mem = memalign(32, size_mem+size_mem * (fast_files[fast_num_files].use_doublebuffer != 0) + 1024);
 	fast_files[fast_num_files].size_mem = size_mem;
 
-	if(!fast_files[fast_num_files].mem) {DPrintf("Failed in fast_files[fast_num_files].mem\n");abort_copy = 1;return -1;}
+	if(!fast_files[fast_num_files].mem) {DPrintf("%s\n", language[FASTCPADD_FAILFASTFILE]);abort_copy = 1;return -1;}
 
 	fast_used_mem+= size_mem;
 
@@ -874,14 +877,14 @@ int fast_copy_process()
 				
 			if(fast_files[current_fast_file_r].bigfile_mode == 1) {
 				
-                DPrintf("Split file >= 4GB\n %s\n", fast_files[current_fast_file_r].pathr);
+                DPrintf("%s >= 4GB\n %s\n", language[GLUTIL_SPLITFILE], fast_files[current_fast_file_r].pathr);
 					sprintf(&fast_files[current_fast_file_r].pathw[fast_files[current_fast_file_r].pos_path], ".666%2.2i",
 						fast_files[current_fast_file_r].number_frag);
 			}
 				
 			if(fast_files[current_fast_file_r].bigfile_mode == 2) {
 				
-                DPrintf("Joining file >= 4GB\n %s\n", fast_files[current_fast_file_r].pathw);
+                DPrintf("%s >= 4GB\n %s\n", language[FASTCPPRC_JOINFILE], fast_files[current_fast_file_r].pathw);
 				sprintf(&fast_files[current_fast_file_r].pathr[fast_files[current_fast_file_r].pos_path], ".666%2.2i",
 				fast_files[current_fast_file_r].number_frag);
 			}
@@ -1132,10 +1135,10 @@ int fast_copy_process()
                 }
 
                 if(write_size < 1024LL)
-                    DPrintf("Wrote %lli B %s\n\n", write_size, fast_files[current_fast_file_w].pathw);
+                    DPrintf("%s %lli B %s\n\n", language[GLUTIL_WROTE], write_size, fast_files[current_fast_file_w].pathw);
                 else
-                    if(write_size < 0x100000LL) DPrintf("Wrote %lli KB %s\n\n", write_size / 1024LL, fast_files[current_fast_file_w].pathw);
-                        else  DPrintf("Wrote %lli MB %s\n\n", write_size / 0x100000LL, fast_files[current_fast_file_w].pathw);
+                    if(write_size < 0x100000LL) DPrintf("%s %lli KB %s\n\n", language[GLUTIL_WROTE], write_size / 1024LL, fast_files[current_fast_file_w].pathw);
+                        else  DPrintf("%s %lli MB %s\n\n", language[GLUTIL_WROTE], write_size / 0x100000LL, fast_files[current_fast_file_w].pathw);
 
                 fast_files[current_fast_file_w].fl = 4; //end of proccess
                 
@@ -1178,8 +1181,8 @@ int fast_copy_process()
         //calc time left
         if(!copy_total_size)
         {
-            sprintf(string1, "Copying. File: %i (%2.2i%%) Time: %2.2i:%2.2i:%2.2i  Vol: %1.2f GB\n", file_counter, 
-                    (int)(write_end * 100ULL / write_size), seconds / 3600, (seconds / 60) % 60, seconds % 60, 
+            sprintf(string1, "%s: %i (%2.2i%%) %s: %2.2i:%2.2i:%2.2i  Vol: %1.2f GB\n", language[FASTCPPRC_COPYFILE], file_counter, 
+                    (int)(write_end * 100ULL / write_size), language[GLUTIL_TIME], seconds / 3600, (seconds / 60) % 60, seconds % 60, 
                     ((double) global_device_bytes) / (1024.0* 1024.* 1024.0));
         }
         else
@@ -1188,15 +1191,15 @@ int fast_copy_process()
             if(abs(time_left - tleft) >= 10) //more than 10 secs diff, update time
                 time_left = tleft;
         
-            sprintf(string1, "Copying. File: %i (%2.2i%%) Time Left: %2.2i:%2.2i:%2.2i %1.2f/%1.2f GB\n", file_counter, 
-                    (int)(write_end * 100ULL / write_size), time_left / 3600, (time_left / 60) % 60, time_left % 60, 
+            sprintf(string1, "%s: %i (%2.2i%%) %s: %2.2i:%2.2i:%2.2i %1.2f/%1.2f GB\n", language[FASTCPPRC_COPYFILE], file_counter, 
+                    (int)(write_end * 100ULL / write_size), language[GLUTIL_TIMELEFT], time_left / 3600, (time_left / 60) % 60, time_left % 60, 
                     ((double) global_device_bytes) / (1024.0* 1024.* 1024.0), ((double) copy_total_size/ (1024.0 * 1024. * 1024.0)));
         }
             
         cls2();
 
         strcpy(dbg_str1, string1);
-        strcpy(dbg_str2, "Hold /\\ to Abort");
+        strcpy(dbg_str2, language[GLUTIL_HOLDTRIANGLEAB]);
         DbgDraw();
 
         tiny3d_Flip();
@@ -1206,7 +1209,7 @@ int fast_copy_process()
         if ((new_pad & BUTTON_TRIANGLE)) {
 
             abort_copy = 1;
-            DPrintf("Aborted by user \n");
+            DPrintf("%s \n", language[GLUTIL_ABORTEDUSER]);
             error = -666;
             break;
         }
@@ -1214,12 +1217,12 @@ int fast_copy_process()
     }
 
 	if(error && error != -666) {
-		DPrintf("Error!!!!!!!!!!!!!!!!!!!!!!!!!\nFiles Opened %i\n Waiting 20 seconds to display fatal error\n", files_opened);
+		DPrintf(language[FASTCPPTC_OPENERROR], files_opened);
 
 		cls2();
 
         strcpy(dbg_str1, string1);
-        strcpy(dbg_str2, "Hold /\\ to Abort");
+        strcpy(dbg_str2, language[GLUTIL_HOLDTRIANGLEAB]);
         DbgDraw();
 
 		tiny3d_Flip();
@@ -1348,7 +1351,7 @@ static int my_game_test(char *path)
                 p+= strlen(f)-6; // adjust for .666xx
                 if(p[0]== '.' && p[1]== '6' && p[2]== '6' && p[3]== '6')
                 {
-                    DPrintf("Split file %lli MB %s\n\n", size/0x100000LL, f);
+                    DPrintf("%s %lli MB %s\n\n", language[GLUTIL_SPLITFILE], size/0x100000LL, f);
                     num_files_split++;
                     is_split = 1;
 
@@ -1356,7 +1359,7 @@ static int my_game_test(char *path)
                     {
                         if(nfilecached < MAX_FILECACHED) 
                         {
-                            sprintf(buff, "Found %s\n\nWant to install? ", entry->d_name);
+                            sprintf(buff, language[GAMETESTS_FOUNDINSTALL], entry->d_name);
                             if(DrawDialogYesNo(buff) == 1)
                             {
                                 sprintf(&filecached[nfilecached][0][0], "%s/%s", path, entry->d_name);
@@ -1377,7 +1380,7 @@ static int my_game_test(char *path)
                 }
             }
 			
-            if(size>=0x100000000LL)	{DPrintf("Big file %lli MB %s\n\n", size/0x100000LL, f);num_files_big++;}
+            if(size>=0x100000000LL)	{DPrintf("%s %lli MB %s\n\n", language[GAMETESTS_BIGFILE], size/0x100000LL, f);num_files_big++;}
 
             if(f) free(f);
 
@@ -1388,13 +1391,14 @@ static int my_game_test(char *path)
 
             global_device_bytes+=size;
 
-            sprintf(string1,"Test File: %i Time: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", file_counter, seconds/3600, 
-                    (seconds/60) % 60, seconds % 60, ((double) global_device_bytes)/(1024.0*1024.0*1024.0));
+            sprintf(string1,"%s: %i %s: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", language[GAMETESTS_TESTFILE], file_counter,
+                    language[GLUTIL_TIME], seconds/3600, (seconds/60) % 60, seconds % 60, 
+                    ((double) global_device_bytes)/(1024.0*1024.0*1024.0));
 			
             cls2();
 
             strcpy(dbg_str1, string1);
-            strcpy(dbg_str2, "Hold /\\ to Abort");
+            strcpy(dbg_str2, language[GLUTIL_HOLDTRIANGLEAB]);
             DbgDraw();
 
             tiny3d_Flip();
@@ -1466,11 +1470,11 @@ static int my_game_countsize(char *path)
 				
 		    copy_total_size+=size;
 			
-		    sprintf(string1,"Checking Size of File: %i Vol: %1.2f GB\n", file_counter, ((double) copy_total_size)/(1024.0*1024.*1024.0));
+		    sprintf(string1,"%s: %i Vol: %1.2f GB\n", language[GAMETESTS_CHECKSIZE], file_counter, ((double) copy_total_size)/(1024.0*1024.*1024.0));
 		    cls2();
 
             strcpy(dbg_str1, string1);
-            strcpy(dbg_str2, "Hold /\\ to Skip");
+            strcpy(dbg_str2, language[GLUTIL_HOLDTRIANGLESK]);
             DbgDraw();
                 
             tiny3d_Flip();

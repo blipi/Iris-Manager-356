@@ -134,6 +134,37 @@ t_lngstr lang_strings[] =
     { "MOVEOBEMU_MOUNTOK"       , "BDEMU mounted in:\n%s/PS3_GAME" },
     { "MOVETBEMU_ERRMOVE"       , "Error Moving To:\n%s exists" },
 
+
+    //UTILS
+    //FAST COPY ADD
+    { "FASTCPADD_FAILED"        , "Failed in fast_copy_process() ret" },
+    { "FASTCPADD_ERRTMFILES"    , "Too much files" },
+    { "FASTCPADD_FAILEDSTAT"    , "Failed in stat()" },
+    { "FASTCPADD_ERROPEN"       , "Error Opening0 (write)" },
+    { "FASTCPADD_COPYING"       , "Copying" },
+    { "FASTCPADD_FAILFASTFILE"  , "Failed in fast_files(fast_num_files).mem" },
+
+    //FAST COPY PROCESS
+    { "FASTCPPRC_JOINFILE"      , "Joining file" },
+    { "FASTCPPRC_COPYFILE"      , "Copying. File" },
+    { "FASTCPPTC_OPENERROR"     , "Error!!!!!!!!!!!!!!!!!!!!!!!!!\nFiles Opened %i\n Waiting 20 seconds to display fatal error\n" },
+
+    //GAME TEST FILES
+    { "GAMETESTS_FOUNDINSTALL"  , "Found %s\n\nWant to install?" },
+    { "GAMETESTS_BIGFILE"       , "Big file" },
+    { "GAMETESTS_TESTFILE"      , "Test File" },
+    { "GAMETESTS_CHECKSIZE"     , "Checking Size of File" },
+
+    //GLOBAL UTILS
+    { "GLUTIL_SPLITFILE"        , "Split file" },
+    { "GLUTIL_WROTE"            , "Wrote" },
+    { "GLUTIL_TIME"             , "Time" },
+    { "GLUTIL_TIMELEFT"         , "Time Left" },
+    { "GLUTIL_HOLDTRIANGLEAB"   , "Hold /\\ to Abort" },
+    { "GLUTIL_HOLDTRIANGLESK"   , "Hold /\\ to Skip" },
+    { "GLUTIL_ABORTEDUSER"      , "Aborted by user" },
+
+
     //GLOBAL
     { "GLOBAL_RETURN"           , "Return" },
     { "GLOBAL_SAVED"            , "File Saved" },
