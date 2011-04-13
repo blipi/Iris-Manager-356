@@ -113,13 +113,15 @@ t_lngstr lang_strings[] =
     { "DRAWGLOPT_INITFTP"       , "Initialize FTP server" },
     { "DRAWGLOPT_TOOLS"         , "Tools" },
     { "DRAWGLOPT_CREDITS"       , "Credits" },
+    { "DRAWGLOPT_FTPINITED"     , "Server FTP initialized\nDo you want auto-enable FTP service on init?" },
+    { "DRAWGLOPT_FTPARINITED"   , "Server FTP already initialized" },
+    { "DRAWGLOPT_FTPSTOPED"     , "Server FTP Stoped\nRemoved FTP service on init." },
 
     //GLOBAL
     { "GLOBAL_RETURN"           , "Return" },
     { "GLOBAL_SAVED"            , "File Saved" },
 
 };
-
 
 char * language[LANGSTRINGS_COUNT];
 

@@ -74,6 +74,9 @@ DRAWGLOPT_SWMUSICON     = Switch Music On
 DRAWGLOPT_INITFTP       = Initialize FTP server
 DRAWGLOPT_TOOLS         = Tools
 DRAWGLOPT_CREDITS       = Credits
+DRAWGLOPT_FTPINITED     = Server FTP initialized@Do you want auto-enable FTP service on init?
+DRAWGLOPT_FTPARINITED   = Server FTP already initialized
+DRAWGLOPT_FTPSTOPED     = Server FTP Stoped@Removed FTP service on init.
 
 # GLOBAL
 GLOBAL_RETURN           = Return

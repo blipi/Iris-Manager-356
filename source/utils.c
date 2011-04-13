@@ -2667,6 +2667,8 @@ int getConfigValueInt (char* pchFileName, char* pchSection, char* pchKey, int iD
 
 */
 
+void convertStringEndl(char* string, int iSize);
+
 void getConfigValueString (char* pchFileName, char* pchSection, char* pchKey, char* pchValue, int iSize, char* pchDefaultValue)
 {
    FILE* pfoConfigFile;
@@ -2683,6 +2685,7 @@ void getConfigValueString (char* pchFileName, char* pchSection, char* pchKey, ch
                   char* pchPtr = strtok(NULL, "\t "); // remove pre tabs and spaces
                   pchPtr = strtok(NULL, "\t=#\n\r"); // get the value if it matches our key
                   if ((pchPtr != NULL)&&( *pchPtr != '\0')) {
+                     convertStringEndl(pchPtr, iSize);
                      strncpy(pchValue, pchPtr, iSize); // copy to destination
                      return;
                   } else {
@@ -2698,6 +2701,26 @@ void getConfigValueString (char* pchFileName, char* pchSection, char* pchKey, ch
    strncpy(pchValue, pchDefaultValue, iSize); // no value found, return the default
 }
 
+
+#define MAX_CONVERSIONS 2
+
+char conversionTable[MAX_CONVERSIONS][2] = 
+{ 
+    { '@', '\n' },
+    { '_', ' ' },
+};
+
+void convertStringEndl(char* string, int iSize)
+{
+    int n;
+    do
+    {
+        for(n = 0; n < MAX_CONVERSIONS; n++)
+            if(string[iSize] == conversionTable[n][0])
+                string[iSize] = conversionTable[n][1];
+    }
+    while(iSize--);
+}
 
 /*******************************************************************************************************************************************************/
 /* Favourites                                                                                                                                          */

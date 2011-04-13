@@ -2898,18 +2898,18 @@ void draw_gbloptions(float x, float y)
                 {
                     if(ftp_init() == 0)
                     {
-                        if(DrawDialogYesNo("Server FTP initialized\nDo you want auto-enable FTP service on init? ") != 1)
+                        if(DrawDialogYesNo(language[DRAWGLOPT_FTPINITED]) != 1)
                             break;
                     }
                     else
                     {
-                        DrawDialogOK("Server FTP already initialized");
+                        DrawDialogOK(language[DRAWGLOPT_FTPARINITED]);
                         break;
                     }
                 }
                 else
                 {
-                        DrawDialogOK("Server FTP Stoped\nRemoved FTP service on init.");
+                        DrawDialogOK(language[DRAWGLOPT_FTPSTOPED]);
                         ftp_deinit();
                 }
                 manager_cfg.opt_flags ^= OPTFLAGS_FTP;
