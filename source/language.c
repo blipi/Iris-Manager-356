@@ -40,6 +40,7 @@ typedef struct lngstr
 
 t_lngstr lang_strings[] = 
 {
+    //MAIN
     // VIDEO - ADJUST
     { "VIDEOADJUST_POSITION"    , "Use LEFT (-X) / RIGHT (+X) / UP (-Y) / DOWN (+Y) to adjust the screen" },
     { "VIDEOADJUST_SCALEINFO"   , "Video Scale X: %i Y: %i" },
@@ -134,6 +135,10 @@ t_lngstr lang_strings[] =
     { "MOVEOBEMU_MOUNTOK"       , "BDEMU mounted in:\n%s/PS3_GAME" },
     { "MOVETBEMU_ERRMOVE"       , "Error Moving To:\n%s exists" },
 
+    //MAIN - GLOBAL
+    { "GLOBAL_RETURN"           , "Return" },
+    { "GLOBAL_SAVED"            , "File Saved" },
+
 
     //UTILS
     //FAST COPY ADD
@@ -147,7 +152,7 @@ t_lngstr lang_strings[] =
     //FAST COPY PROCESS
     { "FASTCPPRC_JOINFILE"      , "Joining file" },
     { "FASTCPPRC_COPYFILE"      , "Copying. File" },
-    { "FASTCPPTC_OPENERROR"     , "Error!!!!!!!!!!!!!!!!!!!!!!!!!\nFiles Opened %i\n Waiting 20 seconds to display fatal error\n" },
+    { "FASTCPPTC_OPENERROR"     , "Error!!!!!!!!!!!!!!!!!!!!!!!!!\nFiles Opened %i\n Waiting 20 seconds to display fatal error" },
 
     //GAME TEST FILES
     { "GAMETESTS_FOUNDINSTALL"  , "Found %s\n\nWant to install?" },
@@ -160,12 +165,12 @@ t_lngstr lang_strings[] =
     { "GAMEDELFL_DELETING"      , "Deleting... File" },
 
     //GAME COPY
-    { "GAMECOPYS_GSIZEABCNTASK" , "Get Size: Aborted - Continue the copy?" },
-    { "GAMECOPYS_STARTED"       , "Starting... \n copy" },
-    { "GAMECOPYS_SPLITEDHDDNFO" , "%s\n\nSplit game copied in HDD0 (non bootable)" },
-    { "GAMECOPYS_SPLITEDUSBNFO" , "%s\n\nSplit game copied in USB00%c (non bootable)" },
-    { "GAMECOPYS_DONE"          , "Done! Files Copied" },
-    { "GAMECOPYS_FAILDELDUMP"   , "Delete failed dump in" },
+    { "GAMECPYSL_GSIZEABCNTASK" , "Get Size: Aborted - Continue the copy?" },
+    { "GAMECPYSL_STARTED"       , "Starting... \n copy" },
+    { "GAMECPYSL_SPLITEDHDDNFO" , "%s\n\nSplit game copied in HDD0 (non bootable)" },
+    { "GAMECPYSL_SPLITEDUSBNFO" , "%s\n\nSplit game copied in USB00%c (non bootable)" },
+    { "GAMECPYSL_DONE"          , "Done! Files Copied" },
+    { "GAMECPYSL_FAILDELDUMP"   , "Delete failed dump in" },
 
     //GAME CACHE COPY
     { "GAMECHCPY_ISNEEDONEFILE" , "Sorry, but you needs to install at least a bigfile" },
@@ -173,6 +178,16 @@ t_lngstr lang_strings[] =
     { "GAMECHCPY_NOSPACE"       , "Sorry, you have %.2fGB free\n\nand you needs %.2fGB" },
     { "GAMECHCPY_CACHENFOSTART" , "Cache Files: %.2fGB - Total Files: %.2fGB\n you save %.2fGB on HDD0 (%.2fGB Total)\n\nPress any button to Start" },
     { "GAMECHCPY_FAILDELFROM"   , "Delete Cache failed dump from" },
+
+    //GAME DELETE
+    { "GAMEDELSL_WANTDELETE"    , "Want to delete from" },
+    { "GAMEDELSL_STARTED"       , "Starting... \n delete" },
+    { "GAMEDELSL_DONE"          , "Done!  Files Deleted" },
+
+    //GAME TEST
+    { "GAMETSTSL_FINALNFO"      , "Directories: %i Files: %i\nBig files: %i Split files: %i" },
+    { "GAMETSTSL_TESTED"        , "Files Tested" },
+
     //GLOBAL UTILS
     { "GLUTIL_SPLITFILE"        , "Split file" },
     { "GLUTIL_WROTE"            , "Wrote" },
@@ -185,12 +200,6 @@ t_lngstr lang_strings[] =
     { "GLUTIL_XEXIT"            , "Press X to Exit" },
     { "GLUTIL_WANTCPYFROM"      , "Want to copy from" },
     { "GLUTIL_WTO"              , "to" },
-
-
-    //GLOBAL
-    { "GLOBAL_RETURN"           , "Return" },
-    { "GLOBAL_SAVED"            , "File Saved" },
-
 };
 
 char * language[LANGSTRINGS_COUNT];
@@ -223,7 +232,7 @@ int open_language (char * filename)
     for (n = 0; n < LANGSTRINGS_COUNT; n++)
     {
         language[n] = (char*) malloc(1024);
-        getConfigValueString(filename, "Language", lang_strings[n].strname, language[n], MAX_CFGLINE_LEN-1, "NOP!"); //lang_strings[n].strdefault);
+        getConfigValueString(filename, "Language", lang_strings[n].strname, language[n], MAX_CFGLINE_LEN-1, lang_strings[n].strdefault);
     }
 
     return version;

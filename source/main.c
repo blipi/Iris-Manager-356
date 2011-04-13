@@ -636,7 +636,7 @@ void LoadManagerCfg()
             break;
     }
 
-    char lang_chosen[256] = "language_en.ini";
+    char lang_chosen[256] = "language.ini";
 
     sprintf(temp_buffer, "%s/config/%s", self_path, lang_chosen);
     int errn = open_language(temp_buffer);

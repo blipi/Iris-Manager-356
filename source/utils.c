@@ -1218,6 +1218,7 @@ int fast_copy_process()
 
 	if(error && error != -666) {
 		DPrintf(language[FASTCPPTC_OPENERROR], files_opened);
+		DPrintf("\n");
 
 		cls2();
 
@@ -1688,7 +1689,7 @@ void copy_from_selection(int game_sel)
     my_game_countsize(directories[game_sel].path_name);
     if(abort_copy) //abort by user or got an error
     { 
-        if(DrawDialogYesNo(language[GAMECOPYS_GSIZEABCNTASK]) != 1)
+        if(DrawDialogYesNo(language[GAMECPYSL_GSIZEABCNTASK]) != 1)
         {
             forcedevices = 2046;
             return;
@@ -1827,7 +1828,7 @@ void copy_from_selection(int game_sel)
         file_counter = 0;
         new_pad = 0;
 
-        DPrintf("%s %s\n %s %s\n\n", language[GAMECOPYS_STARTED], directories[game_sel].path_name, language[GLUTIL_WTO], name);
+        DPrintf("%s %s\n %s %s\n\n", language[GAMECPYSL_STARTED], directories[game_sel].path_name, language[GLUTIL_WTO], name);
 
         if(curr_device != 0) copy_mode = 1; // break files >= 4GB
         else copy_mode = 0;
@@ -1871,9 +1872,9 @@ void copy_from_selection(int game_sel)
             // try rename
             ret = rename(name, filename);
 
-            if(dest == 0)   sprintf(filename, language[GAMECOPYS_SPLITEDHDDNFO], directories[game_sel].title);
+            if(dest == 0)   sprintf(filename, language[GAMECPYSL_SPLITEDHDDNFO], directories[game_sel].title);
             else
-                sprintf(filename, language[GAMECOPYS_SPLITEDUSBNFO], directories[game_sel].title, 47 + curr_device);
+                sprintf(filename, language[GAMECPYSL_SPLITEDUSBNFO], directories[game_sel].title, 47 + curr_device);
             
             dialog_action = 0;
 
@@ -1889,7 +1890,7 @@ void copy_from_selection(int game_sel)
                                     language[GLUTIL_TIME], seconds / 3600, (seconds / 60) % 60, seconds % 60);
             else {
                     
-                sprintf(string1,"%s: %i %s: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", language[GAMECOPYS_DONE], file_counter, 
+                sprintf(string1,"%s: %i %s: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", language[GAMECPYSL_DONE], file_counter, 
                         language[GLUTIL_TIME], seconds / 3600, (seconds / 60) % 60, seconds % 60, ((double) global_device_bytes) / (1024.0 * 1024. * 1024.0));
             }
 
@@ -1921,8 +1922,8 @@ void copy_from_selection(int game_sel)
 
         if(abort_copy) {
 
-            if(dest == 0) sprintf(filename, "%s\n\n%s HDD0?", directories[game_sel].title, language[GAMECOPYS_FAILDELDUMP]);
-                else sprintf(filename, "%s\n\n%s USB00%c?", directories[game_sel].title, language[GAMECOPYS_FAILDELDUMP], 47 + dest);
+            if(dest == 0) sprintf(filename, "%s\n\n%s HDD0?", directories[game_sel].title, language[GAMECPYSL_FAILDELDUMP]);
+                else sprintf(filename, "%s\n\n%s USB00%c?", directories[game_sel].title, language[GAMECPYSL_FAILDELDUMP], 47 + dest);
 
             dialog_action = 0;
             
@@ -2092,9 +2093,9 @@ void copy_from_bluray()
             ret = rename(name, filename);
 
             if(curr_device == 0) 
-                sprintf(filename, language[GAMECOPYS_SPLITEDHDDNFO], id);
+                sprintf(filename, language[GAMECPYSL_SPLITEDHDDNFO], id);
             else
-                sprintf(filename, language[GAMECOPYS_SPLITEDUSBNFO], id, 47 + curr_device);
+                sprintf(filename, language[GAMECPYSL_SPLITEDUSBNFO], id, 47 + curr_device);
 
             dialog_action = 0;
             ret = msgDialogOpen2( mdialogok, filename, my_dialog2, (void*) 0x0000aaab, NULL );
@@ -2107,7 +2108,7 @@ void copy_from_bluray()
             if(abort_copy) sprintf(string1,"%s  %s: %2.2i:%2.2i:%2.2i\n", language[GLUTIL_ABORTED], 
                                     language[GLUTIL_TIME], seconds / 3600, (seconds / 60) % 60, seconds % 60);
             else {
-                sprintf(string1,"%s: %i %s: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", language[GAMECOPYS_DONE], file_counter, 
+                sprintf(string1,"%s: %i %s: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", language[GAMECPYSL_DONE], file_counter, 
                         language[GLUTIL_TIME], seconds / 3600, (seconds / 60) % 60, seconds % 60, 
                         ((double) global_device_bytes) / (1024.0 * 1024. * 1024.0));
             }
@@ -2139,8 +2140,8 @@ void copy_from_bluray()
         
         if(abort_copy) {
 
-            if(curr_device == 0)   sprintf(filename, "%s\n\n%s HDD0?", id, language[GAMECOPYS_FAILDELDUMP]);
-                else sprintf(filename, "%s\n\n%s USB00%c?", id, language[GAMECOPYS_FAILDELDUMP], 47 + curr_device);
+            if(curr_device == 0)   sprintf(filename, "%s\n\n%s HDD0?", id, language[GAMECPYSL_FAILDELDUMP]);
+                else sprintf(filename, "%s\n\n%s USB00%c?", id, language[GAMECPYSL_FAILDELDUMP], 47 + curr_device);
 
             dialog_action = 0;
             ret = msgDialogOpen2(mdialogyesno, filename, my_dialog, (void*) 0x0000aaaa, NULL );
@@ -2324,7 +2325,7 @@ void copy_to_cache(int game_sel, char * hmanager_path)
 
         ////////////////
 
-        DPrintf("%s %s\n %s %s\n\n", language[GAMECOPYS_STARTED], directories[game_sel].path_name, language[GLUTIL_WTO], name);
+        DPrintf("%s %s\n %s %s\n\n", language[GAMECPYSL_STARTED], directories[game_sel].path_name, language[GLUTIL_WTO], name);
 
         abort_copy = 0;
         file_counter = 0;
@@ -2347,7 +2348,7 @@ void copy_to_cache(int game_sel, char * hmanager_path)
                                     language[GLUTIL_TIME], seconds / 3600, (seconds / 60) % 60, seconds % 60);
             else {
                     
-                sprintf(string1,"%s: %i %s: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", language[GAMECOPYS_DONE], file_counter, 
+                sprintf(string1,"%s: %i %s: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", language[GAMECPYSL_DONE], file_counter, 
                         language[GLUTIL_TIME], seconds / 3600, (seconds / 60) % 60, seconds % 60, 
                         ((double) global_device_bytes) / (1024.0 * 1024. * 1024.0));
             }
@@ -2428,9 +2429,9 @@ void delete_game(int game_sel)
     }
 
     if(n == 0)
-        sprintf(filename, "%s\n\n%s HDD0?", directories[game_sel].title, "Want to delete from"); 
+        sprintf(filename, "%s\n\n%s HDD0?", directories[game_sel].title, language[GAMEDELSL_WANTDELETE]); 
     else
-        sprintf(filename, "%s\n\n%s USB00%c?", directories[game_sel].title, "Want to delete from", 47 + n); 
+        sprintf(filename, "%s\n\n%s USB00%c?", directories[game_sel].title, language[GAMEDELSL_WANTDELETE], 47 + n); 
 
     dialog_action = 0;
         
@@ -2450,7 +2451,7 @@ void delete_game(int game_sel)
         file_counter = 0;
         new_pad = 0;
         
-        DPrintf("Starting... \n delete %s\n\n", directories[game_sel].path_name);
+        DPrintf("%s %s\n\n", language[GAMEDELSL_STARTED], directories[game_sel].path_name);
 
         my_game_delete((char *) directories[game_sel].path_name);
         
@@ -2463,16 +2464,18 @@ void delete_game(int game_sel)
 
         while(1){
 
-            if(abort_copy) sprintf(string1,"Aborted!!!  Time: %2.2i:%2.2i:%2.2i\n", seconds / 3600, (seconds/60) % 60, seconds % 60);
+            if(abort_copy) sprintf(string1,"%s  %s: %2.2i:%2.2i:%2.2i\n", language[GLUTIL_ABORTED], 
+                                    language[GLUTIL_TIME], seconds / 3600, (seconds/60) % 60, seconds % 60);
             else
-                sprintf(string1,"Done!  Files Deleted: %i Time: %2.2i:%2.2i:%2.2i\n", file_counter, seconds / 3600, (seconds / 60) % 60, seconds % 60);
+                sprintf(string1,"%s: %i %s: %2.2i:%2.2i:%2.2i\n", language[GAMEDELSL_DONE], file_counter, 
+                                    language[GLUTIL_TIME], seconds / 3600, (seconds / 60) % 60, seconds % 60);
 
             cls2();
 
             strcpy(dbg_str1, string1);
 
             if(vflip & 32)
-                strcpy(dbg_str2, "Press X to Exit");
+                strcpy(dbg_str2, language[GLUTIL_XEXIT]);
             else
                 strcpy(dbg_str2, "");
 
@@ -2515,24 +2518,27 @@ void test_game(int game_sel)
     my_game_test(directories[game_sel].path_name);
     
 
-    DPrintf("Directories: %i Files: %i\nBig files: %i Split files: %i\n\n", num_directories, file_counter, num_files_big, num_files_split);
+    DPrintf(language[GAMETSTSL_FINALNFO], num_directories, file_counter, num_files_big, num_files_split);
+    DPrintf("\n\n");
 
     int seconds = (int) (time(NULL) - time_start);
     int vflip = 0;
 
     while(1){
 
-        if(abort_copy) sprintf(string1,"Aborted!!!  Time: %2.2i:%2.2i:%2.2i\n", seconds / 3600, (seconds/60) % 60, seconds % 60);
+        if(abort_copy) sprintf(string1,"%s  %s: %2.2i:%2.2i:%2.2i\n", language[GLUTIL_ABORTED], 
+                                language[GLUTIL_TIME], seconds / 3600, (seconds/60) % 60, seconds % 60);
         else
-            sprintf(string1,"Files Tested: %i Time: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", 
-                file_counter, seconds / 3600, (seconds / 60) % 60, seconds % 60, ((double) global_device_bytes) / (1024.0 * 1024.* 1024.0));
+            sprintf(string1,"%s: %i %s: %2.2i:%2.2i:%2.2i Vol: %1.2f GB\n", language[GAMETSTSL_TESTED], file_counter, 
+                                language[GLUTIL_TIME], seconds / 3600, (seconds / 60) % 60, seconds % 60, 
+                                ((double) global_device_bytes) / (1024.0 * 1024.* 1024.0));
 
         cls2();
 
         strcpy(dbg_str1, string1);
 
         if(vflip & 32)
-            strcpy(dbg_str2, "Press X to Exit");
+            strcpy(dbg_str2, language[GLUTIL_XEXIT]);
         else
             strcpy(dbg_str2, "");
 
