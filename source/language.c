@@ -124,6 +124,16 @@ t_lngstr lang_strings[] =
     { "DRAWTOOLS_SECENABLE"     , "Press To Enable Syscall Security" },
     { "DRAWTOOLS_LOADX"         , "Load PS3LoadX" },
 
+    //MAIN - OTHERS
+    { "DRAWCACHE_CACHE"         , "Delete Cache Tool" },
+    { "DRAWCACHE_ERRNEEDIT"     , "You need %1.2f GB free to install" },
+    { "DRAWCACHE_ASKTODEL"      , "Delete %s Cache?" },
+    { "PATCHBEMU_ERRNOUSB"      , "BDEMU is only for USB devices" },
+    { "MOVEOBEMU_ERRSAVE"       , "Error Saving:\n%s" },
+    { "MOVEOBEMU_ERRMOVE"       , "Error Moving To:\n%s/PS3_GAME exists" },
+    { "MOVEOBEMU_MOUNTOK"       , "BDEMU mounted in:\n%s/PS3_GAME" },
+    { "MOVETBEMU_ERRMOVE"       , "Error Moving To:\n%s exists" },
+
     //GLOBAL
     { "GLOBAL_RETURN"           , "Return" },
     { "GLOBAL_SAVED"            , "File Saved" },

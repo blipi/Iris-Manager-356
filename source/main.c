@@ -3135,7 +3135,7 @@ void draw_cachesel(float x, float y)
 
     SetFontAutoCenter(0);
   
-    DrawFormatString(x, y - 2, " Delete Cache Tool");
+    DrawFormatString(x, y - 2, " %s", language[DRAWCACHE_CACHE]);
     
     x2= DrawFormatString(2000, -2, "hdd0: %.2fGB ", freeSpace[0]);
     x2 = 848 -(x2 - 2000) - x;
@@ -3171,7 +3171,7 @@ void draw_cachesel(float x, float y)
         SetFontSize(20, 20);
         SetFontColor(0xffff00ff, 0x00000000);
         SetFontAutoCenter(1);
-        DrawFormatString(0, y + 3 * 150 + 6, "You need %1.2f GB free to install", cache_need_free);
+        DrawFormatString(0, y + 3 * 150 + 6, language[DRAWCACHE_ERRNEEDIT], cache_need_free);
         SetFontAutoCenter(0);
 
     } else if(select_option < ncache_list){
@@ -3205,7 +3205,7 @@ void draw_cachesel(float x, float y)
     
         if(select_option >= ncache_list) return;
 
-        sprintf(temp_buffer, "Delete %s Cache?", cache_list[select_option].title_id);
+        sprintf(temp_buffer, language[DRAWCACHE_ASKTODEL], cache_list[select_option].title_id);
 
         if(DrawDialogYesNo(temp_buffer) == 1) {
            
@@ -3320,7 +3320,7 @@ int patch_bdvdemu(u32 flags)
     }
 
     if(usb < 0) {
-        DrawDialogOK("BDEMU is only for USB devices");
+        DrawDialogOK(language[PATCHBEMU_ERRNOUSB]);
         return -1;
     }
 
@@ -3383,7 +3383,7 @@ int move_origin_to_bdemubackup(char *path)
 
     if(SaveFile(temp_buffer, temp_buffer + 1024, strlen(temp_buffer + 1024))!=0) {
         
-        sprintf(temp_buffer + 1024, "Error Saving:\n%s", temp_buffer);
+        sprintf(temp_buffer + 1024, language[MOVEOBEMU_ERRSAVE], temp_buffer);
         DrawDialogOK(temp_buffer + 1024);
         
         return -1;
@@ -3393,13 +3393,13 @@ int move_origin_to_bdemubackup(char *path)
 
     if(lv2FsRename(temp_buffer  + 1024, temp_buffer) != 0)  {
         
-        sprintf(temp_buffer + 256, "Error Moving To:\n%s/PS3_GAME exists", temp_buffer);
+        sprintf(temp_buffer + 256, language[MOVEOBEMU_ERRMOVE], temp_buffer);
         DrawDialogOK(temp_buffer + 256);
 
         return -1;
      }
     
-    sprintf(temp_buffer + 256, "BDEMU mounted in:\n%s/PS3_GAME", temp_buffer);
+    sprintf(temp_buffer + 256, language[MOVEOBEMU_MOUNTOK], temp_buffer);
     DrawDialogOK(temp_buffer + 256);
 
     return 0;
@@ -3449,7 +3449,7 @@ int move_bdemubackup_to_origin(u32 flags)
 
     if(lv2FsRename(temp_buffer, temp_buffer + 1024) != 0)  {
         if(!(olderrflags & flags)) {
-            sprintf(temp_buffer, "Error Moving To:\n%s exists", temp_buffer + 1024);
+            sprintf(temp_buffer, language[MOVETBEMU_ERRMOVE], temp_buffer + 1024);
             DrawDialogOK(temp_buffer);
             olderrflags |= flags;
         }

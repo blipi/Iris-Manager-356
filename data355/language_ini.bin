@@ -33,7 +33,7 @@ DRAWSCREEN_GAMEICANTFD  = I cannot find an USB device to mount /dev_hdd0/game fr
 DRAWSCREEN_GAMEIWLAUNCH = Want to launch the Game?
 DRAWSCREEN_EXTEXENOTFND = external executable not found
 DRAWSCREEN_EXTEXENOTCPY = Use 'Copy EBOOT.BIN from USB' to import them.
-DRAWSCREEN_REQBR        = Required BR-Disc, Retry?
+DRAWSCREEN_REQBR        = Required BR-Disc@ Retry?
 
 # DRAW OPTIONS
 DRAWGMOPT_OPTS          = Options
@@ -84,6 +84,16 @@ DRAWTOOLS_DELCACHE      = Delete Cache Tool
 DRAWTOOLS_SECDISABLE    = Press To Disable Syscall Security
 DRAWTOOLS_SECENABLE     = Press To Enable Syscall Security
 DRAWTOOLS_LOADX         = Load PS3LoadX
+
+# MAIN - OTHERS
+DRAWCACHE_CACHE         = Delete Cache Tool
+DRAWCACHE_ERRNEEDIT     = You need %1.2f GB free to install
+DRAWCACHE_ASKTODEL      = Delete %s Cache?
+PATCHBEMU_ERRNOUSB      = BDEMU is only for USB devices
+MOVEOBEMU_ERRSAVE       = Error Saving:@%s
+MOVEOBEMU_ERRMOVE       = Error Moving To:@%s/PS3_GAME exists
+MOVEOBEMU_MOUNTOK       = BDEMU mounted in:@%s/PS3_GAME
+MOVETBEMU_ERRMOVE       = Error Moving To:@%s exists
 
 # GLOBAL
 GLOBAL_RETURN           = Return
