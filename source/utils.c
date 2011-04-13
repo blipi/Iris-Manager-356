@@ -2381,7 +2381,7 @@ void copy_to_cache(int game_sel, char * hmanager_path)
         if(abort_copy || nfilecached ==0) {
 
            
-            sprintf(filename, "%s\n\n%s USB00%c?", directories[game_sel].title, language[GAMECOPYS_FAILDELDUMPFR], 47 + dest);
+            sprintf(filename, "%s\n\n%s USB00%c?", directories[game_sel].title, language[GAMECHCPY_FAILDELFROM], 47 + dest);
 
             dialog_action = 0;
             

@@ -126,13 +126,13 @@ GAMECOPYS_SPLITEDHDDNFO = %s@@Split game copied in HDD0 (non bootable)
 GAMECOPYS_SPLITEDUSBNFO = %s@@Split game copied in USB00%c (non bootable)
 GAMECOPYS_DONE          = Done! Files Copied
 GAMECOPYS_FAILDELDUMP   = Delete failed dump in
-GAMECOPYS_FAILDELDUMPFR = Delete failed dump from
 
 # GAME CACHE COPY
 GAMECHCPY_ISNEEDONEFILE = Sorry, but you needs to install at least a bigfile
 GAMECHCPY_NEEDMORESPACE = You have %.2fGB free and you needs %.2fGB@@Please, delete Cache Entries
 GAMECHCPY_NOSPACE       = Sorry, you have %.2fGB free@@and you needs %.2fGB
 GAMECHCPY_CACHENFOSTART = Cache Files: %.2fGB - Total Files: %.2fGB@ you save %.2fGB on HDD0 (%.2fGB Total)@@Press any button to Start
+GAMECHCPY_FAILDELFROM   = Delete Cache failed dump from
 
 #GLOBAL UTILS
 GLUTIL_SPLITFILE        = Split file

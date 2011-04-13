@@ -166,14 +166,13 @@ t_lngstr lang_strings[] =
     { "GAMECOPYS_SPLITEDUSBNFO" , "%s\n\nSplit game copied in USB00%c (non bootable)" },
     { "GAMECOPYS_DONE"          , "Done! Files Copied" },
     { "GAMECOPYS_FAILDELDUMP"   , "Delete failed dump in" },
-    { "GAMECOPYS_FAILDELDUMPFR" , "Delete failed dump from" },
 
     //GAME CACHE COPY
     { "GAMECHCPY_ISNEEDONEFILE" , "Sorry, but you needs to install at least a bigfile" },
     { "GAMECHCPY_NEEDMORESPACE" , "You have %.2fGB free and you needs %.2fGB\n\nPlease, delete Cache Entries" },
     { "GAMECHCPY_NOSPACE"       , "Sorry, you have %.2fGB free\n\nand you needs %.2fGB" },
     { "GAMECHCPY_CACHENFOSTART" , "Cache Files: %.2fGB - Total Files: %.2fGB\n you save %.2fGB on HDD0 (%.2fGB Total)\n\nPress any button to Start" },
-
+    { "GAMECHCPY_FAILDELFROM"   , "Delete Cache failed dump from" },
     //GLOBAL UTILS
     { "GLUTIL_SPLITFILE"        , "Split file" },
     { "GLUTIL_WROTE"            , "Wrote" },
