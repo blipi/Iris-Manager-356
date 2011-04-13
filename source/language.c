@@ -103,6 +103,17 @@ t_lngstr lang_strings[] =
     { "DRAWGMCFG_EXTHDD0GAME"   , "Ext /dev_hdd0/game" },
     { "DRAWGMCFG_SAVECFG"       , "Save Config" },
 
+    //DRAW GLOBAL OPTIONS
+    { "DRAWGLOPT_OPTS"          , "Global Options" },
+    { "DRAWGLOPT_SCRADJUST"     , "Video Adjust" },
+    { "DRAWGLOPT_CHANGEDIR"     , "Change Game Directory" },
+    { "DRAWGLOPT_CHANGEBCK"     , "Change Background Color" },
+    { "DRAWGLOPT_SWMUSICOFF"    , "Switch Music Off" },
+    { "DRAWGLOPT_SWMUSICON"     , "Switch Music On" },
+    { "DRAWGLOPT_INITFTP"       , "Initialize FTP server" },
+    { "DRAWGLOPT_TOOLS"         , "Tools" },
+    { "DRAWGLOPT_CREDITS"       , "Credits" },
+
     //GLOBAL
     { "GLOBAL_RETURN"           , "Return" },
     { "GLOBAL_SAVED"            , "File Saved" },

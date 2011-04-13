@@ -2557,36 +2557,36 @@ void draw_configs(float x, float y, int index)
     x2 = DrawButton2(x2, y2, 0, " Retail ", (game_cfg.xmb == 1)) + 8;
 #else
     x2 = DrawButton1(x + 32, y2, 240, language[DRAWGMCFG_DSK], (flash && select_option == 0))  + 16;
-    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_NO] " ", (game_cfg.xmb == 0)) + 8;
-    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_YES] " ", (game_cfg.xmb == 1)) + 8;
+    x2 = DrawButton2(x2, y2, 0, language[DRAWGMCFG_NO] , (game_cfg.xmb == 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, language[DRAWGMCFG_YES], (game_cfg.xmb == 1)) + 8;
 #endif
     y2+= 48;
 
     x2 = DrawButton1(x + 32, y2, 240, language[DRAWGMCFG_UPD], (flash && select_option == 1))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_ON] " ", /*(game_cfg.updates == 0)*/ -1) + 8;
-    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_OFF] " ", /*(game_cfg.updates != 0)*/ 1) + 8;
+    x2 = DrawButton2(x2, y2, 0, language[DRAWGMCFG_ON] , /*(game_cfg.updates == 0)*/ -1) + 8;
+    x2 = DrawButton2(x2, y2, 0, language[DRAWGMCFG_OFF], /*(game_cfg.updates != 0)*/ 1) + 8;
 
     y2+= 48;
 
     x2 = DrawButton1(x + 32, y2, 240, language[DRAWGMCFG_EXTBOOT], (flash && select_option == 2))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_ON] " ", (payload_mode >= ZERO_PAYLOAD) ? (game_cfg.ext_ebootbin != 0) : -1 ) + 8;
-    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_OFF] " ", (game_cfg.ext_ebootbin == 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, language[DRAWGMCFG_ON] , (payload_mode >= ZERO_PAYLOAD) ? (game_cfg.ext_ebootbin != 0) : -1 ) + 8;
+    x2 = DrawButton2(x2, y2, 0, language[DRAWGMCFG_OFF], (game_cfg.ext_ebootbin == 0)) + 8;
 
     y2+= 48;
 
     x2 = DrawButton1(x + 32, y2, 240, language[DRAWGMCFG_BDEMU], (flash && select_option == 3))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_ON] " ", (directories[currentgamedir].splitted) ? -1: (game_cfg.bdemu != 0)) + 8;
-    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_OFF] " ", (game_cfg.bdemu == 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, language[DRAWGMCFG_ON] , (directories[currentgamedir].splitted) ? -1: (game_cfg.bdemu != 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, language[DRAWGMCFG_OFF], (game_cfg.bdemu == 0)) + 8;
 
     y2+= 48;
 
     x2 = DrawButton1(x + 32, y2, 240, language[DRAWGMCFG_EXTHDD0GAME], (flash && select_option == 4))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_ON] " ", (payload_mode >= ZERO_PAYLOAD) ? (game_cfg.exthdd0emu != 0): -1) + 8;
-    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_OFF] " ", (game_cfg.exthdd0emu == 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, language[DRAWGMCFG_ON] , (payload_mode >= ZERO_PAYLOAD) ? (game_cfg.exthdd0emu != 0): -1) + 8;
+    x2 = DrawButton2(x2, y2, 0, language[DRAWGMCFG_OFF], (game_cfg.exthdd0emu == 0)) + 8;
 
     y2+= 48;
 
@@ -2788,7 +2788,7 @@ void draw_gbloptions(float x, float y)
 
     SetFontAutoCenter(0);
   
-    DrawFormatString(x, y - 2, " Global Options");
+    DrawFormatString(x, y - 2, " %s", language[DRAWGLOPT_OPTS]);
 
     if(x3 < 0)
     {
@@ -2806,35 +2806,35 @@ void draw_gbloptions(float x, float y)
     x2 = x;
     y2 = y + 32;
     
-    DrawButton1((848 - 520) / 2, y2, 520, "Video Adjust", (flash && select_option == 0));
+    DrawButton1((848 - 520) / 2, y2, 520, language[DRAWGLOPT_SCRADJUST], (flash && select_option == 0));
     
     y2+= 48;
 
-    DrawButton1((848 - 520) / 2, y2, 520, "Change Game Directory", (flash && select_option == 1));
+    DrawButton1((848 - 520) / 2, y2, 520, language[DRAWGLOPT_CHANGEDIR], (flash && select_option == 1));
     
     y2+= 48;
 
-    DrawButton1((848 - 520) / 2, y2, 520, "Change Background Color", (flash && select_option == 2));
+    DrawButton1((848 - 520) / 2, y2, 520, language[DRAWGLOPT_CHANGEBCK], (flash && select_option == 2));
     
     y2+= 48;
 
-    DrawButton1((848 - 520) / 2, y2, 520, (manager_cfg.opt_flags & OPTFLAGS_PLAYMUSIC)? "Switch Music Off" : "Switch Music On" , (flash && select_option == 3));
+    DrawButton1((848 - 520) / 2, y2, 520, (manager_cfg.opt_flags & OPTFLAGS_PLAYMUSIC)? language[DRAWGLOPT_SWMUSICOFF] : language[DRAWGLOPT_SWMUSICON] , (flash && select_option == 3));
     
     y2+= 48;
 
-    DrawButton1((848 - 520) / 2, y2, 520, (ftp_ip_str[0]) ? ftp_ip_str : "Initialize FTP server", (flash && select_option == 4));
+    DrawButton1((848 - 520) / 2, y2, 520, (ftp_ip_str[0]) ? ftp_ip_str : language[DRAWGLOPT_INITFTP], (flash && select_option == 4));
     
     y2+= 48;
 
-    DrawButton1((848 - 520) / 2, y2, 520, "Tools", (flash && select_option == 5));
+    DrawButton1((848 - 520) / 2, y2, 520, language[DRAWGLOPT_TOOLS], (flash && select_option == 5));
     
     y2+= 48;
 
-    DrawButton1((848 - 520) / 2, y2, 520, "Return", (flash && select_option == 6));
+    DrawButton1((848 - 520) / 2, y2, 520, language[GLOBAL_RETURN], (flash && select_option == 6));
     
     y2+= 48;
     
-    DrawButton1((848 - 520) / 2, y2, 520, "Credits", (flash && select_option == 7));
+    DrawButton1((848 - 520) / 2, y2, 520, language[DRAWGLOPT_CREDITS], (flash && select_option == 7));
    
     y2+= 48;
 
