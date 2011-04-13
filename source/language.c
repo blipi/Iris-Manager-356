@@ -45,7 +45,6 @@ t_lngstr lang_strings[] =
     { "VIDEOADJUST_SCALEINFO"   , "Video Scale X: %i Y: %i" },
     { "VIDEOADJUST_EXITINFO"    , "Press 'X' to exit" },
     { "VIDEOADJUST_DEFAULTS"    , "Press 'O' to default values" },
-    { "VIDEOADJUST_SAVED"       , "File Saved" },
 
     //SELECT - GAME FOLDER
     { "GAMEFOLDER_WANTUSE"      , "Want to use" },
@@ -85,13 +84,28 @@ t_lngstr lang_strings[] =
     { "DRAWGMOPT_CPYEBOOTGAME"  , "Copy EBOOT.BIN from USB" },
     { "DRAWGMOPT_CPYTOFAV"      , "Copy to Favourites" },
     { "DRAWGMOPT_DELFMFAV"      , "Delete from Favourites" },
-    { "DRAWGMOPT_RETURN"        , "Return" },
 
     { "DRAWGMOPT_FIXCOMPLETE"   , "Fix Permissions Done!" },
     { "DRAWGMOPT_CPYOK"         , "copied successfully" },
     { "DRAWGMOPT_CPYERR"        , "Error copying" },
     { "DRAWGMOPT_CPYNOTFND"     , "not found" },
 
+    //DRAW CONFIGS
+    { "DRAWGMCFG_CFGS"          , "Config. Game" },
+    { "DRAWGMCFG_DSK"           , "Requires Disc" },
+    { "DRAWGMCFG_NO"            , "No" },
+    { "DRAWGMCFG_YES"           , "Yes" },
+    { "DRAWGMCFG_UPD"           , "Online Updates" },
+    { "DRAWGMCFG_ON"            , "On" },
+    { "DRAWGMCFG_OFF"           , "Off" },
+    { "DRAWGMCFG_EXTBOOT"       , "Extern EBOOT.BIN" },
+    { "DRAWGMCFG_BDEMU"         , "BD Emu (for USB)" },
+    { "DRAWGMCFG_EXTHDD0GAME"   , "Ext /dev_hdd0/game" },
+    { "DRAWGMCFG_SAVECFG"       , "Save Config" },
+
+    //GLOBAL
+    { "GLOBAL_RETURN"           , "Return" },
+    { "GLOBAL_SAVED"            , "File Saved" },
 
 };
 

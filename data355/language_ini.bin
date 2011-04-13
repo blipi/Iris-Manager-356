@@ -6,7 +6,6 @@ VIDEOADJUST_POSITION    = Use LEFT (-X) / RIGHT (+X) / UP (-Y) / DOWN (+Y) to ad
 VIDEOADJUST_SCALEINFO   = Video Scale X: %i Y: %i
 VIDEOADJUST_EXITINFO    = Press 'X' to exit
 VIDEOADJUST_DEFAULTS    = Press 'O' to default values
-VIDEOADJUST_SAVED       = File Saved
 
 # SELECT - GAME FOLDER
 GAMEFOLDER_WANTUSE      = Want to use
@@ -14,7 +13,7 @@ GAMEFOLDER_TOINSTALLNTR = to install the game?
 GAMEFOLDER_USING        = Using
 GAMEFOLDER_TOINSTALL    = to install the game
     
-#DRAW SCREEN1
+# DRAW SCREEN1
 DRAWSCREEN_FAVSWAP      = Favourites Swap
 DRAWSCREEN_FAVINSERT    = Favourites Insert
 DRAWSCREEN_FAVORITES    = Favourites
@@ -36,7 +35,7 @@ DRAWSCREEN_EXTEXENOTFND = external executable not found
 DRAWSCREEN_EXTEXENOTCPY = Use 'Copy EBOOT.BIN from USB' to import them.
 DRAWSCREEN_REQBR        = Required BR-Disc, Retry?
 
-#DRAW OPTIONS
+# DRAW OPTIONS
 DRAWGMOPT_OPTS          = Options
 DRAWGMOPT_CFGGAME       = Config. Game
 DRAWGMOPT_CPYGAME       = Copy Game
@@ -53,4 +52,20 @@ DRAWGMOPT_CPYOK         = copied successfully
 DRAWGMOPT_CPYERR        = Error copying
 DRAWGMOPT_CPYNOTFND     = not found
 
+# DRAW CONFIGS
+DRAWGMCFG_CFGS          = Config. Game
+DRAWGMCFG_DSK           = Requires Disc
+DRAWGMCFG_NO            = No
+DRAWGMCFG_YES           = Yes
+DRAWGMCFG_UPD           = Online Updates
+DRAWGMCFG_ON            = On
+DRAWGMCFG_OFF           = Off
+DRAWGMCFG_EXTBOOT       = Extern EBOOT.BIN
+DRAWGMCFG_BDEMU         = BD Emu (for USB)
+DRAWGMCFG_EXTHDD0GAME   = Ext /dev_hdd0/game
+DRAWGMCFG_SAVECFG       = Save Config
+
+# GLOBAL
+GLOBAL_RETURN           = Return
+GLOBAL_SAVED            = File Saved
 

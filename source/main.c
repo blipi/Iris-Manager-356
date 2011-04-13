@@ -728,7 +728,7 @@ void video_adjust()
             
       
             if(SaveManagerCfg() == 0) {
-                sprintf(temp_buffer, "manager_setup.bin\n\n%s", language[VIDEOADJUST_SAVED]);
+                sprintf(temp_buffer, "manager_setup.bin\n\n%s", language[GLOBAL_SAVED]);
                 DrawDialogOK(temp_buffer);
             }
 
@@ -2243,7 +2243,7 @@ void draw_options(float x, float y, int index)
     
     y2+= 48;
 
-    DrawButton1(x + 32, y2, 320, language[DRAWGMOPT_RETURN], (flash && select_option == 7));
+    DrawButton1(x + 32, y2, 320, language[GLOBAL_RETURN], (flash && select_option == 7));
     
     y2+= 48;
     /*
@@ -2509,7 +2509,7 @@ void draw_configs(float x, float y, int index)
 
     SetFontAutoCenter(0);
   
-    DrawFormatString(x, y - 2, " Config. Game");
+    DrawFormatString(x, y - 2, " %s", language[DRAWGMCFG_CFGS]);
 
     i = selected;
 
@@ -2541,7 +2541,7 @@ void draw_configs(float x, float y, int index)
 
 
 #ifdef CONFIG_USE_SYS8PERMH4
-    x2 = DrawButton1(x + 32, y2, 240, "Fix Permissions", (flash && select_option == 0)) + 16;
+    x2 = DrawButton1(x + 32, y2, 240, "Fix Permissions", (flash && select_option == 0)) + 16; // do no translate this (3.44)
     
     x2 = DrawButton2(x2, y2, 0, " Default ", (game_cfg.perm == 0) ) + 8;
     x2 = DrawButton2(x2, y2, 0, " PS jailbreak ", (game_cfg.perm == 1)) + 8;
@@ -2552,48 +2552,48 @@ void draw_configs(float x, float y, int index)
     
 
 #ifdef CONFIG_USE_SYS8CONFIG
-    x2 = DrawButton1(x + 32, y2, 240, "Select XMB", (flash && select_option == 0))  + 16;
-    x2 = DrawButton2(x2, y2, 0, "  Debug  ", (game_cfg.xmb == 0)) + 8;
-    x2 = DrawButton2(x2, y2, 0, "  Retail  ", (game_cfg.xmb == 1)) + 8;
+    x2 = DrawButton1(x + 32, y2, 240, "Select XMB", (flash && select_option == 0))  + 16; // do no translate this (3.44 atm)
+    x2 = DrawButton2(x2, y2, 0, " Debug ", (game_cfg.xmb == 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, " Retail ", (game_cfg.xmb == 1)) + 8;
 #else
-    x2 = DrawButton1(x + 32, y2, 240, "Requires Disc", (flash && select_option == 0))  + 16;
-    x2 = DrawButton2(x2, y2, 0, "  No  ", (game_cfg.xmb == 0)) + 8;
-    x2 = DrawButton2(x2, y2, 0, "  Yes  ", (game_cfg.xmb == 1)) + 8;
+    x2 = DrawButton1(x + 32, y2, 240, language[DRAWGMCFG_DSK], (flash && select_option == 0))  + 16;
+    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_NO] " ", (game_cfg.xmb == 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_YES] " ", (game_cfg.xmb == 1)) + 8;
 #endif
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "Online Updates", (flash && select_option == 1))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, language[DRAWGMCFG_UPD], (flash && select_option == 1))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, "  On  ", /*(game_cfg.updates == 0)*/ -1) + 8;
-    x2 = DrawButton2(x2, y2, 0, "  Off  ", /*(game_cfg.updates != 0)*/ 1) + 8;
+    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_ON] " ", /*(game_cfg.updates == 0)*/ -1) + 8;
+    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_OFF] " ", /*(game_cfg.updates != 0)*/ 1) + 8;
 
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "Extern EBOOT.BIN", (flash && select_option == 2))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, language[DRAWGMCFG_EXTBOOT], (flash && select_option == 2))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, "  On  ", (payload_mode >= ZERO_PAYLOAD) ? (game_cfg.ext_ebootbin != 0) : -1 ) + 8;
-    x2 = DrawButton2(x2, y2, 0, "  Off  ", (game_cfg.ext_ebootbin == 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_ON] " ", (payload_mode >= ZERO_PAYLOAD) ? (game_cfg.ext_ebootbin != 0) : -1 ) + 8;
+    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_OFF] " ", (game_cfg.ext_ebootbin == 0)) + 8;
 
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "BD Emu (for USB)", (flash && select_option == 3))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, language[DRAWGMCFG_BDEMU], (flash && select_option == 3))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, "  On  ", (directories[currentgamedir].splitted) ? -1: (game_cfg.bdemu != 0)) + 8;
-    x2 = DrawButton2(x2, y2, 0, "  Off  ", (game_cfg.bdemu == 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_ON] " ", (directories[currentgamedir].splitted) ? -1: (game_cfg.bdemu != 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_OFF] " ", (game_cfg.bdemu == 0)) + 8;
 
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "Ext /dev_hdd0/game", (flash && select_option == 4))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, language[DRAWGMCFG_EXTHDD0GAME], (flash && select_option == 4))  + 16;
         
-    x2 = DrawButton2(x2, y2, 0, "  On  ", (payload_mode >= ZERO_PAYLOAD) ? (game_cfg.exthdd0emu != 0): -1) + 8;
-    x2 = DrawButton2(x2, y2, 0, "  Off  ", (game_cfg.exthdd0emu == 0)) + 8;
+    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_ON] " ", (payload_mode >= ZERO_PAYLOAD) ? (game_cfg.exthdd0emu != 0): -1) + 8;
+    x2 = DrawButton2(x2, y2, 0, " " language[DRAWGMCFG_OFF] " ", (game_cfg.exthdd0emu == 0)) + 8;
 
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "Save Config", (flash && select_option == 5))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, language[DRAWGMCFG_SAVECFG], (flash && select_option == 5))  + 16;
     y2+= 48;
 
-    x2 = DrawButton1(x + 32, y2, 240, "Return", (flash && select_option == 6))  + 16;
+    x2 = DrawButton1(x + 32, y2, 240, language[GLOBAL_RETURN], (flash && select_option == 6))  + 16;
     y2+= 48;
 
 
@@ -2673,7 +2673,7 @@ void draw_configs(float x, float y, int index)
               
                 
                 if(SaveFile(temp_buffer, (char *) &game_cfg, sizeof(game_cfg)) == 0) {
-                    sprintf(temp_buffer, "%s.cfg\n\nFile Saved", directories[currentgamedir].title_id);
+                    sprintf(temp_buffer, "%s.cfg\n\n%s", directories[currentgamedir].title_id, language[GLOBAL_SAVED]);
                     DrawDialogOK(temp_buffer);
                 }
 
