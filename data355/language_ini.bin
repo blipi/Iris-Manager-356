@@ -1,0 +1,56 @@
+[Language]
+VERSION = 1
+
+# VIDEO - ADJUST
+VIDEOADJUST_POSITION    = Use LEFT (-X) / RIGHT (+X) / UP (-Y) / DOWN (+Y) to adjust the screen
+VIDEOADJUST_SCALEINFO   = Video Scale X: %i Y: %i
+VIDEOADJUST_EXITINFO    = Press 'X' to exit
+VIDEOADJUST_DEFAULTS    = Press 'O' to default values
+VIDEOADJUST_SAVED       = File Saved
+
+# SELECT - GAME FOLDER
+GAMEFOLDER_WANTUSE      = Want to use
+GAMEFOLDER_TOINSTALLNTR = to install the game?
+GAMEFOLDER_USING        = Using
+GAMEFOLDER_TOINSTALL    = to install the game
+    
+#DRAW SCREEN1
+DRAWSCREEN_FAVSWAP      = Favourites Swap
+DRAWSCREEN_FAVINSERT    = Favourites Insert
+DRAWSCREEN_FAVORITES    = Favourites
+DRAWSCREEN_PAGE         = Page
+DRAWSCREEN_GAMES        = Games
+DRAWSCREEN_PLAY         = Play
+DRAWSCREEN_SOPTIONS     = SELECT: Game Options
+DRAWSCREEN_SDELETE      = SELECT: Delete Favourite
+DRAWSCREEN_STGLOPT      = START: Global Options
+DRAWSCREEN_EXITXMB      = Exit to XMB?
+DRAWSCREEN_CANRUNFAV    = Cannot run this favourite
+DRAWSCREEN_MARKNOTEXEC  = Marked as non executable. Trying to install in HDD0 cache
+DRAWSCREEN_MARKNOTEX4G  = Marked as not executable - Contains splited files >= 4GB
+DRAWSCREEN_GAMEINOFMNT  = I cannot find one folder to mount /dev_hdd0/game from USB
+DRAWSCREEN_GAMEIASKDIR  = Want to create in /dev_usb00
+DRAWSCREEN_GAMEICANTFD  = I cannot find an USB device to mount /dev_hdd0/game from USB
+DRAWSCREEN_GAMEIWLAUNCH = Want to launch the Game?
+DRAWSCREEN_EXTEXENOTFND = external executable not found
+DRAWSCREEN_EXTEXENOTCPY = Use 'Copy EBOOT.BIN from USB' to import them.
+DRAWSCREEN_REQBR        = Required BR-Disc, Retry?
+
+#DRAW OPTIONS
+DRAWGMOPT_OPTS          = Options
+DRAWGMOPT_CFGGAME       = Config. Game
+DRAWGMOPT_CPYGAME       = Copy Game
+DRAWGMOPT_DELGAME       = Delete Game
+DRAWGMOPT_FIXGAME       = Fix File Permissions
+DRAWGMOPT_TSTGAME       = Test Game
+DRAWGMOPT_CPYEBOOTGAME  = Copy EBOOT.BIN from USB
+DRAWGMOPT_CPYTOFAV      = Copy to Favourites
+DRAWGMOPT_DELFMFAV      = Delete from Favourites
+DRAWGMOPT_RETURN        = Return
+
+DRAWGMOPT_FIXCOMPLETE   = Fix Permissions Done!
+DRAWGMOPT_CPYOK         = copied successfully
+DRAWGMOPT_CPYERR        = Error copying
+DRAWGMOPT_CPYNOTFND     = not found
+
+
