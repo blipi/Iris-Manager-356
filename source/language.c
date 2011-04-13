@@ -117,6 +117,13 @@ t_lngstr lang_strings[] =
     { "DRAWGLOPT_FTPARINITED"   , "Server FTP already initialized" },
     { "DRAWGLOPT_FTPSTOPED"     , "Server FTP Stoped\nRemoved FTP service on init." },
 
+    //DRAW TOOLS
+    { "DRAWTOOLS_TOOLS"         , "Tools" },
+    { "DRAWTOOLS_DELCACHE"      , "Delete Cache Tool" },
+    { "DRAWTOOLS_SECDISABLE"    , "Press To Disable Syscall Security" },
+    { "DRAWTOOLS_SECENABLE"     , "Press To Enable Syscall Security" },
+    { "DRAWTOOLS_LOADX"         , "Load PS3LoadX" },
+
     //GLOBAL
     { "GLOBAL_RETURN"           , "Return" },
     { "GLOBAL_SAVED"            , "File Saved" },

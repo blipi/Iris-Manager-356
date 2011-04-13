@@ -2982,7 +2982,7 @@ void draw_toolsoptions(float x, float y)
 
     SetFontAutoCenter(0);
   
-    DrawFormatString(x, y - 2, " Tools");
+    DrawFormatString(x, y - 2, " %s", language[DRAWTOOLS_TOOLS]);
 
     y += 24;
 
@@ -2992,22 +2992,22 @@ void draw_toolsoptions(float x, float y)
     x2 = x;
     y2 = y + 32;
     
-    DrawButton1((848 - 520) / 2, y2, 520, "Delete Cache Tool", (flash && select_option == 0));
+    DrawButton1((848 - 520) / 2, y2, 520, language[DRAWTOOLS_DELCACHE], (flash && select_option == 0));
     
     y2+= 48;
 
     if(manager_cfg.usekey)
-        DrawButton1((848 - 520) / 2, y2, 520, "Press To Disable Syscall Security", (flash && select_option == 1));
+        DrawButton1((848 - 520) / 2, y2, 520, language[DRAWTOOLS_SECDISABLE], (flash && select_option == 1));
     else
-        DrawButton1((848 - 520) / 2, y2, 520, "Press To Enable Syscall Security", (flash && select_option == 1));
+        DrawButton1((848 - 520) / 2, y2, 520, language[DRAWTOOLS_SECENABLE], (flash && select_option == 1));
     
     y2+= 48;
 
-    DrawButton1((848 - 520) / 2, y2, 520, "Load PS3LoadX", (flash && select_option == 2));
+    DrawButton1((848 - 520) / 2, y2, 520, language[DRAWTOOLS_LOADX], (flash && select_option == 2));
     
     y2+= 48;
 
-    DrawButton1((848 - 520) / 2, y2, 520, "Return", (flash && select_option == 3));
+    DrawButton1((848 - 520) / 2, y2, 520, language[GLOBAL_RETURN], (flash && select_option == 3));
     
     y2+= 48;
     
