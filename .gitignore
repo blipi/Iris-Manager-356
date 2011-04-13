@@ -3,3 +3,8 @@ build
 *.self
 *.pkg
 *.md5
+*.bin_
+md5sum.txt
+data355/payload_sky.bin
+data355/payload_syscall36.bin
+payload355/*.bin
