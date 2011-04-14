@@ -97,6 +97,7 @@ static u64 frame_count = 0;
 // font 2: 224 chr from 32 to 255, 16 x 32 pix 2 bit depth
 #include "font_b.h"
 #include "bluray_png.bin.h"
+#include "direct_png.bin.h"
 #include "usb_png.bin.h"
 #include "missing_png.bin.h"
 
@@ -146,8 +147,10 @@ void Load_PNG_resources()
 
     Png_res[2].png_in   = (void *) missing_png_bin;
     Png_res[2].png_size = sizeof  (missing_png_bin);
-   
-    
+
+    Png_res[3].png_in   = (void *) direct_png_bin;
+    Png_res[3].png_size = sizeof (direct_png_bin);
+
     // load PNG from memory
 
     for(i = 0; i < 16; i++)
@@ -533,7 +536,8 @@ struct {
     int ext_ebootbin;
     int bdemu;
     int exthdd0emu;
-    int pad[7];
+    int direct_boot;
+    int pad[6];
 } game_cfg;
 
 int load_ps3loadx = 0;
@@ -580,6 +584,9 @@ void fun_exit()
         sysProcessExitSpawn2("/dev_hdd0/game/PSL145310/RELOAD.SELF", NULL, NULL, NULL, 0, 1001, SYS_PROCESS_SPAWN_STACK_SIZE_1M);
         load_ps3loadx = 0;
     }
+    
+    if(game_cfg.direct_boot)
+        sysProcessExitSpawn2("/dev_bdvd/PS3_GAME/USRDIR/EBOOT.BIN", NULL, NULL, NULL, 0, 3071, SYS_PROCESS_SPAWN_STACK_SIZE_1M);
 
 }
 
@@ -1321,8 +1328,7 @@ s32 main(s32 argc, const char* argv[])
 
     
      }
-
-
+     
 	return 0;
 }
 
@@ -1696,13 +1702,22 @@ void draw_screen1(float x, float y)
 
         load_gamecfg (get_currentdir(i)); // refresh game info
 
-        if(game_cfg.xmb)
+        if((game_cfg.xmb) || (game_cfg.direct_boot == 2))
         {
             tiny3d_SetTextureWrap(0, Png_res_offset[0], Png_res[0].width, 
                 Png_res[0].height, Png_res[0].wpitch, 
                 TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
 
             DrawTextBox(x + 200 * select_px + 148 + (200 - 23 * 8)/2, y + select_py * 150 - 4 + 150 - 36, 0, 32, 32, 0xffffff99);
+        }
+        
+        if(game_cfg.direct_boot)
+        {
+            tiny3d_SetTextureWrap(0, Png_res_offset[3], Png_res[3].width, 
+                Png_res[3].height, Png_res[3].wpitch, 
+                TINY3D_TEX_FORMAT_A8R8G8B8,  TEXTWRAP_CLAMP, TEXTWRAP_CLAMP,1);
+
+            DrawTextBox(x + 200 * select_px + 148 + (200 - 23 * 8)/2, y + select_py * 150 - 4 + 150 - 36, 0, 32, 32, 0xffffffff);        
         }
 
     }
@@ -1866,7 +1881,7 @@ void draw_screen1(float x, float y)
 
                 }
 
-                if(game_cfg.xmb && (fdevices & 2048) == 0)
+                if((game_cfg.xmb && (fdevices & 2048) == 0) || (game_cfg.direct_boot == 2))
                 {
                     if(check_disc() == -1)
                         return;
@@ -2549,7 +2564,7 @@ void draw_configs(float x, float y, int index)
 
     y2+= 48;
 #endif
-    
+
 
 #ifdef CONFIG_USE_SYS8CONFIG
     x2 = DrawButton1(x + 32, y2, 240, "Select XMB", (flash && select_option == 0))  + 16; // do no translate this (3.44 atm)
@@ -2562,10 +2577,20 @@ void draw_configs(float x, float y, int index)
 #endif
     y2+= 48;
 
+    #if 0
     x2 = DrawButton1(x + 32, y2, 240, language[DRAWGMCFG_UPD], (flash && select_option == 1))  + 16;
         
     x2 = DrawButton2(x2, y2, 0, language[DRAWGMCFG_ON] , /*(game_cfg.updates == 0)*/ -1) + 8;
     x2 = DrawButton2(x2, y2, 0, language[DRAWGMCFG_OFF], /*(game_cfg.updates != 0)*/ 1) + 8;
+
+    y2+= 48;
+    #endif
+
+    x2 = DrawButton1(x + 32, y2, 240, "Direct Boot", (flash && select_option == 1)) + 16;
+    
+    x2 = DrawButton2(x2, y2, 0, language[DRAWGMCFG_NO], (game_cfg.direct_boot == 0) ) + 8;
+    x2 = DrawButton2(x2, y2, 0, language[DRAWGMCFG_YES], (game_cfg.direct_boot == 1)) + 8;
+    x2 = DrawButton2(x2, y2, 0, "With BR", (game_cfg.direct_boot == 2)) + 8;
 
     y2+= 48;
 
@@ -2650,11 +2675,9 @@ void draw_configs(float x, float y, int index)
             case 0:
                 ROT_INC(game_cfg.xmb, 1, 0);
                 break;
-            #if 0
             case 1:
-                ROT_INC(game_cfg.updates, 1, 0);
+                ROT_INC(game_cfg.direct_boot, 2, 0);
                 break;
-            #endif
             case 2:
                 if(payload_mode >= ZERO_PAYLOAD)
                     ROT_INC(game_cfg.ext_ebootbin, 1, 0);
@@ -2712,11 +2735,9 @@ void draw_configs(float x, float y, int index)
             case 0:
                 ROT_DEC(game_cfg.xmb, 0, 1);
                 break;
-            #if 0
             case 1:
-                ROT_DEC(game_cfg.updates, 0, 1);
+                ROT_DEC(game_cfg.direct_boot, 0, 2);
                 break;
-            #endif
             case 2:
                 if(payload_mode >= ZERO_PAYLOAD)
                     ROT_DEC(game_cfg.ext_ebootbin, 0, 1);
@@ -2746,11 +2767,9 @@ void draw_configs(float x, float y, int index)
             case 0:
                 ROT_INC(game_cfg.xmb, 1, 0);
                 break;
-            #if 0
             case 1:
-                ROT_INC(game_cfg.updates, 1, 0);
+                ROT_INC(game_cfg.direct_boot, 2, 0);
                 break;
-            #endif
             case 2:
                 if(payload_mode >= ZERO_PAYLOAD)
                     ROT_INC(game_cfg.ext_ebootbin, 1, 0);
