@@ -41,10 +41,8 @@
 #define PATHUSB_LEN    0xB //11
 
 #define DEBUG_HOOK 0
-#define SYS8_PERMH4 0 // testing if you want, we need this on 3.55?
 
 #define SYS8_VERSION 0x7
-#define PERM_MODE 2  // 0 -> restricted 1-> original 2-> new for some games
 
 #define ABS(target) ((target) - (BASE) - .)
 
@@ -210,67 +208,13 @@ aDev_bdvd:    .string    "/dev_bdvd"
 aApp_home:    .string    "/app_home"
 
 /*********************************************************************/
-#if SYS8_PERMH4
-.org 0x2A8
-perm0_routine:
-    MEM_BASE(%r9)
-    LOADI_LABEL2(%r9, perm_mode)
-    lwz        %r0, 0(%r9)
-    cmplwi  %r0, 1
-    beq        return1_h4
-    cmplwi  %r0, 2
-    beq        return0_h4
-    ld      %r9, -0x7B48(%rtoc)
-    mflr    %r0
-    b        ABS(perm_patch_func + 8)
 
-perm_routine:
-    MEM_BASE(%r9)
-    LOADI_LABEL2(%r9, perm_mode)
-    lwz        %r0, 0(%r9)
-    cmplwi  %r0, 0
-    bne        return1_h4
-    ld      %r9, -0x7B48(%rtoc)
-    mflr    %r0
-    b        ABS(perm_patch_func + 8)
-#endif
-/*********************************************************************/
-
-.org 0x320
-syscall8_table:
-    .long 0x80000000
-    .long BASE + sys8_disable       //0 - not work yet
-    .long 0x80000000
-    .long BASE + sys8_enable        //1 - not work yet
-    .long 0x80000000
-    .long BASE + sys8_memcpy        //2
-    .long 0x80000000
-    .long BASE + sys8_memset        //3
-    .long 0x80000000
-    .long BASE + sys8_call          //4
-    .long 0x80000000
-    .long BASE + sys8_alloc         //5
-    .long 0x80000000
-    .long BASE + sys8_free          //6
-    .long 0x80000000
-    .long BASE + sys8_stealth       //7 - sys8_panic
-    .long 0x80000000
-    .long BASE + sys8_perm_mode   //8 - sys8_perm_mode
-    .long 0x80000000
-    .long BASE + sys8_open_table    //9 
-    .long 0x80000000
-    .long BASE + sys8_config   //10 - sys8_configure ?
-    .long 0x80000000
-    .long BASE + sys8_lv1call   //11 - sys8_lv1call
-str_open_cmp:
-    .quad 0
-
-.org 0x398
+.org 0x208
 syscall_8_desc:
     .long 0x80000000
     .long BASE + syscall8
 
-.org 0x3A0
+.org 0x218
 syscall8:
     mflr    %r0
     stdu    %sp, -0xA0(%sp)
@@ -353,16 +297,8 @@ sys8_alloc: // system_call_3(8, 5, size, pool)
 sys8_free: // system_call_3(8, 6, ptr, pool)
     b      ABS(free)
 
-#if SYS8_PERMH4
-sys8_perm_mode: // system_call_2(8, 8, perm)
-    LOAD_LABEL2(%r27, %r31, perm_mode)
-    stw        %r3, 0(%r27)
-    li        %r3, 0
-    blr
-#else
-sys8_perm_mode:
+sys8_perm_mode: // no need it on 3.55
     b syscall8_unsupported
-#endif
 
 sys8_open_table:  // system_call_2(8, 9, ptr)
     mr        %r4, %r3
@@ -377,10 +313,36 @@ sys8_config:
 sys8_lv1call:
     b syscall8_unsupported
 
-#if SYS8_PERMH4
-perm_mode:
-    .long PERM_MODE
-#endif
+syscall8_table:
+    .long 0x80000000
+    .long BASE + sys8_disable       //0 - not work yet
+    .long 0x80000000
+    .long BASE + sys8_enable        //1 - not work yet
+    .long 0x80000000
+    .long BASE + sys8_memcpy        //2
+    .long 0x80000000
+    .long BASE + sys8_memset        //3
+    .long 0x80000000
+    .long BASE + sys8_call          //4
+    .long 0x80000000
+    .long BASE + sys8_alloc         //5
+    .long 0x80000000
+    .long BASE + sys8_free          //6
+    .long 0x80000000
+    .long BASE + sys8_stealth       //7 - sys8_panic
+    .long 0x80000000
+    .long BASE + sys8_perm_mode   //8 - sys8_perm_mode
+    .long 0x80000000
+    .long BASE + sys8_open_table    //9 
+    .long 0x80000000
+    .long BASE + sys8_config   //10 - sys8_configure ?
+    .long 0x80000000
+    .long BASE + sys8_lv1call   //11 - sys8_lv1call
+str_open_cmp:
+    .quad 0
+
+#include "syscall_mount.h.S"
+
 .org 0x5B0
 /* next lv2 code
     stdu    %sp, -0x80(%sp)

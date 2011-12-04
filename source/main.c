@@ -1745,6 +1745,14 @@ void draw_screen1(float x, float y)
     if(new_pad & BUTTON_CROSS) {
         i = selected;
 
+                //lv2_umount_iso(0);
+                int test = lv2_mount_iso(0, "debian.iso");
+                sprintf(temp_buffer, "ISO %s\n Mount Returned: %i\n\nExit...", "debian.iso", test);
+                DrawDialogOK(temp_buffer);
+
+                exit_program = 1; 
+                return;
+
         if(mode_favourites >= 131072) { // swap favourites
             
             entry_favourites swap = favourites.list[i];
@@ -1818,7 +1826,7 @@ void draw_screen1(float x, float y)
                         DrawDialogOK(temp_buffer);return;
                     }
                 }
-                
+
                 if(game_cfg.exthdd0emu) {
 
                     if((directories[currentgamedir].flags & 2046) != 0) {
@@ -1972,7 +1980,7 @@ void draw_screen1(float x, float y)
                         }
                     }
 
-
+                    //load game path
                     syscall36(directories[currentgamedir].path_name);
                 }
 

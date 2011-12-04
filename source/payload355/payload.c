@@ -25,6 +25,8 @@
 #include "hvcall.h"
 #include "mm.h"
 #include "syscall8.h"
+#include "utils.h"
+#include "mount.h"
 
 #include "payload_sky.bin.h"
 #include "payload_syscall36.bin.h"
@@ -173,18 +175,9 @@ void load_payload(int mode)
         00346690  80 00 00 00 00 32 49 68  80 00 00 00 00 32 49 68  Ç....2IhÇ....2Ih
     */
     _poke(0x346690, 0x800000000000F010ULL); // syscall_map_open_desc - sys36
-    _poke(0x3465b0, 0x800000000000F2E0ULL); // syscall_8_desc - sys8
-
-#ifdef CONFIG_USE_SYS8PERMH4
-    /*
-        0x0E7F0, b perm_routine    //0x48000A30
-        0x24E44, bl perm0_routine  //0x4BFEA3AD
-        0xC1DD0, bl perm0_routine  //0x4BF4D421
-    */
-    _poke32(0x0e7f0, 0x48000A30);
-    _poke32(0x24e44, 0x4BFEA3AD);
-    _poke32(0xc1dd0, 0x4BF4D421);
-#endif
+    //_poke(0x3465b0, 0x800000000000F2E0ULL); // syscall_8_desc - sys8
+    _poke(0x3465b0, 0x800000000000F150ULL); // syscall_8_desc - sys8
+    _poke(0x3466c0, 0x800000000000F2C0ULL); // syscall_mount_desc - sys42
 
 }
 
@@ -360,5 +353,55 @@ int lv2_patch_bdvdemu(uint32_t flags)
     remove_lv2_memcpy();
     
     return flag;
+}
+
+/*
+aDev_bdvd:    .string    "/dev_bdvd"
+aApp_home:    .string    "/app_home"
+*/
+
+const char* MOUNT_POINT = "/dev_iso0";
+
+int lv2_mount_iso(uint32_t flags, const char* file)
+{
+    char * fs_iso = temp_buffer;
+
+    Lv2FsStat entry;
+    int is_umounted = lv2FsStat(MOUNT_POINT, &entry);
+    if (is_umounted == 0)
+        return -1;
+
+    //int result = lv2FsMount("CELL_FS_LOOPBACK:/dev_hdd0/test.iso", FS_ISO9660, MOUNT_POINT, 0);
+    
+    // /dev_hdd0/PSXISO/SLES-01943/RADIKAL.BIN
+    sprintf(fs_iso, "CELL_FS_LOOPBACK:/dev_hdd0/PSXISO/%s", file);
+    //sprintf(fs_iso, "/dev_hdd0/PSXISO/%s", file);
+    
+    //int is_failed = lv2FsMount(fs_iso, FS_ISO9660, MOUNT_POINT, (s32)1);
+
+    //int is_failed = lv2FsMyMount(fs_iso, FS_ISO9660, MOUNT_POINT);
+    //int is_failed = lv2FsMount("CELL_FS_LOOP:/dev_hdd0/PSXISO/test.iso", FS_ISO9660, MOUNT_POINT, (s32)1);
+    int is_failed = lv2FsMount("CELL_FS_DUMMY", FS_DUMMYFS, MOUNT_POINT, (s32)0);
+    
+    //int is_failed = lv2FsMount(DEV_FLASH1, FS_FAT32, MOUNT_POINT, (s32)1);
+
+    return is_failed;
+}
+
+
+int lv2_umount_iso(uint32_t flags)
+{
+    int is_failed = -1;
+
+    Lv2FsStat entry;
+    int is_umounted = lv2FsStat(MOUNT_POINT, &entry);
+    
+    if (is_umounted == 0)
+    {
+        //desmontar
+        is_failed = lv2FsUnMount(MOUNT_POINT);
+    }
+    
+    return (is_failed == 0);
 }
 

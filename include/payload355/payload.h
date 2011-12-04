@@ -21,6 +21,9 @@ extern int lv2_unpatch_bdvdemu(void);
 extern int lv2_patch_bdvdemu(uint32_t flags);
 extern void sys36_memcpy( uint64_t to, const uint64_t from, size_t sz);
 
+extern int lv2_mount_iso(uint32_t flags, const char* file);
+extern int lv2_umount_iso(uint32_t flags);
+
 extern int map_lv1(void);
 extern void unmap_lv1(void);
 extern void patch_lv2_protection(void);
@@ -28,7 +31,6 @@ extern void install_new_poke(void);
 extern void remove_new_poke(void);
 extern int is_payload_loaded(void);
 
-//#define CONFIG_USE_SYS8PERMH4 //disabled by default (testing, maybe not added on final release - if not usefull)
 //#define CONFIG_USE_SYS8CONFIG //disabled, not working yet
 
 #endif

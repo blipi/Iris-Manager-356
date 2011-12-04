@@ -4,6 +4,7 @@
 #define strlen                      0x4e6ac                                                                                                                                            
 #define alloc                       0x60b78                                                                                                                                            
 #define free                        0x60fb4
+#define mount                       0x2b2abc
 
 #define memory_patch_func           0x2b329c
 #define pathdup_from_user           0x18dc68                                                                                                                                           
