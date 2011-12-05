@@ -465,6 +465,16 @@ int lv2launch(u64 addr)
 int syscall36(char * path) 
 { return Lv2Syscall1(36, (u64) path); }
 
+//Syscall to get firmware version
+#define SYS_GET_FIRMWARE_VERSION 376
+#define FIRMWARE_356 0x8B10
+
+u64 lv2GetFirmwareVersion(void)
+{
+	return Lv2Syscall0(SYS_GET_FIRMWARE_VERSION);
+}
+
+
 u64 hmanager_key = 0x1759829723742374ULL;
 
 /******************************************************************************************************************************************************/
@@ -888,6 +898,9 @@ int payload_mode = 0;
 
 s32 main(s32 argc, const char* argv[])
 {
+	if(lv2GetFirmwareVersion() != FIRMWARE_356) //Avoid running on non 356 firmwares
+		return 0;
+		
     int n;
     
     u32 entry = 0;
@@ -935,57 +948,32 @@ s32 main(s32 argc, const char* argv[])
             }
         }
     }
+	
+	
+    tiny3d_Init(1024*1024*2);
+    ioPadInit(7);
 
     payload_mode = is_payload_loaded();
 
     switch(payload_mode)
     {
-        case WANIN_PAYLOAD: //payload WaninV2 CFW
         case ZERO_PAYLOAD: //no payload installed
-    		install_new_poke(); /* need for patch lv2 */
-
-    		if (!map_lv1()) {
-    			remove_new_poke();
-
-                tiny3d_Init(1024*1024);
-                ioPadInit(7);
-                DrawDialogOK("Error Loading Payload: map failed?!");
-    			exit(0);
-    		}
-
-    		patch_lv2_protection(); /* yaw */
-    		remove_new_poke(); /* restore pokes */
-    
-    		unmap_lv1();  /* 3.55 need unmap? */
-    
-            __asm__("sync");
-            sleep(1); /* dont touch! nein! */
-
-            //please, do not translate this strings - i preffer this errors in english for better support...
-            if(payload_mode == WANIN_PAYLOAD)
-            {
-                load_payload_syscall36old(payload_mode);
-                sprintf(temp_buffer, "WANINV2 DETECTED\nOLD SYSCALL 36 LOADED (mode=%i)\n\n - no big files allowed with this payload -", payload_mode);
-                sprintf(payload_str, "wanin cfw - old syscall36, no bigfiles allowed");
-            }
-            else
-            {
-    		    load_payload(payload_mode);
-                __asm__("sync");
-                sleep(1); /* maybe need it, maybe not */
-                
-            }
-            break;
-		case SYS36_PAYLOAD:
-            sprintf(temp_buffer, "OLD SYSCALL 36 RESIDENT, RESPECT!\nNEW PAYLOAD NOT LOADED...\n\n - no big files allowed with this payload -");
-            sprintf(payload_str, "syscall36 resident - new payload no loaded, no bigfiles allowed");
-            break;
+    		
+			payload_mode = SKY10_PAYLOAD;
+			patch_lv2_protection();
+			load_payload(payload_mode);
+			
+			break;
+			
 		case SKY10_PAYLOAD:
             break;
+			
+		default:
+			DrawDialogOK("Unkown error\n");
 	}
 
-    usleep(250000);
-
+    //usleep(250000);
+/*
     if(payload_mode >= ZERO_PAYLOAD)
     {
         int test = 0x100;
@@ -1007,10 +995,7 @@ s32 main(s32 argc, const char* argv[])
 
     sys8_perm_mode(2);
     sys8_path_table(0LL);
-
-    tiny3d_Init(1024*1024*2);
-    ioPadInit(7);
-
+*/
     if(payload_mode < ZERO_PAYLOAD) //if mode is wanin or worse, launch advert
     {
         DrawDialogOK(temp_buffer);
@@ -1025,11 +1010,13 @@ s32 main(s32 argc, const char* argv[])
     mkdir(temp_buffer, S_IRWXO | S_IRWXU | S_IRWXG | S_IFDIR);
         
 	// Load texture
+	
 
     LoadTexture();
 
     init_twat();
 
+	
     // initialize manager conf
 
     memset(&manager_cfg, 0, sizeof(manager_cfg));
@@ -1101,12 +1088,12 @@ s32 main(s32 argc, const char* argv[])
 	fdevices_old=0;
 	forcedevices=0;
 	find_device=0;
-
+	
     syscall36("/dev_bdvd");
-    sys8_perm_mode((u64) 2);
-
+    //sys8_perm_mode((u64) 2);
+	
     unpatch_bdvdemu();
-
+	
     init_music();
 
     sprintf(temp_buffer, "%s/config/favourites.bin", self_path);
