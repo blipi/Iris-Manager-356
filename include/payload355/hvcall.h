@@ -2,9 +2,9 @@
 #define HVCALL_H
 
 #define HVSC_SYSCALL                    811                     // which syscall to overwrite with hvsc redirect
-#define HVSC_SYSCALL_ADDR               0x8000000000195540ULL   // where above syscall is in lv2
+#define HVSC_SYSCALL_ADDR               0x80000000001955D4ULL   // where above syscall is in lv2
 #define NEW_POKE_SYSCALL                813                     // which syscall to overwrite with new poke
-#define NEW_POKE_SYSCALL_ADDR           0x8000000000195A68ULL   // where above syscall is in lv2
+#define NEW_POKE_SYSCALL_ADDR           0x8000000000195AFCULL   // where above syscall is in lv2
 
 #define HV_BASE                         0x8000000014000000ULL   // where in lv2 to map lv1
 #define HV_SIZE                         0x370000                // size of lv1 memory to map/dump
