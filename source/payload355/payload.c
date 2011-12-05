@@ -198,14 +198,15 @@ void load_payload(int mode)
 			
     /* BASIC PATCHES SYS36 */
     // by 2 anonymous people
-	/*
-    _poke32(0x55f14, 0x60000000);
-    _poke32(0x55f1c, 0x48000098);
-    _poke32(0x7af68, 0x60000000);
-    _poke32(0x7af7c, 0x60000000);
-    _poke(0x55EA0, 0x63FF003D60000000);  // fix 8001003D error 
-    _poke(0x55F64, 0x3FE080013BE00000);  // fix 8001003E error 
-	*/
+	
+    _poke32(0x55EC0, 0x60000000);
+    //_poke32(0x55EC8, 0x48000098); //fixed on core
+    _poke32(0x7AFB4, 0x60000000);
+    _poke32(0x7AFC8, 0x60000000);
+	
+    //_poke(0x55E4C, 0x63FF003D60000000);  // fix 8001003D error  -> fixed on core
+    _poke(0x55F10, 0x3FE080013BE00000);  // fix 8001003E error 
+	
     /*
         -002b3290  f8 01 00 b0 7c 9c 23 78  7c 7d 1b 78 4b d9 b4 11  |....|.#x|}.xK...|
         +002b3290  f8 01 00 b0 7c 9c 23 78  4b d5 bf 40 4b d9 b4 11  |....|.#xK..@K...| (openhook jump - 0xF1D8)
