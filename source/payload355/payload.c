@@ -147,6 +147,20 @@ inline void install_lv2_new_syscalls()
 	__asm__("sync");
 	sleep(1);
 }
+
+inline void uninstall_lv2_new_syscalls()
+{
+	pokeq(0x80000000003465E8ULL, 0x8000000000324968ULL);
+	pokeq(0x80000000003465F0ULL, 0x8000000000324968ULL);
+
+	u64 i;
+	for(i = 0x800000000000F014ULL; i < 0x800000000000F0A0ULL; i+=8)
+		pokeq(i, 0x6000000060000000ULL);
+
+	__asm__("sync");
+	sleep(1);
+}
+
 	
 inline void install_lv2_memcpy()
 {
@@ -201,8 +215,9 @@ void load_payload(int mode)
 	
     _poke32(0x55EC0, 0x60000000);
     //_poke32(0x55EC8, 0x48000098); //fixed on core
-    _poke32(0x7AFB4, 0x60000000);
-    _poke32(0x7AFC8, 0x60000000);
+    _poke32(0x7AFB4, 0x60000000); //the fix is already aplied on 0xEF60
+	_poke32(0x7AFC8, 0x60000000); //the fix is already aplied on 0x7A47C
+	
 	
     //_poke(0x55E4C, 0x63FF003D60000000);  // fix 8001003D error  -> fixed on core
     _poke(0x55F10, 0x3FE080013BE00000);  // fix 8001003E error 
@@ -219,20 +234,18 @@ void load_payload(int mode)
 	
     _poke(0x346690, 0x800000000000F170ULL); // syscall_map_open_desc - sys36
     //_poke(0x3465b0, 0x800000000000F2E0ULL); // syscall_8_desc - sys8
-	
-	__asm__("sync");
-	
-	
-#ifdef CONFIG_USE_SYS8PERMH4
+		
     /*
         0x0E7F0, b perm_routine    //0x48000A30
         0x24E44, bl perm0_routine  //0x4BFEA3AD
         0xC1DD0, bl perm0_routine  //0x4BF4D421
     */
-    //_poke32(0x0e7f0, 0x48000A30);
-    //_poke32(0x24e44, 0x4BFEA3AD);
-    //_poke32(0xc1dd0, 0x4BF4D421);
-#endif
+    
+	_poke(0xE808, 0x48000A887C0802A6); //b F290, mflr r0
+    _poke32(0x24E14, 0x4BFEA44D); //bl F260
+    _poke32(0xC1E6C, 0x4BF4D3F5); //bl F260
+
+	__asm__("sync");
 
 }
 
