@@ -21,7 +21,7 @@
 #define strdup_from_user            0x192C20
 #define strdup                      0x192C20
 
-#define perm_patch_func             0x0E810
+#define perm_patch_func            0xE808
 #define rtoc_entry_1		        0x1030
 #define rtoc_entry_2		       -0x5b80
 
