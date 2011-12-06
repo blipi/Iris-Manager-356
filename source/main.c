@@ -565,6 +565,8 @@ int inited = 0;
 
 void fun_exit()
 {
+	uninstall_lv2_new_syscalls();
+	
     close_language();
     ftp_deinit();
 
@@ -966,6 +968,7 @@ s32 main(s32 argc, const char* argv[])
 			break;
 			
 		case SKY10_PAYLOAD:
+			install_lv2_new_syscalls();
             break;
 			
 		default:
