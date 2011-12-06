@@ -24,6 +24,8 @@
 #define PATHSTR_LEN    0x9
 #define ABS(target) ((target) - (BASE) - .)
 
+#define PERM_MODE 2  // 0 -> restricted 1-> original 2-> new for some games
+
 // Dynamic macros to load a label into a register
 #define MEM_BASE(dest) \
     li dest, 1; \
@@ -144,7 +146,34 @@ return_org_open_func:
 aDev_bdvd:    .string    "/dev_bdvd"
 aApp_home:    .string    "/app_home"
 
-.org 0x200
+.org 0x1C0
+perm0_routine:
+    MEM_BASE(%r9)
+    LOADI_LABEL2(%r9, perm_mode)
+    lwz        %r0, 0(%r9)
+    cmplwi  %r0, 1
+    beq        return1_h4
+    cmplwi  %r0, 2
+    beq        return0_h4
+    ld      %r9, -0x7B48(%rtoc)
+    mflr    %r0
+    b        ABS(perm_patch_func + 8)
+
+perm_routine:
+    MEM_BASE(%r9)
+    LOADI_LABEL2(%r9, perm_mode)
+    lwz        %r0, 0(%r9)
+    cmplwi  %r0, 0
+    bne        return1_h4
+    ld      %r9, -0x7B48(%rtoc)
+    mflr    %r0
+    b        ABS(perm_patch_func + 8)
+	
+perm_mode:
+    .long PERM_MODE
+	
+.org 0x230
+	
 //.org 0x5B8 //max 0x5AC?
 /* next lv2 code
     stdu    %sp, -0x80(%sp)
